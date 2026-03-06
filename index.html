@@ -1,0 +1,2591 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Aide — Private AI Assistant</title>
+<link href="https://fonts.googleapis.com/css2?family=DM+Serif+Display:ital@0;1&family=DM+Sans:wght@300;400;500;600&family=DM+Mono:wght@400;500&display=swap" rel="stylesheet">
+<script src="https://cdnjs.cloudflare.com/ajax/libs/xlsx/0.18.5/xlsx.full.min.js"></script>
+<script src="https://cdn.jsdelivr.net/npm/exceljs@4.4.0/dist/exceljs.min.js"></script>
+<script src="https://cdn.jsdelivr.net/npm/pptxgenjs@3.12.0/dist/pptxgen.bundle.js"></script>
+<script src="https://cdnjs.cloudflare.com/ajax/libs/docx/7.8.2/docx.umd.min.js"></script>
+<style>
+*,*::before,*::after{box-sizing:border-box;margin:0;padding:0}
+:root{
+  --bg:#F7F6F3;--surface:#FFFFFF;--surface2:#F0EFE9;
+  --border:#E4E2DA;--border-light:#EEEDEA;
+  --text:#1C1C1A;--text-2:#5C5B55;--text-3:#9C9B94;
+  --accent:#1C1C1A;--green:#2A6E47;--green-bg:#EBF4EE;
+  --amber:#92530A;--amber-bg:#FEF3E2;
+  --red:#C0392B;--red-bg:#FDECEA;--blue:#1A4D8F;--blue-bg:#EAF0FB;
+  --r:8px;--r-sm:5px;--r-lg:14px;
+  --sh:0 2px 8px rgba(0,0,0,0.07),0 1px 2px rgba(0,0,0,0.04);
+  --sh-lg:0 8px 30px rgba(0,0,0,0.10),0 2px 8px rgba(0,0,0,0.06);
+}
+body{font-family:'DM Sans',sans-serif;background:var(--bg);color:var(--text);height:100vh;overflow:hidden;display:flex;flex-direction:column;-webkit-font-smoothing:antialiased}
+
+/* ── SCREENS ── */
+.screen{display:none;width:100%;height:100%}
+.screen.active{display:flex}
+
+/* ════════════════════
+   ACTIVATION SCREEN
+════════════════════ */
+#activation{align-items:center;justify-content:center;flex-direction:column;background:var(--bg);position:relative;overflow:hidden}
+#activation::before{content:'';position:absolute;width:500px;height:500px;background:radial-gradient(circle,rgba(42,110,71,0.07) 0%,transparent 70%);top:-80px;right:-80px;pointer-events:none}
+
+.act-card{background:var(--surface);border:1px solid var(--border);border-radius:var(--r-lg);box-shadow:var(--sh-lg);width:480px;max-width:calc(100vw - 32px);animation:cardIn .35s cubic-bezier(.16,1,.3,1)}
+@keyframes cardIn{from{opacity:0;transform:translateY(14px) scale(.98)}to{opacity:1;transform:translateY(0) scale(1)}}
+
+.act-header{padding:28px 32px 22px;border-bottom:1px solid var(--border-light)}
+.act-logo{font-family:'DM Serif Display',serif;font-size:26px;letter-spacing:-.02em;font-style:italic}
+.act-logo span{color:var(--text-3);font-size:16px;font-style:normal;font-family:'DM Sans',sans-serif;font-weight:400;margin-left:4px}
+.act-tagline{font-size:13px;color:var(--text-3);margin-top:5px}
+
+.act-body{padding:26px 32px 30px;display:flex;flex-direction:column;gap:0}
+
+.act-tabs{display:flex;background:var(--surface2);border:1px solid var(--border);border-radius:var(--r-sm);padding:3px;gap:2px;margin-bottom:22px}
+.act-tab{flex:1;padding:8px;border:none;background:transparent;border-radius:4px;font-family:'DM Sans',sans-serif;font-size:13px;font-weight:500;cursor:pointer;color:var(--text-3);transition:all .15s}
+.act-tab.active{background:var(--surface);color:var(--text);box-shadow:0 1px 3px rgba(0,0,0,0.06)}
+
+/* Managed tab */
+.managed-pane,.byok-pane{display:none;flex-direction:column;gap:14px}
+.managed-pane.show,.byok-pane.show{display:flex}
+
+.plan-grid{display:grid;grid-template-columns:1fr 1fr 1fr;gap:8px}
+.plan-card{border:2px solid var(--border);border-radius:var(--r);padding:12px 10px;cursor:pointer;transition:all .15s;text-align:center;background:var(--surface);position:relative}
+.plan-card:hover{border-color:var(--text-2)}
+.plan-card.selected{border-color:var(--accent);background:var(--surface2)}
+.plan-price{font-size:18px;font-weight:600;letter-spacing:-.02em;color:var(--text)}
+.plan-name{font-size:11px;font-weight:600;color:var(--text-2);margin-top:3px}
+.plan-detail{font-size:10.5px;color:var(--text-3);margin-top:2px;line-height:1.3}
+.plan-badge{position:absolute;top:-8px;left:50%;transform:translateX(-50%);background:var(--green);color:#fff;font-size:9px;font-weight:600;padding:2px 7px;border-radius:10px;white-space:nowrap;text-transform:uppercase;letter-spacing:.04em}
+
+.act-label{font-size:11px;font-weight:600;color:var(--text-3);text-transform:uppercase;letter-spacing:.06em;display:block;margin-bottom:6px}
+.act-input{width:100%;padding:10px 12px;border:1.5px solid var(--border);border-radius:var(--r-sm);font-family:'DM Mono',monospace;font-size:13px;color:var(--text);background:var(--bg);outline:none;transition:border-color .15s}
+.act-input:focus{border-color:var(--accent)}
+.act-input::placeholder{color:var(--text-3);font-family:'DM Sans',sans-serif}
+
+.act-btn{width:100%;padding:11px;background:var(--accent);color:#fff;border:none;border-radius:var(--r-sm);font-family:'DM Sans',sans-serif;font-size:14px;font-weight:500;cursor:pointer;transition:opacity .15s}
+.act-btn:hover{opacity:.85}
+.act-btn:disabled{opacity:.4;cursor:not-allowed}
+.act-btn-ghost{width:100%;padding:10px;background:transparent;color:var(--text-2);border:1.5px solid var(--border);border-radius:var(--r-sm);font-family:'DM Sans',sans-serif;font-size:13px;cursor:pointer;transition:all .15s}
+.act-btn-ghost:hover{border-color:var(--text-2);color:var(--text)}
+
+.info-pill{display:inline-flex;align-items:center;gap:5px;padding:5px 10px;border-radius:20px;font-size:12px}
+.info-pill.green{background:var(--green-bg);color:var(--green)}
+.info-pill.amber{background:var(--amber-bg);color:var(--amber)}
+.info-pill.blue{background:var(--blue-bg);color:var(--blue)}
+
+.act-result{padding:9px 12px;border-radius:var(--r-sm);font-size:12.5px;display:none;margin-top:4px}
+.act-result.success{background:var(--green-bg);color:var(--green);display:block}
+.act-result.error{background:var(--red-bg);color:var(--red);display:block}
+
+/* Provider guide steps */
+.provider-steps{background:var(--surface2);border:1px solid var(--border);border-radius:var(--r);padding:14px 16px;display:flex;flex-direction:column;gap:10px}
+.ps-row{display:flex;gap:10px;align-items:flex-start;font-size:13px;color:var(--text-2);line-height:1.45}
+.ps-num{width:20px;height:20px;border-radius:50%;background:var(--accent);color:#fff;font-size:11px;font-weight:600;display:flex;align-items:center;justify-content:center;flex-shrink:0;margin-top:1px}
+.ps-row a{color:var(--green);text-decoration:none;font-weight:500}
+.ps-row a:hover{text-decoration:underline}
+.pstep{display:none}.pstep.show{display:flex;flex-direction:column;gap:14px}
+.byok-provider-row{display:flex;gap:6px;margin-bottom:4px}
+.bpr-btn{flex:1;padding:7px 8px;border:1.5px solid var(--border);border-radius:var(--r-sm);background:var(--surface);cursor:pointer;font-family:'DM Sans',sans-serif;font-size:12px;font-weight:500;color:var(--text-2);transition:all .15s;text-align:center}
+.bpr-btn.selected{border-color:var(--accent);background:var(--surface2);color:var(--text)}
+
+/* ════════════════════
+   MAIN APP
+════════════════════ */
+#app{flex-direction:column}
+.topbar{height:50px;background:var(--surface);border-bottom:1px solid var(--border);display:flex;align-items:center;padding:0 16px;gap:10px;flex-shrink:0}
+.logo{font-family:'DM Serif Display',serif;font-size:18px;letter-spacing:-.02em;font-style:italic;color:var(--text)}
+.tb-divider{width:1px;height:16px;background:var(--border)}
+.status-pill{display:flex;align-items:center;gap:5px;padding:3px 9px;border-radius:20px;background:var(--surface2);border:1px solid var(--border)}
+.sdot{width:5px;height:5px;border-radius:50%;background:var(--text-3)}
+.sdot.on{background:var(--green)}.sdot.off{background:var(--red)}
+.stext{font-size:11px;color:var(--text-2);font-weight:500}
+.topbar-right{margin-left:auto;display:flex;align-items:center;gap:6px}
+.prov-switch{display:flex;background:var(--surface2);border:1px solid var(--border);border-radius:var(--r-sm);padding:2px;gap:2px}
+.pb{font-family:'DM Mono',monospace;font-size:11px;font-weight:500;padding:4px 10px;border:none;border-radius:3px;cursor:pointer;background:transparent;color:var(--text-3);transition:all .15s}
+.pb.active{background:var(--surface);color:var(--text);box-shadow:0 1px 2px rgba(0,0,0,0.06)}
+.tb-btn{width:30px;height:30px;border:1px solid var(--border);border-radius:var(--r-sm);background:var(--surface);cursor:pointer;display:flex;align-items:center;justify-content:center;color:var(--text-2);transition:all .15s;font-size:15px}
+.tb-btn:hover{background:var(--surface2);color:var(--text)}
+
+/* Layout */
+.app-body{display:flex;flex:1;overflow:hidden}
+.sidebar{width:210px;flex-shrink:0;background:var(--surface);border-right:1px solid var(--border);display:flex;flex-direction:column;overflow:hidden}
+.sb-top{padding:10px 10px 8px;border-bottom:1px solid var(--border-light)}
+.new-btn{width:100%;display:flex;align-items:center;gap:7px;padding:8px 10px;background:var(--text);color:#fff;border:none;border-radius:var(--r-sm);font-family:'DM Sans',sans-serif;font-size:13px;font-weight:500;cursor:pointer;transition:opacity .15s}
+.new-btn:hover{opacity:.85}
+.conv-list{flex:1;overflow-y:auto;padding:6px;display:flex;flex-direction:column;gap:1px}
+.conv-list::-webkit-scrollbar{width:3px}
+.conv-list::-webkit-scrollbar-thumb{background:var(--border);border-radius:2px}
+.ci{display:flex;align-items:center;gap:6px;padding:7px 8px;border-radius:var(--r-sm);cursor:pointer;transition:background .1s}
+.ci:hover{background:var(--surface2)}.ci.active{background:var(--surface2)}
+.ci-icon{font-size:13px;flex-shrink:0;opacity:.6}
+.ci-name{font-size:12.5px;color:var(--text-2);flex:1;overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
+.ci.active .ci-name{color:var(--text);font-weight:500}
+.ci-del{opacity:0;width:16px;height:16px;border:none;background:none;cursor:pointer;color:var(--text-3);font-size:11px;border-radius:3px;display:flex;align-items:center;justify-content:center;flex-shrink:0;transition:all .15s;padding:0}
+.ci:hover .ci-del{opacity:1}
+.ci-del:hover{color:var(--red);background:var(--red-bg)}
+.sb-footer{padding:10px 12px;border-top:1px solid var(--border-light)}
+.priv-note{font-size:11px;color:var(--text-3);display:flex;align-items:center;gap:4px}
+.license-badge{display:flex;align-items:center;gap:4px;padding:3px 8px;border-radius:10px;font-size:10px;font-weight:600;margin-top:5px}
+.license-badge.managed{background:var(--green-bg);color:var(--green)}
+.license-badge.byok{background:var(--blue-bg);color:var(--blue)}
+
+/* Chat */
+.chat-panel{flex:1;display:flex;flex-direction:column;overflow:hidden;min-width:0}
+.messages{flex:1;overflow-y:auto;padding:24px 0 8px;display:flex;flex-direction:column}
+.messages::-webkit-scrollbar{width:3px}
+.messages::-webkit-scrollbar-thumb{background:var(--border);border-radius:2px}
+
+/* Empty state */
+.empty{flex:1;display:flex;flex-direction:column;align-items:center;justify-content:center;padding:32px;text-align:center;gap:5px}
+.empty-title{font-family:'DM Serif Display',serif;font-size:26px;letter-spacing:-.02em;font-style:italic}
+.empty-sub{font-size:13px;color:var(--text-3);max-width:300px;line-height:1.6;margin-top:3px}
+.qgrid{display:grid;grid-template-columns:1fr 1fr;gap:8px;margin-top:18px;max-width:500px;width:100%}
+.qcard{background:var(--surface);border:1px solid var(--border);border-radius:var(--r);padding:12px 14px;cursor:pointer;text-align:left;transition:all .15s;font-family:'DM Sans',sans-serif}
+.qcard:hover{border-color:var(--text-2);box-shadow:var(--sh)}
+.qc-icon{font-size:17px;margin-bottom:5px;display:block}
+.qc-title{font-size:12.5px;font-weight:600;color:var(--text);display:block}
+.qc-desc{font-size:11.5px;color:var(--text-3);margin-top:2px;display:block;line-height:1.4}
+
+/* Messages */
+.msg-row{padding:3px 0;animation:msgIn .2s ease}
+@keyframes msgIn{from{opacity:0;transform:translateY(5px)}to{opacity:1;transform:translateY(0)}}
+.msg-inner{max-width:720px;margin:0 auto;padding:0 20px;display:flex}
+.msg-row.user .msg-inner{justify-content:flex-end}
+.msg-row.assistant .msg-inner{justify-content:flex-start}
+.bubble{max-width:74%;padding:10px 14px;border-radius:12px;font-size:13.5px;line-height:1.65;word-break:break-word}
+.msg-row.user .bubble{background:var(--accent);color:#fff;border-bottom-right-radius:3px}
+.msg-row.assistant .bubble{background:var(--surface);color:var(--text);border:1px solid var(--border);box-shadow:0 1px 3px rgba(0,0,0,0.04);border-bottom-left-radius:3px}
+.bubble p{margin-bottom:8px}.bubble p:last-child{margin-bottom:0}
+.bubble strong{font-weight:600}.bubble em{font-style:italic}
+.bubble code{font-family:'DM Mono',monospace;font-size:11.5px;background:rgba(0,0,0,0.06);padding:1px 5px;border-radius:3px}
+.msg-row.user .bubble code{background:rgba(255,255,255,0.15)}
+.bubble pre{background:#1C1C1A;color:#a8e6c0;padding:12px 14px;border-radius:var(--r-sm);overflow-x:auto;margin:8px 0;font-family:'DM Mono',monospace;font-size:11.5px;line-height:1.5}
+.bubble pre code{background:none;padding:0}
+.bubble ul,.bubble ol{padding-left:18px;margin:6px 0}.bubble li{margin-bottom:3px}
+
+/* Doc card */
+.doc-card{display:flex;align-items:center;gap:10px;background:var(--bg);border:1px solid var(--border);border-radius:var(--r-sm);padding:10px 12px;margin-top:10px;cursor:pointer;transition:all .15s}
+.doc-card:hover{border-color:var(--text-2);box-shadow:var(--sh)}
+.doc-card-icon{font-size:20px;flex-shrink:0}
+.doc-card-info{flex:1}
+.doc-card-name{font-size:12.5px;font-weight:600;color:var(--text)}
+.doc-card-type{font-size:11px;color:var(--text-3);margin-top:1px}
+.doc-card-action{font-size:11px;color:var(--green);font-weight:500;white-space:nowrap}
+
+/* Typing */
+.typing-row{padding:3px 0}
+.typing-inner{max-width:720px;margin:0 auto;padding:0 20px}
+.typing-bubble{background:var(--surface);border:1px solid var(--border);border-radius:12px;border-bottom-left-radius:3px;padding:12px 14px;display:inline-flex;gap:4px;align-items:center;box-shadow:0 1px 3px rgba(0,0,0,0.04)}
+.td{width:5px;height:5px;border-radius:50%;background:var(--text-3);animation:td 1.2s infinite}
+.td:nth-child(2){animation-delay:.2s}.td:nth-child(3){animation-delay:.4s}
+@keyframes td{0%,60%,100%{transform:translateY(0);opacity:.4}30%{transform:translateY(-4px);opacity:1}}
+.msg-meta{max-width:720px;margin:2px auto 0;padding:0 20px;display:flex}
+.msg-row.user .msg-meta{justify-content:flex-end}
+.msg-time{font-size:10px;color:var(--text-3);font-family:'DM Mono',monospace}
+
+/* Input */
+.input-area{padding:12px 20px 16px;background:var(--bg);flex-shrink:0}
+.input-wrap{max-width:720px;margin:0 auto;background:var(--surface);border:1.5px solid var(--border);border-radius:12px;box-shadow:var(--sh);overflow:hidden;transition:border-color .15s,box-shadow .15s}
+.input-wrap:focus-within{border-color:#c0beb6;box-shadow:var(--sh-lg)}
+.input-row{display:flex;align-items:flex-end;padding:10px 12px;gap:8px}
+#userInput{flex:1;border:none;outline:none;resize:none;font-family:'DM Sans',sans-serif;font-size:13.5px;color:var(--text);background:transparent;min-height:22px;max-height:140px;line-height:1.5;overflow-y:auto}
+#userInput::placeholder{color:var(--text-3)}
+.send-btn{width:32px;height:32px;border-radius:var(--r-sm);border:none;background:var(--accent);color:#fff;cursor:pointer;display:flex;align-items:center;justify-content:center;flex-shrink:0;transition:opacity .15s,transform .1s}
+.send-btn:hover{opacity:.85}.send-btn:active{transform:scale(.95)}.send-btn:disabled{opacity:.3;cursor:not-allowed}
+.input-footer{padding:0 12px 8px;display:flex;align-items:center;justify-content:space-between}
+.input-hint{font-size:11px;color:var(--text-3);font-family:'DM Mono',monospace}
+.ws-btn{display:flex;align-items:center;gap:5px;font-size:11px;color:var(--text-3);cursor:pointer;padding:2px 7px;border-radius:20px;border:1px solid transparent;transition:all .15s;background:none;font-family:'DM Sans',sans-serif}
+.ws-btn.on{color:var(--blue);border-color:var(--blue-bg);background:var(--blue-bg)}
+.ws-dot{width:5px;height:5px;border-radius:50%;background:var(--text-3);transition:background .15s}
+.ws-btn.on .ws-dot{background:var(--blue)}
+
+/* Preview */
+.preview-panel{width:400px;flex-shrink:0;background:var(--surface);border-left:1px solid var(--border);display:flex;flex-direction:column;overflow:hidden;transition:width .2s ease}
+.preview-panel.hidden{width:0;overflow:hidden;border:none}
+.preview-header{height:44px;border-bottom:1px solid var(--border);display:flex;align-items:center;padding:0 14px;gap:8px;flex-shrink:0}
+.preview-title{font-size:12.5px;font-weight:600;color:var(--text-2);flex:1;overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
+.dl-btn{display:flex;align-items:center;gap:5px;padding:5px 10px;background:var(--green);color:#fff;border:none;border-radius:var(--r-sm);font-size:12px;font-weight:500;cursor:pointer;font-family:'DM Sans',sans-serif;transition:opacity .15s;white-space:nowrap}
+.dl-btn:hover{opacity:.85}
+.pv-close{width:24px;height:24px;border:none;background:none;cursor:pointer;color:var(--text-3);font-size:16px;border-radius:4px;display:flex;align-items:center;justify-content:center}
+.pv-close:hover{background:var(--surface2);color:var(--text)}
+.preview-body{flex:1;overflow:auto;padding:16px;background:var(--bg)}
+
+/* Excel preview */
+.xp{font-size:12px}
+.xp table{border-collapse:collapse;width:100%;background:var(--surface);border-radius:var(--r-sm);overflow:hidden;box-shadow:0 1px 3px rgba(0,0,0,0.05)}
+.xp th{background:var(--surface2);padding:7px 10px;text-align:left;font-size:11px;font-weight:600;color:var(--text-2);border-bottom:1px solid var(--border);white-space:nowrap}
+.xp td{padding:6px 10px;border-bottom:1px solid var(--border-light);color:var(--text);white-space:nowrap}
+.xp tr:last-child td{border-bottom:none}.xp tr:hover td{background:var(--surface2)}
+
+/* PPT preview */
+.ppt-slides{display:flex;flex-direction:column;gap:10px}
+.ppt-slide{background:#fff;border:1px solid var(--border);border-radius:var(--r-sm);aspect-ratio:16/9;display:flex;flex-direction:column;align-items:center;justify-content:center;padding:24px;text-align:center;box-shadow:0 1px 3px rgba(0,0,0,0.05);position:relative;overflow:hidden}
+.ppt-slide-num{position:absolute;bottom:8px;right:10px;font-size:10px;color:var(--text-3);font-family:'DM Mono',monospace}
+.ppt-title{font-family:'DM Serif Display',serif;font-size:18px;color:#1a1a18;margin-bottom:10px;line-height:1.2}
+.ppt-content{font-size:12px;color:#5c5b55;line-height:1.6;text-align:left;width:100%}
+.ppt-content li{margin-bottom:4px}
+
+/* Word preview */
+.wp{background:var(--surface);border:1px solid var(--border);border-radius:var(--r-sm);padding:28px 32px;box-shadow:0 1px 3px rgba(0,0,0,0.05);font-size:13.5px;line-height:1.8;color:var(--text)}
+.wp h1{font-family:'DM Serif Display',serif;font-size:22px;margin-bottom:14px}
+.wp h2{font-size:15px;font-weight:600;margin:14px 0 7px}
+.wp p{margin-bottom:9px}.wp ul,.wp ol{padding-left:18px;margin-bottom:9px}.wp li{margin-bottom:3px}
+
+/* Settings drawer */
+.settings-overlay{display:none;position:fixed;inset:0;background:rgba(0,0,0,0.12);z-index:200;backdrop-filter:blur(2px)}
+.settings-overlay.open{display:flex;align-items:flex-start;justify-content:flex-end}
+.settings-drawer{background:var(--surface);width:300px;height:100vh;border-left:1px solid var(--border);display:flex;flex-direction:column;box-shadow:var(--sh-lg);animation:drawerIn .2s ease;overflow:hidden}
+@keyframes drawerIn{from{transform:translateX(18px);opacity:0}to{transform:translateX(0);opacity:1}}
+.drawer-header{padding:16px 18px;border-bottom:1px solid var(--border);display:flex;align-items:center;justify-content:space-between}
+.drawer-title{font-size:13.5px;font-weight:600}
+.drawer-body{flex:1;overflow-y:auto;padding:16px;display:flex;flex-direction:column;gap:18px}
+.sg{display:flex;flex-direction:column;gap:7px}
+.sl{font-size:11px;font-weight:600;color:var(--text-3);text-transform:uppercase;letter-spacing:.06em}
+.si,.ss,.sta{width:100%;padding:8px 10px;border:1.5px solid var(--border);border-radius:var(--r-sm);font-family:'DM Sans',sans-serif;font-size:13px;color:var(--text);background:var(--bg);outline:none;transition:border-color .15s}
+.si:focus,.ss:focus,.sta:focus{border-color:var(--accent)}
+.sta{resize:vertical;min-height:80px;font-size:12px;line-height:1.5}
+.btn-save{width:100%;padding:10px;background:var(--accent);color:#fff;border:none;border-radius:var(--r-sm);font-family:'DM Sans',sans-serif;font-size:13.5px;font-weight:500;cursor:pointer;transition:opacity .15s}
+.btn-save:hover{opacity:.85}
+.btn-ghost-sm{width:100%;padding:9px;background:transparent;color:var(--text-2);border:1.5px solid var(--border);border-radius:var(--r-sm);font-family:'DM Sans',sans-serif;font-size:13px;cursor:pointer;transition:all .15s;margin-top:4px}
+.btn-ghost-sm:hover{border-color:var(--text-2);color:var(--text)}
+
+/* ── MODE PICKER ── */
+.mode-bar{padding:6px 10px;border-bottom:1px solid var(--border-light)}
+.mode-select{width:100%;padding:5px 8px;border:1px solid var(--border);border-radius:var(--r-sm);font-family:'DM Sans',sans-serif;font-size:12px;font-weight:500;color:var(--text);background:var(--surface2);outline:none;cursor:pointer;transition:border-color .15s}
+.mode-select:focus{border-color:var(--accent)}
+
+/* ── PROJECTS ── */
+.proj-section{border-bottom:1px solid var(--border-light)}
+.proj-header{display:flex;align-items:center;padding:8px 10px 4px;gap:4px}
+.proj-label{font-size:10px;font-weight:700;color:var(--text-3);text-transform:uppercase;letter-spacing:.06em;flex:1}
+.proj-add{width:18px;height:18px;border:none;background:none;cursor:pointer;color:var(--text-3);font-size:14px;display:flex;align-items:center;justify-content:center;border-radius:3px;transition:all .15s;padding:0}
+.proj-add:hover{background:var(--surface2);color:var(--text)}
+.proj-list{padding:0 6px 6px;display:flex;flex-direction:column;gap:1px}
+.proj-item{border-radius:var(--r-sm);overflow:hidden}
+.proj-row{display:flex;align-items:center;gap:6px;padding:6px 8px;cursor:pointer;transition:background .1s;border-radius:var(--r-sm)}
+.proj-row:hover{background:var(--surface2)}
+.proj-row.open{background:var(--surface2)}
+.proj-dot{width:7px;height:7px;border-radius:50%;flex-shrink:0}
+.proj-name{font-size:12px;font-weight:500;color:var(--text-2);flex:1;overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
+.proj-count{font-size:10px;color:var(--text-3);font-family:'DM Mono',monospace}
+.proj-del{opacity:0;width:14px;height:14px;border:none;background:none;cursor:pointer;color:var(--text-3);font-size:10px;border-radius:2px;padding:0;display:flex;align-items:center;justify-content:center}
+.proj-row:hover .proj-del{opacity:1}
+.proj-del:hover{color:var(--red)}
+.proj-convs{padding-left:14px;display:none;flex-direction:column;gap:1px}
+.proj-item.open .proj-convs{display:flex}
+.proj-conv{display:flex;align-items:center;gap:5px;padding:5px 8px;border-radius:var(--r-sm);cursor:pointer;font-size:12px;color:var(--text-3);transition:all .15s}
+.proj-conv:hover{background:var(--surface2);color:var(--text-2)}
+.proj-conv.active{color:var(--text);font-weight:500}
+
+/* ── FILE ATTACHMENTS ── */
+.attach-btn{width:28px;height:28px;border:1px solid var(--border);border-radius:var(--r-sm);background:transparent;cursor:pointer;display:flex;align-items:center;justify-content:center;color:var(--text-3);transition:all .15s;font-size:14px;flex-shrink:0}
+.attach-btn:hover{background:var(--surface2);color:var(--text);border-color:var(--text-2)}
+.attachments-bar{padding:6px 12px 0;display:flex;flex-wrap:wrap;gap:6px}
+.att-chip{display:flex;align-items:center;gap:5px;padding:4px 8px;background:var(--surface2);border:1px solid var(--border);border-radius:20px;font-size:11px;color:var(--text-2);max-width:160px}
+.att-chip-name{overflow:hidden;text-overflow:ellipsis;white-space:nowrap;flex:1}
+.att-chip-rm{background:none;border:none;cursor:pointer;color:var(--text-3);font-size:12px;padding:0;line-height:1;flex-shrink:0}
+.att-chip-rm:hover{color:var(--red)}
+
+/* ── SEARCH INDICATOR ── */
+.search-indicator{display:none;align-items:center;gap:6px;padding:6px 12px;font-size:11.5px;color:var(--blue);background:var(--blue-bg);border-top:1px solid #d0dff5}
+.search-indicator.show{display:flex}
+.si-spin{width:10px;height:10px;border:1.5px solid var(--blue);border-top-color:transparent;border-radius:50%;animation:spin .6s linear infinite}
+@keyframes spin{to{transform:rotate(360deg)}}
+
+/* ── ARTIFACTS PANEL ── */
+.artifacts-panel{width:220px;flex-shrink:0;background:var(--surface);border-left:1px solid var(--border);display:flex;flex-direction:column;overflow:hidden}
+.artifacts-panel.hidden{display:none}
+.art-header{height:44px;border-bottom:1px solid var(--border);display:flex;align-items:center;padding:0 14px;gap:6px;flex-shrink:0}
+.art-title{font-size:12px;font-weight:600;color:var(--text-2);flex:1}
+.art-list{flex:1;overflow-y:auto;padding:8px}
+.art-empty{font-size:11.5px;color:var(--text-3);text-align:center;padding:24px 12px;line-height:1.6}
+.art-item{display:flex;align-items:center;gap:8px;padding:8px 10px;border:1px solid var(--border);border-radius:var(--r-sm);margin-bottom:6px;cursor:pointer;transition:all .15s;background:var(--surface)}
+.art-item:hover{border-color:var(--text-2);box-shadow:var(--sh)}
+.art-icon{font-size:18px;flex-shrink:0}
+.art-info{flex:1;min-width:0}
+.art-name{font-size:11.5px;font-weight:600;color:var(--text);overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
+.art-meta{font-size:10px;color:var(--text-3);margin-top:1px}
+.art-dl{font-size:10px;color:var(--green);font-weight:600;white-space:nowrap}
+.drop-overlay{display:none;position:absolute;inset:0;background:rgba(26,77,143,0.08);border:2px dashed var(--blue);border-radius:var(--r-lg);z-index:50;align-items:center;justify-content:center;flex-direction:column;gap:8px;pointer-events:none}
+.drop-overlay.show{display:flex}
+.drop-overlay-icon{font-size:32px}
+.drop-overlay-text{font-size:14px;font-weight:600;color:var(--blue)}
+</style>
+</head>
+<body>
+
+<!-- ════════════════════════════════
+     ACTIVATION SCREEN
+════════════════════════════════ -->
+<div id="activation" class="screen active">
+  <div class="act-card">
+    <div class="act-header">
+      <div class="act-logo">Aide <span>/ private AI assistant</span></div>
+      <div class="act-tagline">Your AI. Your data. Nobody else's.</div>
+    </div>
+    <div class="act-body">
+
+      <div class="act-tabs">
+        <button class="act-tab active" onclick="switchActTab('managed',this)">✦ Managed — we handle it</button>
+        <button class="act-tab" onclick="switchActTab('byok',this)">🔑 Bring your own key</button>
+      </div>
+
+      <!-- MANAGED PANE -->
+      <div class="managed-pane show" id="managedPane">
+        <div class="plan-grid" id="planGrid">
+          <div class="plan-card" onclick="selectPlan('starter',this)">
+            <div class="plan-price">$9<span style="font-size:12px;font-weight:400;color:var(--text-3)">/mo</span></div>
+            <div class="plan-name">Starter</div>
+            <div class="plan-detail">500 msgs/month<br>Fast model</div>
+          </div>
+          <div class="plan-card selected" onclick="selectPlan('pro',this)">
+            <div class="plan-badge">Most popular</div>
+            <div class="plan-price">$19<span style="font-size:12px;font-weight:400;color:var(--text-3)">/mo</span></div>
+            <div class="plan-name">Pro</div>
+            <div class="plan-detail">Unlimited msgs<br>Best model</div>
+          </div>
+          <div class="plan-card" onclick="selectPlan('byok_lifetime',this)">
+            <div class="plan-price">$49<span style="font-size:12px;font-weight:400;color:var(--text-3)"> once</span></div>
+            <div class="plan-name">Lifetime</div>
+            <div class="plan-detail">Own key included<br>Forever</div>
+          </div>
+        </div>
+
+        <div>
+          <label class="act-label">License key</label>
+          <input class="act-input" id="licenseKeyInput" type="text" placeholder="AIDE-XXXX-XXXX-XXXX" autocomplete="off" spellcheck="false" oninput="formatLicenseInput(this)" />
+        </div>
+
+        <div style="font-size:12.5px;color:var(--text-2);line-height:1.5">
+          Don't have a key? <a href="#" onclick="openCheckout(event)" style="color:var(--green);font-weight:500;text-decoration:none">Get one at aide.app →</a>
+        </div>
+
+        <div id="licenseResult" class="act-result"></div>
+        <button class="act-btn" id="activateBtn" onclick="activateLicense()">Activate</button>
+        <button class="act-btn-ghost" onclick="tryDemo()">Try demo (5 free messages)</button>
+      </div>
+
+      <!-- BYOK PANE -->
+      <div class="byok-pane" id="byokPane">
+        <div>
+          <label class="act-label">Choose your AI provider</label>
+          <div class="byok-provider-row">
+            <button class="bpr-btn selected" onclick="selectBYOKProvider('claude',this)">🤖 Claude</button>
+            <button class="bpr-btn" onclick="selectBYOKProvider('openai',this)">⚡ ChatGPT</button>
+            <button class="bpr-btn" onclick="selectBYOKProvider('gemini',this)">✦ Gemini</button>
+            <button class="bpr-btn" onclick="selectBYOKProvider('mistral',this)">🌊 Mistral</button>
+            <button class="bpr-btn" onclick="selectBYOKProvider('ollama',this)">💻 Local</button>
+          </div>
+        </div>
+
+        <!-- Claude steps -->
+        <div class="pstep show" id="bpClaude">
+          <div class="provider-steps">
+            <div class="ps-row"><div class="ps-num">1</div><div>Go to <a href="https://console.anthropic.com" target="_blank">console.anthropic.com</a> → create free account</div></div>
+            <div class="ps-row"><div class="ps-num">2</div><div>API Keys → <strong>Create Key</strong> → copy it</div></div>
+            <div class="ps-row"><div class="ps-num">3</div><div>Add billing (pay-as-you-go, ~$1–3/month typical use)</div></div>
+          </div>
+          <div>
+            <label class="act-label">Your Claude API key</label>
+            <input class="act-input" id="claudeKeyBYOK" type="password" placeholder="sk-ant-api03-..." />
+          </div>
+          <select class="act-input" id="claudeModelBYOK" style="font-family:'DM Sans',sans-serif;font-size:13px">
+            <option value="claude-sonnet-4-20250514">Claude Sonnet 4 — best quality</option>
+            <option value="claude-haiku-4-5-20251001">Claude Haiku 4.5 — faster & cheaper</option>
+          </select>
+        </div>
+
+        <!-- OpenAI steps -->
+        <div class="pstep" id="bpOpenAI">
+          <div class="provider-steps">
+            <div class="ps-row"><div class="ps-num">1</div><div>Go to <a href="https://platform.openai.com" target="_blank">platform.openai.com</a> → sign in</div></div>
+            <div class="ps-row"><div class="ps-num">2</div><div>Profile → API keys → <strong>Create new secret key</strong></div></div>
+            <div class="ps-row"><div class="ps-num">3</div><div>Copy the key (starts with <code style="font-family:monospace;font-size:11px;background:#f0efe9;padding:1px 4px;border-radius:3px">sk-</code>)</div></div>
+          </div>
+          <div>
+            <label class="act-label">Your OpenAI API key</label>
+            <input class="act-input" id="openaiKeyBYOK" type="password" placeholder="sk-..." />
+          </div>
+          <select class="act-input" id="openaiModelBYOK" style="font-family:'DM Sans',sans-serif;font-size:13px">
+            <option value="gpt-4o">GPT-4o — best quality</option>
+            <option value="gpt-4o-mini">GPT-4o mini — fast & cheap</option>
+          </select>
+        </div>
+
+        <!-- Ollama steps -->
+        <div class="pstep" id="bpOllama">
+          <div class="provider-steps">
+            <div class="ps-row"><div class="ps-num">1</div><div>Download <a href="https://ollama.com" target="_blank">ollama.com</a> → drag to Applications</div></div>
+            <div class="ps-row"><div class="ps-num">2</div><div>Open Terminal → run: <code style="font-family:monospace;font-size:11px;background:#1C1C1A;color:#a8e6c0;padding:2px 6px;border-radius:3px">ollama pull qwen2.5:14b</code></div></div>
+            <div class="ps-row"><div class="ps-num">3</div><div>Keep Ollama running in your menu bar. 100% free & offline.</div></div>
+          </div>
+          <input class="act-input" id="ollamaUrlBYOK" type="text" value="http://localhost:11434" placeholder="Ollama URL" />
+          <input class="act-input" id="ollamaModelBYOK" type="text" value="qwen2.5:14b" placeholder="Model name" />
+        </div>
+
+        <!-- Gemini steps -->
+        <div class="pstep" id="bpGemini">
+          <div class="provider-steps">
+            <div class="ps-row"><div class="ps-num">1</div><div>Go to <a href="https://aistudio.google.com" target="_blank">aistudio.google.com</a> → sign in with Google</div></div>
+            <div class="ps-row"><div class="ps-num">2</div><div>Click <strong>Get API key</strong> → <strong>Create API key</strong></div></div>
+            <div class="ps-row"><div class="ps-num">3</div><div>Free tier available — no billing required to start</div></div>
+          </div>
+          <input class="act-input" id="geminiKeyBYOK" type="password" placeholder="AIzaSy..." />
+          <select class="act-input" id="geminiModelBYOK" style="font-family:'DM Sans',sans-serif;font-size:13px">
+            <option value="gemini-2.0-flash">Gemini 2.0 Flash — fast & free</option>
+            <option value="gemini-2.0-pro-exp">Gemini 2.0 Pro — best quality</option>
+          </select>
+        </div>
+
+        <!-- Mistral steps -->
+        <div class="pstep" id="bpMistral">
+          <div class="provider-steps">
+            <div class="ps-row"><div class="ps-num">1</div><div>Go to <a href="https://console.mistral.ai" target="_blank">console.mistral.ai</a> → create account</div></div>
+            <div class="ps-row"><div class="ps-num">2</div><div>API Keys → <strong>Create new key</strong> → copy it</div></div>
+            <div class="ps-row"><div class="ps-num">3</div><div>Free trial credits included — no card needed initially</div></div>
+          </div>
+          <input class="act-input" id="mistralKeyBYOK" type="password" placeholder="Mistral API key..." />
+          <select class="act-input" id="mistralModelBYOK" style="font-family:'DM Sans',sans-serif;font-size:13px">
+            <option value="mistral-small-latest">Mistral Small — fast & cheap</option>
+            <option value="mistral-large-latest">Mistral Large — best quality</option>
+          </select>
+        </div>
+
+        <div id="byokResult" class="act-result"></div>
+        <button class="act-btn" onclick="activateBYOK()">Test & start →</button>
+      </div>
+
+    </div>
+  </div>
+</div>
+
+<!-- ════════════════════════════════
+     MAIN APP
+════════════════════════════════ -->
+<div id="app" class="screen">
+  <div class="topbar">
+    <div class="logo">Aide</div>
+    <div class="tb-divider"></div>
+    <div class="status-pill">
+      <div class="sdot on" id="appDot"></div>
+      <div class="stext" id="appStatus">Ready</div>
+    </div>
+    <div class="topbar-right">
+      <div class="prov-switch" id="provSwitch"></div>
+      <button class="tb-btn" onclick="toggleArtifactsPanel()" title="Files created">📎</button>
+      <button class="tb-btn" onclick="toggleSettings()" title="Settings">⚙</button>
+    </div>
+  </div>
+
+  <div class="app-body">
+    <!-- Sidebar -->
+    <div class="sidebar">
+      <div class="sb-top">
+        <button class="new-btn" onclick="newConv()">
+          <svg width="12" height="12" viewBox="0 0 12 12" fill="none"><path d="M6 1v10M1 6h10" stroke="currentColor" stroke-width="1.5" stroke-linecap="round"/></svg>
+          New conversation
+        </button>
+      </div>
+
+      <!-- Mode picker -->
+      <div class="mode-bar">
+        <select class="mode-select" id="modeSelect" onchange="setMode(this.value)"></select>
+      </div>
+
+      <!-- Projects -->
+      <div class="proj-section">
+        <div class="proj-header">
+          <div class="proj-label">Projects</div>
+          <button class="proj-add" onclick="createProject()" title="New project">+</button>
+        </div>
+        <div class="proj-list" id="projList"></div>
+      </div>
+
+      <!-- Conversations -->
+      <div style="padding:6px 10px 2px;display:flex;align-items:center">
+        <div class="proj-label">Conversations</div>
+      </div>
+      <div class="conv-list" id="convList"
+        ondragover="event.preventDefault()"
+        ondrop="onDropToInbox(event)"></div>
+
+      <div class="sb-footer">
+        <div class="priv-note">🔒 All data encrypted</div>
+        <div style="display:flex;align-items:center;gap:5px;margin-top:4px">
+          <div id="syncDot" style="width:5px;height:5px;border-radius:50%;background:var(--text-3);transition:background .3s;flex-shrink:0"></div>
+          <div id="syncLabel" style="font-size:10px;color:var(--text-3);font-family:'DM Mono',monospace"></div>
+        </div>
+        <div class="license-badge" id="licenseBadge"></div>
+      </div>
+    </div>
+
+    <!-- Chat -->
+    <div class="chat-panel" id="chatPanel"
+      ondragenter="onFileDragEnter(event)"
+      ondragover="onFileDragOver(event)"
+      ondragleave="onFileDragLeave(event)"
+      ondrop="onFileDrop(event)"
+      style="position:relative">
+      <div class="drop-overlay" id="dropOverlay">
+        <div class="drop-overlay-icon">📎</div>
+        <div class="drop-overlay-text">Drop files to attach</div>
+      </div>
+      <div class="messages" id="messages"></div>
+      <div class="input-area">
+        <div class="input-wrap">
+          <div class="attachments-bar" id="attachmentsBar"></div>
+          <div class="search-indicator" id="searchIndicator">
+            <div class="si-spin"></div>
+            <span id="searchStatus">Searching the web…</span>
+          </div>
+          <div class="input-row">
+            <button class="attach-btn" onclick="triggerFileUpload()" title="Attach file">
+              <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M21.44 11.05l-9.19 9.19a6 6 0 01-8.49-8.49l9.19-9.19a4 4 0 015.66 5.66l-9.2 9.19a2 2 0 01-2.83-2.83l8.49-8.48"/></svg>
+            </button>
+            <input type="file" id="fileInput" style="display:none" multiple accept=".pdf,.docx,.xlsx,.xls,.csv,.txt,.png,.jpg,.jpeg,.gif,.webp" onchange="handleFileSelect(event)" />
+            <textarea id="userInput" placeholder="Ask anything, attach files, or say 'create an Excel tracker with…'" rows="1"
+              onkeydown="handleKey(event)" oninput="autoResize(this)"></textarea>
+            <button class="send-btn" id="sendBtn" onclick="sendMsg()">
+              <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><line x1="22" y1="2" x2="11" y2="13"/><polygon points="22 2 15 22 11 13 2 9 22 2"/></svg>
+            </button>
+          </div>
+          <div class="input-footer">
+            <span class="input-hint">↵ send · shift+↵ newline · 📎 attach</span>
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <!-- Artifacts panel -->
+    <div class="artifacts-panel" id="artifactsPanel">
+      <div class="art-header">
+        <span style="font-size:14px">📎</span>
+        <div class="art-title">Files created</div>
+        <button class="pv-close" onclick="toggleArtifactsPanel()" title="Close">✕</button>
+      </div>
+      <div class="art-list" id="artList">
+        <div class="art-empty">Files you create will appear here — Excel, PowerPoint, Word docs.</div>
+      </div>
+    </div>
+
+    <!-- Preview -->
+    <div class="preview-panel hidden" id="previewPanel">
+      <div class="preview-header">
+        <div class="preview-title" id="pvTitle">Preview</div>
+        <button class="dl-btn" id="pvDl" onclick="downloadDoc()" style="display:none">↓ Download</button>
+        <button class="pv-close" onclick="closePreview()">✕</button>
+      </div>
+      <div class="preview-body" id="pvBody"></div>
+    </div>
+  </div>
+</div>
+
+<!-- Settings -->
+<div class="settings-overlay" id="settingsOverlay" onclick="handleSettingsClick(event)">
+  <div class="settings-drawer">
+    <div class="drawer-header">
+      <div class="drawer-title">Settings</div>
+      <button class="btn-ghost-sm" style="width:auto;padding:5px 10px;font-size:12px;margin:0" onclick="toggleSettings()">Close</button>
+    </div>
+    <div class="drawer-body">
+      <div class="sg"><div class="sl">Claude API key</div><input class="si" id="sClaudeKey" type="password" placeholder="sk-ant-..." /></div>
+      <div class="sg"><div class="sl">OpenAI API key</div><input class="si" id="sOpenAIKey" type="password" placeholder="sk-..." /></div>
+      <div class="sg"><div class="sl">Gemini API key</div><input class="si" id="sGeminiKey" type="password" placeholder="AIza..." /></div>
+      <div class="sg"><div class="sl">Mistral API key</div><input class="si" id="sMistralKey" type="password" placeholder="..." /></div>
+      <div class="sg"><div class="sl">Tavily Search key</div><input class="si" id="sBraveKey" type="password" placeholder="tvly-..." /><div style="font-size:11px;color:var(--text-3);margin-top:4px">Free at <a href="https://tavily.com" target="_blank" style="color:var(--blue)">tavily.com</a> · 1,000 searches/month free</div></div>
+      <div class="sg"><div class="sl">Ollama URL</div><input class="si" id="sOllamaUrl" /><input class="si" id="sOllamaModel" placeholder="Model" style="margin-top:6px"/></div>
+      <div class="sg"><div class="sl">License key</div><input class="si" id="sLicenseKey" type="text" /></div>
+      <div class="sg">
+        <div class="sl">Conversations</div>
+        <button class="btn-ghost-sm" onclick="exportConversations();toggleSettings()">↓ Export all conversations</button>
+        <button class="btn-ghost-sm" style="margin-top:4px" onclick="importConversations()">↑ Import conversations</button>
+      </div>
+      <button class="btn-save" onclick="saveSettings()">Save settings</button>
+      <button class="btn-ghost-sm" onclick="resetApp()">Reset & re-activate</button>
+    </div>
+  </div>
+</div>
+
+<script>
+// ══════════════════════════════════
+// CONFIG — SET THESE FOR YOUR PRODUCT
+// ══════════════════════════════════
+const PRODUCT_CONFIG = {
+  // ── YOUR API KEYS (managed mode) ──
+  ANTHROPIC_KEY: '',   // console.anthropic.com
+  OPENAI_KEY: '',      // platform.openai.com
+  GEMINI_KEY: '',      // aistudio.google.com (free tier available)
+  MISTRAL_KEY: '',     // console.mistral.ai (free tier available)
+  BRAVE_SEARCH_KEY: '', // legacy, use TAVILY below
+  TAVILY_SEARCH_KEY: '', // tavily.com — free 1000 searches/month
+
+  // ── SUPABASE (encrypted sync) ──
+  SUPABASE_URL: 'https://mranmvybghfqelyhgknh.supabase.co',
+  SUPABASE_ANON_KEY: 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6Im1yYW5tdnliZ2hmcWVseWhna25oIiwicm9sZSI6ImFub24iLCJpYXQiOjE3NzI4MDY5MjUsImV4cCI6MjA4ODM4MjkyNX0.AbsdDfX9BOzWOlBuTYM3qjnB47bC6J3Eu9v2L7CEoDk',
+
+  // ── YOUR GITHUB PAGES URL ──
+  KEYS_VALIDATION_URL: 'https://YOUR-USERNAME.github.io/aide-keys/keys.json',
+
+  // ── DEMO ──
+  DEMO_MESSAGES: 5,
+  CHECKOUT_URL: 'https://aide.app/pricing',
+
+  // ── MODEL REGISTRY ──
+  // Each model: { id, label, provider, apiModel, tier, badge? }
+  // tier: 'demo' | 'starter' | 'pro' | 'lifetime'
+  MODELS: [
+    // DEMO tier
+    { id:'haiku',     label:'Haiku 4.5',      badge:'Fast',     provider:'anthropic', apiModel:'claude-haiku-4-5-20251001',  tier:'demo'     },
+    // STARTER tier
+    { id:'mistral-s', label:'Mistral Small',   badge:'',         provider:'mistral',   apiModel:'mistral-small-latest',       tier:'starter'  },
+    { id:'gemini-f',  label:'Gemini Flash',    badge:'',         provider:'gemini',    apiModel:'gemini-2.0-flash',           tier:'starter'  },
+    // PRO tier
+    { id:'sonnet',    label:'Sonnet 4.6',      badge:'⭐ Best',  provider:'anthropic', apiModel:'claude-sonnet-4-6',          tier:'pro'      },
+    { id:'gpt4m',     label:'GPT-4o mini',     badge:'',         provider:'openai',    apiModel:'gpt-4o-mini',                tier:'pro'      },
+    { id:'gemini-p',  label:'Gemini Pro',      badge:'',         provider:'gemini',    apiModel:'gemini-2.0-pro-exp',         tier:'pro'      },
+    // LIFETIME tier
+    { id:'opus',      label:'Opus 4.6',        badge:'🔥 Top',   provider:'anthropic', apiModel:'claude-opus-4-6',            tier:'lifetime' },
+    { id:'gpt4o',     label:'GPT-4o',          badge:'',         provider:'openai',    apiModel:'gpt-4o',                     tier:'lifetime' },
+    { id:'mistral-l', label:'Mistral Large',   badge:'',         provider:'mistral',   apiModel:'mistral-large-latest',       tier:'lifetime' },
+  ],
+
+  // ── PLAN → MAX TIER ──
+  PLAN_TIERS: {
+    demo:     'demo',
+    starter:  'starter',
+    pro:      'pro',
+    lifetime: 'lifetime',
+    byok:     'lifetime', // BYOK users always see all models (they use their own keys)
+  },
+
+  TIER_ORDER: ['demo', 'starter', 'pro', 'lifetime'],
+};
+
+const DOC_INSTRUCTIONS = `
+
+When asked to create files, respond with JSON wrapped in <DOCUMENT> tags, plus a brief explanation outside.
+
+━━ EXCEL FORMAT ━━
+{"excel":{"filename":"name.xlsx","sheets":[{
+  "name":"Sheet1",
+  "headerColor":"1A4D8F",
+  "headers":["Month","Revenue","Cost","Profit","Margin %","vs Last Year"],
+  "colWidths":[14,14,14,14,12,14],
+  "types":["text","currency","currency","currency","percent","percent"],
+  "rows":[
+    ["Jan",125000,87000,38000,0.304,0.12],
+    ["Feb",138000,91000,47000,0.341,0.18]
+  ],
+  "formulas":{
+    "Profit":{"col":3,"formula":"={B}-{C}","dependsOn":["Revenue","Cost"]},
+    "Margin %":{"col":4,"formula":"={D}/{B}","dependsOn":["Profit","Revenue"]},
+    "vs Last Year":{"col":5,"formula":"=({B}-{prevB})/{prevB}","note":"fill manually if prior data unavailable"}
+  },
+  "conditionalFormats":[
+    {"col":4,"type":"colorScale","low":"FF6B6B","mid":"FFFFFF","high":"51CF66"},
+    {"col":5,"type":"aboveBelow","above":"51CF66","below":"FF6B6B","threshold":0}
+  ],
+  "charts":[{
+    "type":"bar",
+    "title":"Revenue vs Cost",
+    "dataCols":[1,2],
+    "labelCol":0,
+    "position":{"col":8,"row":2,"width":8,"height":16}
+  },{
+    "type":"line",
+    "title":"Margin Trend",
+    "dataCols":[4],
+    "labelCol":0,
+    "position":{"col":8,"row":19,"width":8,"height":14}
+  }],
+  "totalsRow":true
+}]}}
+
+Formula rules:
+- Use {ColName} to reference column values. System replaces with correct Excel cell refs.
+- For percent formulas always divide by a non-zero column.
+- For YoY/variance, use simple formulas or leave as raw data if prior period unavailable.
+- ALWAYS use plain numbers (not strings) for number/currency/percent columns.
+- Include formulas whenever the column is derivable from other columns (e.g. Profit = Revenue - Cost).
+- Supported formula patterns: arithmetic (+,-,*,/), percent of total, variance, running total.
+
+Conditional format rules:
+- colorScale: gradient from low→mid→high color on a numeric column
+- aboveBelow: green if above threshold, red if below
+
+Chart rules:
+- type: "bar" | "line" | "pie" | "area"
+- dataCols: array of 0-based column indices to plot
+- labelCol: 0-based index of the label column (usually 0)
+- Always add at least one chart for financial/analytical sheets
+
+━━ POWERPOINT FORMAT ━━
+{"ppt":{"filename":"name.pptx","theme":{"accent":"1A4D8F","dark":"1C1C1A","light":"F5F4F0"},"slides":[
+  {"layout":"title","title":"Title","subtitle":"Subtitle · Date","bg":"1A4D8F","titleColor":"FFFFFF"},
+  {"layout":"content","title":"Slide Title","bullets":["Key point with detail","Second point","Third point"],"note":"Speaker note"},
+  {"layout":"two-col","title":"Comparison","left":{"heading":"Option A","points":["Point 1","Point 2","Point 3"]},"right":{"heading":"Option B","points":["Point 1","Point 2","Point 3"]}},
+  {"layout":"metric","title":"Key Results","metrics":[{"value":"$2.4M","label":"Revenue","sub":"+18% YoY"},{"value":"94%","label":"Retention","sub":"above target"},{"value":"3.2x","label":"ROI","sub":"vs 2.1x prior"}]},
+  {"layout":"chart","title":"Performance Trend","chartType":"bar","chartData":{"labels":["Q1","Q2","Q3","Q4"],"series":[{"name":"2024","values":[120,145,132,168]},{"name":"2025","values":[145,162,158,195]}]}},
+  {"layout":"table","title":"Summary","tableHeaders":["Initiative","Owner","Status","Impact"],"tableRows":[["Project A","Team X","On track","High"],["Project B","Team Y","At risk","Medium"]]}
+]}}
+
+Slide layout rules:
+- Always start with title slide
+- metric slide: include "sub" for context below each metric (e.g. "+18% YoY")
+- chart slide: use for any trend, comparison, or distribution data
+- table slide: use for structured data, status updates, comparisons
+- Aim for 6-10 slides for a complete deck
+- Make bullets substantive (full sentence, specific data point, not vague headers)
+
+━━ WORD FORMAT ━━
+{"word":{"filename":"name.docx","title":"Title","sections":[{"heading":"Section","content":"Text here\nNew paragraph"}]}}
+
+Always wrap JSON in <DOCUMENT>...</DOCUMENT> tags. Output ONLY valid JSON inside the tags — no comments, no trailing commas.`;
+
+
+// ══════════════════════════════════
+// MODES — hidden system prompts
+// ══════════════════════════════════
+const MODES = [
+  { id:'executive', icon:'🎯', label:'Executive',
+    prompt:`You are a senior executive advisor. Be strategic, concise, and boardroom-ready. Lead with the key insight. Use crisp bullet points for lists. Avoid jargon. Frame everything in terms of business impact, risk, and opportunity. When creating documents, make them polished and presentation-ready.` },
+  { id:'analyst', icon:'📊', label:'Analyst',
+    prompt:`You are a rigorous data analyst. Lead with numbers and evidence. Structure responses with clear sections. Use tables when comparing options. Flag assumptions explicitly. When creating Excel files, include formulas, proper number formatting, and summary statistics. Be precise and thorough.` },
+  { id:'coder', icon:'💻', label:'Coder',
+    prompt:`You are an expert software engineer. Write clean, production-ready code with comments. Default to modern best practices. Show complete implementations, not snippets. Explain the "why" behind architectural decisions. When debugging, identify root cause first. Be direct and technical.` },
+  { id:'writer', icon:'✍️', label:'Writer',
+    prompt:`You are a skilled professional writer and editor. Write with clarity, flow, and precision. Match the requested tone exactly. Avoid passive voice. Vary sentence length for rhythm. When editing, explain your changes. When creating Word documents, use proper headings and professional structure.` },
+  { id:'research', icon:'🧠', label:'Research',
+    prompt:`You are a thorough research analyst. Provide comprehensive, well-structured analysis. Cite sources when using web search. Present multiple perspectives on contested topics. Distinguish clearly between established facts and analysis. Use headers to organize long responses. Be academically rigorous.` },
+];
+
+// ══════════════════════════════════
+// STATE
+// ══════════════════════════════════
+let cfg = {
+  mode: null,
+  licenseKey: '',
+  licenseData: null,
+  provider: 'claude',
+  selectedModelId: 'haiku',
+  activeMode: 'executive',  // which MODES preset is active
+  claudeKey: '', claudeModel: 'claude-sonnet-4-6',
+  openaiKey: '', openaiModel: 'gpt-4o',
+  geminiKey: '', mistralKey: '',
+  braveKey: '',
+  ollamaUrl: 'http://localhost:11434', ollamaModel: 'qwen2.5:14b',
+  webSearch: false,
+  demoCount: 0,
+  activated: false
+};
+
+let convs = {};
+let projects = {};
+let curConv = null;
+let loading = false;
+let curDoc = null;
+let selectedPlan = 'pro';
+let byokProvider = 'claude';
+let attachments = [];
+
+// ══════════════════════════════════
+// ENCRYPTION (AES-256-GCM)
+// ══════════════════════════════════
+async function deriveKey(password) {
+  const enc = new TextEncoder();
+  const keyMaterial = await crypto.subtle.importKey(
+    'raw', enc.encode(password), 'PBKDF2', false, ['deriveKey']
+  );
+  return crypto.subtle.deriveKey(
+    { name:'PBKDF2', salt:enc.encode('aide-salt-v1'), iterations:100000, hash:'SHA-256' },
+    keyMaterial,
+    { name:'AES-GCM', length:256 },
+    false, ['encrypt','decrypt']
+  );
+}
+
+async function encrypt(text, password) {
+  const key = await deriveKey(password);
+  const iv = crypto.getRandomValues(new Uint8Array(12));
+  const enc = new TextEncoder();
+  const ciphertext = await crypto.subtle.encrypt({ name:'AES-GCM', iv }, key, enc.encode(text));
+  const buf = new Uint8Array(iv.byteLength + ciphertext.byteLength);
+  buf.set(iv, 0);
+  buf.set(new Uint8Array(ciphertext), iv.byteLength);
+  return btoa(String.fromCharCode(...buf));
+}
+
+async function decrypt(b64, password) {
+  const key = await deriveKey(password);
+  const buf = Uint8Array.from(atob(b64), c => c.charCodeAt(0));
+  const iv = buf.slice(0, 12);
+  const ciphertext = buf.slice(12);
+  const dec = await crypto.subtle.decrypt({ name:'AES-GCM', iv }, key, ciphertext);
+  return new TextDecoder().decode(dec);
+}
+
+async function hashKey(licenseKey) {
+  const enc = new TextEncoder();
+  const hash = await crypto.subtle.digest('SHA-256', enc.encode(licenseKey));
+  return Array.from(new Uint8Array(hash)).map(b=>b.toString(16).padStart(2,'0')).join('').slice(0,32);
+}
+
+// ══════════════════════════════════
+// SUPABASE SYNC
+// ══════════════════════════════════
+let syncTimeout = null;
+let syncStatus = 'idle'; // idle | syncing | synced | error
+let keyHash = null;
+let encPassword = null;
+
+async function initSync() {
+  if (!PRODUCT_CONFIG.SUPABASE_URL || !cfg.licenseKey) return;
+  encPassword = cfg.licenseKey;
+  keyHash = await hashKey(cfg.licenseKey);
+  setSyncStatus('syncing');
+  await pullFromSupabase();
+  setSyncStatus('synced');
+}
+
+function setSyncStatus(status) {
+  syncStatus = status;
+  const dot = document.getElementById('syncDot');
+  const label = document.getElementById('syncLabel');
+  if (!dot) return;
+  const states = {
+    idle:    { color:'var(--text-3)', text:'' },
+    syncing: { color:'var(--amber)',  text:'Syncing…' },
+    synced:  { color:'var(--green)',  text:'Synced' },
+    error:   { color:'var(--red)',    text:'Sync error' },
+  };
+  const s = states[status] || states.idle;
+  dot.style.background = s.color;
+  label.textContent = s.text;
+}
+
+function schedulePush() {
+  if (!keyHash) return;
+  clearTimeout(syncTimeout);
+  syncTimeout = setTimeout(pushToSupabase, 1500);
+  setSyncStatus('syncing');
+}
+
+async function pushToSupabase() {
+  if (!keyHash || !encPassword) return;
+  try {
+    const payload = JSON.stringify({ convs, projects, updatedAt: Date.now() });
+    const encrypted = await encrypt(payload, encPassword);
+    const res = await fetch(`${PRODUCT_CONFIG.SUPABASE_URL}/rest/v1/conversations`, {
+      method: 'POST',
+      headers: {
+        'Content-Type': 'application/json',
+        'apikey': PRODUCT_CONFIG.SUPABASE_ANON_KEY,
+        'Authorization': 'Bearer ' + PRODUCT_CONFIG.SUPABASE_ANON_KEY,
+        'Prefer': 'resolution=merge-duplicates',
+      },
+      body: JSON.stringify({
+        id: keyHash,
+        license_key_hash: keyHash,
+        data: encrypted,
+        updated_at: new Date().toISOString()
+      })
+    });
+    if (!res.ok) throw new Error('Push failed: ' + res.status);
+    setSyncStatus('synced');
+  } catch(e) {
+    console.error('Sync push error:', e);
+    setSyncStatus('error');
+  }
+}
+
+async function pullFromSupabase() {
+  if (!keyHash || !encPassword) return;
+  try {
+    const res = await fetch(
+      `${PRODUCT_CONFIG.SUPABASE_URL}/rest/v1/conversations?id=eq.${keyHash}&select=data,updated_at`,
+      {
+        headers: {
+          'apikey': PRODUCT_CONFIG.SUPABASE_ANON_KEY,
+          'Authorization': 'Bearer ' + PRODUCT_CONFIG.SUPABASE_ANON_KEY,
+        }
+      }
+    );
+    if (!res.ok) return;
+    const rows = await res.json();
+    if (!rows.length || !rows[0].data) return;
+
+    const decrypted = await decrypt(rows[0].data, encPassword);
+    const remote = JSON.parse(decrypted);
+
+    // Merge: remote wins for conversations updated more recently
+    let changed = false;
+    Object.entries(remote.convs || {}).forEach(([id, remoteConv]) => {
+      const local = convs[id];
+      if (!local || remoteConv.updatedAt > (local.updatedAt||0)) {
+        convs[id] = remoteConv;
+        changed = true;
+      }
+    });
+    Object.entries(remote.projects || {}).forEach(([id, remoteProj]) => {
+      if (!projects[id]) { projects[id] = remoteProj; changed = true; }
+    });
+
+    if (changed) {
+      saveConvs(); saveProjects();
+      renderConvList(); renderProjList();
+      // Reload current conv if it changed
+      if (curConv && convs[curConv]) renderMessages();
+    }
+  } catch(e) {
+    console.error('Sync pull error:', e);
+    setSyncStatus('error');
+  }
+}
+
+// ══════════════════════════════════
+// INIT
+// ══════════════════════════════════
+function init() {
+  const saved = localStorage.getItem('aide_v2_cfg');
+  if (saved) cfg = { ...cfg, ...JSON.parse(saved) };
+  const savedC = localStorage.getItem('aide_v2_convs');
+  if (savedC) convs = JSON.parse(savedC);
+  const savedP = localStorage.getItem('aide_v2_projects');
+  if (savedP) projects = JSON.parse(savedP);
+
+  if (cfg.activated) {
+    launchApp();
+  } else {
+    document.getElementById('activation').classList.add('active');
+  }
+}
+
+function saveCfg() { localStorage.setItem('aide_v2_cfg', JSON.stringify(cfg)); }
+function saveConvs() { localStorage.setItem('aide_v2_convs', JSON.stringify(convs)); schedulePush(); }
+function saveProjects() { localStorage.setItem('aide_v2_projects', JSON.stringify(projects)); schedulePush(); }
+
+// ══════════════════════════════════
+// ACTIVATION — MANAGED
+// ══════════════════════════════════
+let actTab = 'managed';
+
+function switchActTab(tab, el) {
+  actTab = tab;
+  document.querySelectorAll('.act-tab').forEach(t => t.classList.remove('active'));
+  el.classList.add('active');
+  document.getElementById('managedPane').classList.toggle('show', tab==='managed');
+  document.getElementById('byokPane').classList.toggle('show', tab==='byok');
+}
+
+function selectPlan(plan, el) {
+  selectedPlan = plan;
+  document.querySelectorAll('.plan-card').forEach(c => c.classList.remove('selected'));
+  el.classList.add('selected');
+}
+
+function formatLicenseInput(input) {
+  let v = input.value.toUpperCase().replace(/[^A-Z0-9]/g,'');
+  let parts = [];
+  for (let i = 0; i < v.length && parts.length < 4; i+=4) {
+    parts.push(v.substr(i,4));
+  }
+  input.value = parts.join('-');
+}
+
+function openCheckout(e) {
+  e.preventDefault();
+  window.open(PRODUCT_CONFIG.CHECKOUT_URL, '_blank');
+}
+
+async function activateLicense() {
+  const key = document.getElementById('licenseKeyInput').value.trim();
+  const result = document.getElementById('licenseResult');
+  const btn = document.getElementById('activateBtn');
+
+  if (!key || key.length < 10) {
+    result.className = 'act-result error';
+    result.textContent = 'Please enter your license key.';
+    return;
+  }
+
+  btn.disabled = true;
+  btn.textContent = 'Validating…';
+  result.className = 'act-result';
+
+  try {
+    // Demo key bypass
+    if (key === 'AIDE-DEMO-TEST-0001') {
+      cfg.mode = 'managed';
+      cfg.licenseKey = key;
+      cfg.licenseData = { plan:'pro', expires:'2030-12-31', customer:'Demo User' };
+      cfg.provider = 'claude';
+      cfg.activated = true;
+      saveCfg();
+      launchApp();
+      return;
+    }
+
+    // Fetch validation JSON from GitHub
+    const r = await fetch(PRODUCT_CONFIG.KEYS_VALIDATION_URL + '?t=' + Date.now(), {
+      signal: AbortSignal.timeout(8000)
+    });
+
+    if (!r.ok) throw new Error('Could not reach validation server. Check your internet connection.');
+
+    const data = await r.json();
+    const keyData = data.keys?.[key];
+
+    if (!keyData) {
+      result.className = 'act-result error';
+      result.textContent = '✕ Invalid license key. Check for typos or get one at aide.app';
+      return;
+    }
+
+    // Check expiry
+    if (keyData.expires !== '2030-12-31' && new Date(keyData.expires) < new Date()) {
+      result.className = 'act-result error';
+      result.textContent = `✕ This key expired on ${keyData.expires}. Please renew at aide.app`;
+      return;
+    }
+
+    // Valid!
+    cfg.mode = 'managed';
+    cfg.licenseKey = key;
+    cfg.licenseData = keyData;
+    cfg.provider = 'claude';
+    cfg.activated = true;
+    saveCfg();
+    launchApp();
+
+  } catch(e) {
+    if (e.name === 'TimeoutError') {
+      result.className = 'act-result error';
+      result.textContent = '✕ Validation timed out. Check your internet and try again.';
+    } else {
+      result.className = 'act-result error';
+      result.textContent = '✕ ' + e.message;
+    }
+  }
+
+  btn.disabled = false;
+  btn.textContent = 'Activate';
+}
+
+function tryDemo() {
+  cfg.mode = 'demo';
+  cfg.demoCount = 0;
+  cfg.licenseData = { plan:'demo', customer:'Demo' };
+  cfg.activated = true;
+  saveCfg();
+  launchApp();
+}
+
+// ══════════════════════════════════
+// ACTIVATION — BYOK
+// ══════════════════════════════════
+function selectBYOKProvider(p, el) {
+  byokProvider = p;
+  document.querySelectorAll('.bpr-btn').forEach(b => b.classList.remove('selected'));
+  el.classList.add('selected');
+  ['bpClaude','bpOpenAI','bpOllama','bpGemini','bpMistral'].forEach(id => {
+    document.getElementById(id).classList.remove('show');
+  });
+  const map = { claude:'bpClaude', openai:'bpOpenAI', ollama:'bpOllama', gemini:'bpGemini', mistral:'bpMistral' };
+  document.getElementById(map[p])?.classList.add('show');
+}
+
+async function activateBYOK() {
+  const result = document.getElementById('byokResult');
+  result.className = 'act-result';
+
+  try {
+    if (byokProvider === 'claude') {
+      const key = document.getElementById('claudeKeyBYOK').value.trim();
+      if (!key) throw new Error('Enter your Claude API key');
+      const r = await fetch('https://api.anthropic.com/v1/messages', {
+        method:'POST',
+        headers:{'Content-Type':'application/json','x-api-key':key,'anthropic-version':'2023-06-01','anthropic-dangerous-direct-browser-access':'true'},
+        body:JSON.stringify({model:'claude-haiku-4-5-20251001',max_tokens:5,messages:[{role:'user',content:'hi'}]})
+      });
+      if (!r.ok) { const e=await r.json(); throw new Error(e.error?.message||'Invalid key'); }
+      cfg.claudeKey = key;
+      cfg.claudeModel = document.getElementById('claudeModelBYOK').value;
+
+    } else if (byokProvider === 'openai') {
+      const key = document.getElementById('openaiKeyBYOK').value.trim();
+      if (!key) throw new Error('Enter your OpenAI API key');
+      const r = await fetch('https://api.openai.com/v1/chat/completions', {
+        method:'POST',
+        headers:{'Content-Type':'application/json','Authorization':'Bearer '+key},
+        body:JSON.stringify({model:'gpt-4o-mini',max_tokens:5,messages:[{role:'user',content:'hi'}]})
+      });
+      if (!r.ok) { const e=await r.json(); throw new Error(e.error?.message||'Invalid key'); }
+      cfg.openaiKey = key;
+      cfg.openaiModel = document.getElementById('openaiModelBYOK').value;
+
+    } else if (byokProvider === 'gemini') {
+      const key = document.getElementById('geminiKeyBYOK').value.trim();
+      if (!key) throw new Error('Enter your Gemini API key');
+      const model = document.getElementById('geminiModelBYOK').value;
+      const r = await fetch(`https://generativelanguage.googleapis.com/v1beta/models/${model}:generateContent?key=${key}`, {
+        method:'POST', headers:{'Content-Type':'application/json'},
+        body:JSON.stringify({contents:[{role:'user',parts:[{text:'hi'}]}],generationConfig:{maxOutputTokens:5}})
+      });
+      if (!r.ok) { const e=await r.json(); throw new Error(e.error?.message||'Invalid Gemini key'); }
+      cfg.geminiKey = key;
+
+    } else if (byokProvider === 'mistral') {
+      const key = document.getElementById('mistralKeyBYOK').value.trim();
+      if (!key) throw new Error('Enter your Mistral API key');
+      const model = document.getElementById('mistralModelBYOK').value;
+      const r = await fetch('https://api.mistral.ai/v1/chat/completions', {
+        method:'POST',
+        headers:{'Content-Type':'application/json','Authorization':'Bearer '+key},
+        body:JSON.stringify({model,max_tokens:5,messages:[{role:'user',content:'hi'}]})
+      });
+      if (!r.ok) { const e=await r.json(); throw new Error(e.error?.message||'Invalid Mistral key'); }
+      cfg.mistralKey = key;
+
+    } else {
+      const url = document.getElementById('ollamaUrlBYOK').value.trim();
+      const r = await fetch(`${url}/api/tags`, {signal:AbortSignal.timeout(4000)});
+      if (!r.ok) throw new Error('Cannot reach Ollama. Make sure it is running.');
+      cfg.ollamaUrl = url;
+      cfg.ollamaModel = document.getElementById('ollamaModelBYOK').value.trim();
+    }
+
+    cfg.mode = 'byok';
+    cfg.provider = byokProvider;
+    cfg.licenseData = { plan:'byok', customer:'Self-hosted' };
+    cfg.activated = true;
+    saveCfg();
+    launchApp();
+
+  } catch(e) {
+    result.className = 'act-result error';
+    result.textContent = '✕ ' + e.message;
+  }
+}
+
+// ══════════════════════════════════
+// APP LAUNCH
+// ══════════════════════════════════
+function launchApp() {
+  document.getElementById('activation').classList.remove('active');
+  document.getElementById('app').classList.add('active');
+  buildProvSwitch();
+  updateStatus();
+  loadSettingsUI();
+  renderModeBar();
+  renderConvList();
+  renderProjList();
+  initSync();
+
+  // Set default model for plan if not already set or if locked
+  if (cfg.mode === 'managed') {
+    const avail = getAvailableModels();
+    const cur = getModel(cfg.selectedModelId);
+    const curRank = cur ? tierRank(cur.tier) : -1;
+    const planRank = tierRank(getPlanTier());
+    if (!cur || curRank > planRank) {
+      cfg.selectedModelId = avail[avail.length - 1]?.id || 'haiku';
+      saveCfg();
+    }
+  }
+
+  // License badge
+  const badge = document.getElementById('licenseBadge');
+  if (cfg.mode === 'managed') {
+    badge.className = 'license-badge managed';
+    badge.textContent = '✦ ' + (cfg.licenseData?.plan||'managed').charAt(0).toUpperCase() + (cfg.licenseData?.plan||'managed').slice(1);
+  } else if (cfg.mode === 'byok') {
+    badge.className = 'license-badge byok';
+    badge.textContent = '🔑 BYOK';
+  } else {
+    badge.className = 'license-badge';
+    badge.style.background = '#fef3e2';
+    badge.style.color = '#92530a';
+    badge.textContent = `Demo · ${PRODUCT_CONFIG.DEMO_MESSAGES - cfg.demoCount} left`;
+  }
+
+  const keys = Object.keys(convs);
+  if (keys.length) {
+    const last = localStorage.getItem('aide_last_conv');
+    loadConv(last && convs[last] ? last : keys[keys.length-1]);
+  } else {
+    newConv();
+  }
+}
+
+// ── MODEL HELPERS ──
+function getPlanTier() {
+  const plan = cfg.licenseData?.plan || 'demo';
+  return PRODUCT_CONFIG.PLAN_TIERS[plan] || 'demo';
+}
+
+function tierRank(tier) {
+  return PRODUCT_CONFIG.TIER_ORDER.indexOf(tier);
+}
+
+function getAvailableModels() {
+  const planTier = getPlanTier();
+  const planRank = tierRank(planTier);
+  return PRODUCT_CONFIG.MODELS.filter(m => tierRank(m.tier) <= planRank);
+}
+
+function getLockedModels() {
+  const planTier = getPlanTier();
+  const planRank = tierRank(planTier);
+  return PRODUCT_CONFIG.MODELS.filter(m => tierRank(m.tier) > planRank);
+}
+
+function getModel(id) {
+  return PRODUCT_CONFIG.MODELS.find(m => m.id === id);
+}
+
+function getDefaultModel() {
+  const avail = getAvailableModels();
+  // Pick highest tier available as default
+  return avail[avail.length - 1];
+}
+
+function buildProvSwitch() {
+  const sw = document.getElementById('provSwitch');
+
+  if (cfg.mode === 'managed') {
+    // Show model picker dropdown for managed users
+    const available = getAvailableModels();
+    const locked = getLockedModels();
+    const current = getModel(cfg.selectedModelId) || getDefaultModel();
+
+    const options = [
+      ...available.map(m => `<option value="${m.id}" ${m.id===current.id?'selected':''}>${m.label}${m.badge?' · '+m.badge:''}</option>`),
+      locked.length ? `<optgroup label="── Upgrade to unlock ──">` : '',
+      ...locked.map(m => `<option value="${m.id}" disabled>${m.label} 🔒</option>`),
+      locked.length ? `</optgroup>` : '',
+    ].join('');
+
+    sw.innerHTML = `<select id="modelSelect" onchange="onModelSelect(this)"
+      style="font-family:'DM Mono',sans-serif;font-size:11px;font-weight:500;padding:4px 8px;
+      border:1px solid var(--border);border-radius:var(--r-sm);background:var(--surface2);
+      color:var(--text);outline:none;cursor:pointer;max-width:160px">
+      ${options}
+    </select>`;
+
+  } else {
+    // BYOK mode — show provider buttons
+    const provs = [];
+    if (cfg.claudeKey) provs.push({ id:'claude', label:'Claude' });
+    if (cfg.openaiKey) provs.push({ id:'openai', label:'GPT' });
+    if (cfg.geminiKey) provs.push({ id:'gemini', label:'Gemini' });
+    if (cfg.mistralKey) provs.push({ id:'mistral', label:'Mistral' });
+    provs.push({ id:'ollama', label:'Local' });
+    sw.innerHTML = provs.map(p =>
+      `<button class="pb ${cfg.provider===p.id?'active':''}" onclick="setProvider('${p.id}',this)">${p.label}</button>`
+    ).join('');
+  }
+}
+
+function onModelSelect(sel) {
+  cfg.selectedModelId = sel.value;
+  saveCfg();
+  updateStatus();
+}
+
+function setProvider(p, el) {
+  cfg.provider = p;
+  saveCfg();
+  document.querySelectorAll('.pb').forEach(b => b.classList.remove('active'));
+  el.classList.add('active');
+  updateStatus();
+}
+
+function updateStatus() {
+  if (cfg.mode === 'managed') {
+    const m = getModel(cfg.selectedModelId) || getDefaultModel();
+    document.getElementById('appStatus').textContent = `${m.label}`;
+  } else {
+    const labels = {
+      claude: `Claude · ${cfg.claudeModel.split('-').slice(0,2).join('-')}`,
+      openai: `GPT · ${cfg.openaiModel}`,
+      gemini: `Gemini`,
+      mistral: `Mistral`,
+      ollama: `Local · ${cfg.ollamaModel}`
+    };
+    document.getElementById('appStatus').textContent = labels[cfg.provider] || 'Ready';
+  }
+}
+
+// web search always on for Claude — no toggle needed
+function toggleWS() {}
+
+// ══════════════════════════════════
+// MODES
+// ══════════════════════════════════
+function renderModeBar() {
+  const sel = document.getElementById('modeSelect');
+  if (!sel) return;
+  sel.innerHTML = MODES.map(m =>
+    `<option value="${m.id}" ${cfg.activeMode===m.id?'selected':''}>${m.icon} ${m.label}</option>`
+  ).join('');
+}
+
+function setMode(id) {
+  cfg.activeMode = id;
+  cfg.webSearch = true; // always on — Claude decides when to search
+  saveCfg();
+  renderModeBar();
+  const m = MODES.find(x=>x.id===id);
+  document.getElementById('appStatus').textContent = m ? m.icon+' '+m.label : 'Ready';
+}
+
+function getActivePrompt() {
+  const m = MODES.find(x=>x.id===cfg.activeMode);
+  const today = new Date().toLocaleDateString('en-GB', { weekday:'long', year:'numeric', month:'long', day:'numeric' });
+  const datePrefix = `Today's date is ${today}. Always use this date as the reference for any date-related calculations, forecasts, timelines, or models.\n\n`;
+  return datePrefix + (m ? m.prompt : MODES[0].prompt) + DOC_INSTRUCTIONS;
+}
+
+// ══════════════════════════════════
+// PROJECTS
+// ══════════════════════════════════
+const PROJ_COLORS = ['2A6E47','1A4D8F','92530A','7B3F9E','C0392B','2C7A7B'];
+
+function createProject() {
+  const name = prompt('Project name:');
+  if (!name?.trim()) return;
+  const id = 'p'+Date.now();
+  const color = PROJ_COLORS[Object.keys(projects).length % PROJ_COLORS.length];
+  projects[id] = { id, name:name.trim(), color, convIds:[], open:true };
+  saveProjects();
+  renderProjList();
+}
+
+function renderProjList() {
+  const list = document.getElementById('projList');
+  const pids = Object.keys(projects);
+  if (!pids.length) { list.innerHTML=''; return; }
+  list.innerHTML = pids.map(pid => {
+    const p = projects[pid];
+    const convCount = p.convIds.filter(id=>convs[id]).length;
+    return `<div class="proj-item ${p.open?'open':''}" id="proj-${pid}">
+      <div class="proj-row" onclick="toggleProject('${pid}')">
+        <div class="proj-dot" style="background:#${p.color}"></div>
+        <div class="proj-name">${esc(p.name)}</div>
+        <div class="proj-count">${convCount}</div>
+        <button class="proj-del" onclick="deleteProject('${pid}',event)" title="Delete project">✕</button>
+      </div>
+      <div class="proj-convs" id="pconvs-${pid}"
+        ondragover="onDragOverProject(event,'${pid}')"
+        ondragleave="onDragLeaveProject(event,'${pid}')"
+        ondrop="onDropToProject(event,'${pid}')">
+        ${p.convIds.filter(id=>convs[id]).map(cid => {
+          const c = convs[cid];
+          return `<div class="proj-conv ${cid===curConv?'active':''}" onclick="loadConv('${cid}')" draggable="true" ondragstart="onDragStart(event,'${cid}')">${esc(c.title.slice(0,28)+(c.title.length>28?'…':''))}</div>`;
+        }).join('')}
+        ${!p.convIds.filter(id=>convs[id]).length?`<div style="font-size:11px;color:var(--text-3);padding:4px 8px;font-style:italic">Drag chats here</div>`:''}
+      </div>
+    </div>`;
+  }).join('');
+}
+
+function toggleProject(pid) {
+  projects[pid].open = !projects[pid].open;
+  saveProjects(); renderProjList();
+}
+
+function deleteProject(pid, e) {
+  e.stopPropagation();
+  if (!confirm(`Delete project "${projects[pid].name}"?\nConversations will move back to inbox.`)) return;
+  delete projects[pid];
+  saveProjects(); renderProjList(); renderConvList();
+}
+
+// Drag & drop
+let dragConvId = null;
+function onDragStart(e, cid) { dragConvId = cid; e.dataTransfer.effectAllowed='move'; }
+
+function onDragOverProject(e, pid) {
+  e.preventDefault(); e.stopPropagation();
+  document.getElementById('pconvs-'+pid)?.classList.add('drag-over');
+}
+function onDragLeaveProject(e, pid) {
+  document.getElementById('pconvs-'+pid)?.classList.remove('drag-over');
+}
+function onDropToProject(e, pid) {
+  e.preventDefault(); e.stopPropagation();
+  document.getElementById('pconvs-'+pid)?.classList.remove('drag-over');
+  if (!dragConvId) return;
+  // Remove from any existing project
+  Object.values(projects).forEach(p => { p.convIds = p.convIds.filter(id=>id!==dragConvId); });
+  projects[pid].convIds.push(dragConvId);
+  saveProjects(); renderProjList(); renderConvList();
+  dragConvId = null;
+}
+function onDropToInbox(e) {
+  e.preventDefault();
+  if (!dragConvId) return;
+  Object.values(projects).forEach(p => { p.convIds = p.convIds.filter(id=>id!==dragConvId); });
+  saveProjects(); renderProjList(); renderConvList();
+  dragConvId = null;
+}
+
+// ══════════════════════════════════
+// FILE ATTACHMENTS
+// ══════════════════════════════════
+function triggerFileUpload() { document.getElementById('fileInput').click(); }
+
+async function handleFileSelect(e) {
+  const files = Array.from(e.target.files);
+  for (const file of files) {
+    await processFile(file);
+  }
+  e.target.value = '';
+  renderAttachments();
+}
+
+async function processFile(file) {
+  const name = file.name;
+  const ext = name.split('.').pop().toLowerCase();
+  const isImage = ['png','jpg','jpeg','gif','webp'].includes(ext);
+
+  if (isImage) {
+    const base64 = await fileToBase64(file);
+    attachments.push({ name, type:'image', mimeType:file.type, base64, isImage:true });
+    return;
+  }
+
+  if (ext === 'pdf') {
+    // Read as base64 for Claude vision, or extract text
+    const base64 = await fileToBase64(file);
+    attachments.push({ name, type:'pdf', mimeType:'application/pdf', base64, isImage:false });
+    return;
+  }
+
+  if (ext === 'txt' || ext === 'csv') {
+    const text = await file.text();
+    attachments.push({ name, type:'text', content: text.slice(0,20000), isImage:false });
+    return;
+  }
+
+  if (ext === 'xlsx' || ext === 'xls') {
+    const buf = await file.arrayBuffer();
+    const wb = XLSX.read(buf);
+    let text = '';
+    wb.SheetNames.forEach(sn => {
+      text += `\n## Sheet: ${sn}\n`;
+      text += XLSX.utils.sheet_to_csv(wb.Sheets[sn]);
+    });
+    attachments.push({ name, type:'excel', content: text.slice(0,20000), isImage:false });
+    return;
+  }
+
+  if (ext === 'docx') {
+    // Read raw text via mammoth if available, else base64
+    try {
+      const buf = await file.arrayBuffer();
+      // Simple docx text extraction: find readable text between XML tags
+      const arr = new Uint8Array(buf);
+      const str = new TextDecoder().decode(arr);
+      const matches = str.match(/<w:t[^>]*>([^<]+)<\/w:t>/g) || [];
+      const text = matches.map(m=>m.replace(/<[^>]+>/g,'')).join(' ');
+      attachments.push({ name, type:'docx', content: text.slice(0,20000), isImage:false });
+    } catch {
+      attachments.push({ name, type:'docx', content:'[Could not extract text from this Word file]', isImage:false });
+    }
+    return;
+  }
+
+  // Fallback: try as text
+  try {
+    const text = await file.text();
+    attachments.push({ name, type:'text', content: text.slice(0,20000), isImage:false });
+  } catch {
+    attachments.push({ name, type:'unknown', content:'[Could not read file]', isImage:false });
+  }
+}
+
+function fileToBase64(file) {
+  return new Promise((res,rej) => {
+    const r = new FileReader();
+    r.onload = () => res(r.result.split(',')[1]);
+    r.onerror = rej;
+    r.readAsDataURL(file);
+  });
+}
+
+function removeAttachment(idx) {
+  attachments.splice(idx,1);
+  renderAttachments();
+}
+
+function renderAttachments() {
+  const bar = document.getElementById('attachmentsBar');
+  if (!attachments.length) { bar.innerHTML=''; return; }
+  const icons = { image:'🖼', pdf:'📄', excel:'📊', docx:'📝', text:'📃', csv:'📊', unknown:'📎' };
+  bar.innerHTML = attachments.map((a,i) =>
+    `<div class="att-chip">
+      <span>${icons[a.type]||'📎'}</span>
+      <span class="att-chip-name">${esc(a.name)}</span>
+      <button class="att-chip-rm" onclick="removeAttachment(${i})">✕</button>
+    </div>`
+  ).join('');
+}
+
+// ── FILE DRAG & DROP onto chat ──
+let dragCounter = 0;
+function onFileDragEnter(e) {
+  if (!e.dataTransfer.types.includes('Files')) return;
+  dragCounter++;
+  document.getElementById('dropOverlay').classList.add('show');
+}
+function onFileDragOver(e) {
+  if (!e.dataTransfer.types.includes('Files')) return;
+  e.preventDefault();
+  e.dataTransfer.dropEffect = 'copy';
+}
+function onFileDragLeave(e) {
+  dragCounter--;
+  if (dragCounter <= 0) {
+    dragCounter = 0;
+    document.getElementById('dropOverlay').classList.remove('show');
+  }
+}
+async function onFileDrop(e) {
+  e.preventDefault();
+  dragCounter = 0;
+  document.getElementById('dropOverlay').classList.remove('show');
+  const files = Array.from(e.dataTransfer.files);
+  for (const f of files) await processFile(f);
+  renderAttachments();
+}
+
+// ── EXPORT / IMPORT ──
+function exportConversations() {
+  const data = { version:1, exportedAt:new Date().toISOString(), conversations:convs, projects };
+  const blob = new Blob([JSON.stringify(data,null,2)], {type:'application/json'});
+  const a = document.createElement('a');
+  a.href = URL.createObjectURL(blob);
+  a.download = `aide-backup-${new Date().toISOString().slice(0,10)}.json`;
+  a.click();
+}
+
+function importConversations() {
+  const input = document.createElement('input');
+  input.type='file'; input.accept='.json';
+  input.onchange = async (e) => {
+    const file = e.target.files[0]; if (!file) return;
+    try {
+      const data = JSON.parse(await file.text());
+      if (!data.conversations) throw new Error('Invalid backup file');
+      if (!confirm(`Import ${Object.keys(data.conversations).length} conversations? This merges with your existing data.`)) return;
+      convs = {...convs,...data.conversations};
+      if (data.projects) projects = {...projects,...data.projects};
+      saveConvs(); saveProjects(); renderConvList(); renderProjList();
+      alert('Import successful!');
+    } catch(err) { alert('Import failed: '+err.message); }
+  };
+  input.click();
+}
+
+function buildMessageContent(text) {
+  // Build content array for API (handles mixed text + files)
+  if (!attachments.length) return text;
+
+  const parts = [];
+
+  // Text files: prepend as context
+  const textFiles = attachments.filter(a=>!a.isImage && a.type!=='pdf');
+  if (textFiles.length) {
+    let ctx = textFiles.map(a=>`--- File: ${a.name} ---\n${a.content}`).join('\n\n');
+    parts.push({ type:'text', text: ctx + '\n\n' + text });
+  } else {
+    parts.push({ type:'text', text });
+  }
+
+  // Images and PDFs: add as vision content
+  const visual = attachments.filter(a=>a.isImage || a.type==='pdf');
+  visual.forEach(a => {
+    if (a.isImage) {
+      parts.push({ type:'image', source:{ type:'base64', media_type:a.mimeType, data:a.base64 } });
+    } else if (a.type==='pdf') {
+      parts.push({ type:'document', source:{ type:'base64', media_type:'application/pdf', data:a.base64 } });
+    }
+  });
+
+  return parts.length === 1 ? parts[0].text : parts;
+}
+
+// ══════════════════════════════════
+// WEB SEARCH (Tavily)
+// ══════════════════════════════════
+// ══════════════════════════════════
+// WEB SEARCH — Anthropic native tool
+// ══════════════════════════════════
+async function callAnthropicWithSearch(key, model, history, content, systemPrompt) {
+  const messages = [...history, {role:'user', content}];
+
+  document.getElementById('searchIndicator').classList.add('show');
+  document.getElementById('searchStatus').textContent = 'Searching the web…';
+
+  try {
+    const r = await fetch('https://api.anthropic.com/v1/messages', {
+      method: 'POST',
+      headers: {
+        'Content-Type': 'application/json',
+        'x-api-key': key,
+        'anthropic-version': '2023-06-01',
+        'anthropic-dangerous-direct-browser-access': 'true'
+      },
+      body: JSON.stringify({
+        model,
+        max_tokens: 4096,
+        system: systemPrompt,
+        tools: [{ type: 'web_search_20250305', name: 'web_search' }],
+        messages
+      })
+    });
+
+    if (!r.ok) { const e = await r.json(); throw new Error(e.error?.message || `Error ${r.status}`); }
+    const d = await r.json();
+
+    // Handle tool_use loop — Claude may call web_search then respond
+    if (d.stop_reason === 'tool_use') {
+      const toolUseBlock = d.content.find(b => b.type === 'tool_use');
+      const textSoFar = d.content.filter(b => b.type === 'text').map(b => b.text).join('');
+
+      if (toolUseBlock) {
+        document.getElementById('searchStatus').textContent = `Searching: "${(toolUseBlock.input?.query||'').slice(0,40)}"…`;
+
+        // Send tool result back (Anthropic handles the actual search)
+        const r2 = await fetch('https://api.anthropic.com/v1/messages', {
+          method: 'POST',
+          headers: {
+            'Content-Type': 'application/json',
+            'x-api-key': key,
+            'anthropic-version': '2023-06-01',
+            'anthropic-dangerous-direct-browser-access': 'true'
+          },
+          body: JSON.stringify({
+            model,
+            max_tokens: 4096,
+            system: systemPrompt,
+            tools: [{ type: 'web_search_20250305', name: 'web_search' }],
+            messages: [
+              ...messages,
+              { role: 'assistant', content: d.content },
+              { role: 'user', content: [{ type: 'tool_result', tool_use_id: toolUseBlock.id, content: [] }] }
+            ]
+          })
+        });
+        if (!r2.ok) { const e = await r2.json(); throw new Error(e.error?.message || `Error ${r2.status}`); }
+        const d2 = await r2.json();
+        return d2.content?.filter(b=>b.type==='text').map(b=>b.text).join('') || '';
+      }
+      return textSoFar;
+    }
+
+    return d.content?.filter(b=>b.type==='text').map(b=>b.text).join('') || '';
+
+  } finally {
+    document.getElementById('searchIndicator').classList.remove('show');
+  }
+}
+
+// Legacy Tavily (kept as fallback, likely blocked by CORS)
+async function fetchWebSearch(query) { return null; }
+
+// ══════════════════════════════════
+// CONVERSATIONS
+// ══════════════════════════════════
+function newConv() {
+  const id = 'c'+Date.now();
+  convs[id] = {id, title:'New conversation', messages:[], createdAt:Date.now()};
+  curConv = id;
+  localStorage.setItem('aide_last_conv', id);
+  saveConvs(); renderConvList(); renderMessages(); renderArtifacts();
+}
+
+function loadConv(id) {
+  if (!convs[id]) return;
+  curConv = id;
+  localStorage.setItem('aide_last_conv', id);
+  renderConvList(); renderProjList(); renderMessages(); renderArtifacts();
+}
+
+function delConv(id, e) {
+  e.stopPropagation();
+  delete convs[id]; saveConvs();
+  if (curConv === id) {
+    const ks = Object.keys(convs);
+    ks.length ? loadConv(ks[ks.length-1]) : newConv();
+  }
+  renderConvList();
+}
+
+function renderConvList() {
+  const list = document.getElementById('convList');
+  // Only show convs not in any project
+  const inProject = new Set(Object.values(projects).flatMap(p=>p.convIds));
+  const ids = Object.keys(convs)
+    .filter(id => !inProject.has(id))
+    .sort((a,b)=>convs[b].createdAt-convs[a].createdAt);
+  if (!ids.length) { list.innerHTML='<div style="padding:8px 10px;font-size:12px;color:var(--text-3)">No conversations yet</div>'; return; }
+  list.innerHTML = ids.map(id => {
+    const c = convs[id];
+    const icon = c.title.match(/excel|spreadsheet|csv/i)?'📊':c.title.match(/slide|ppt|presentation/i)?'📑':c.title.match(/word|doc|report/i)?'📄':'💬';
+    return `<div class="ci ${id===curConv?'active':''}" onclick="loadConv('${id}')"
+      draggable="true" ondragstart="onDragStart(event,'${id}')">
+      <span class="ci-icon">${icon}</span>
+      <span class="ci-name">${esc(c.title)}</span>
+      <button class="ci-del" onclick="delConv('${id}',event)">✕</button>
+    </div>`;
+  }).join('');
+}
+
+// ══════════════════════════════════
+// MESSAGES
+// ══════════════════════════════════
+function renderMessages() {
+  const container = document.getElementById('messages');
+  const conv = convs[curConv];
+  if (!conv||!conv.messages.length) {
+    const isDemo = cfg.mode === 'demo';
+    container.innerHTML = `<div class="empty">
+      <div class="empty-title">${isDemo?'Try Aide free':'What can I help with?'}</div>
+      <div class="empty-sub">${isDemo?`${PRODUCT_CONFIG.DEMO_MESSAGES} free messages. No signup needed.`:'Ask me anything, or create Excel, PowerPoint, and Word files.'}</div>
+      <div class="qgrid">
+        <button class="qcard" onclick="sendQuick('Create an Excel spreadsheet with a monthly budget tracker including income, expenses by category, and a savings summary.')">
+          <span class="qc-icon">📊</span><span class="qc-title">Budget tracker</span><span class="qc-desc">Excel with income & expense categories</span>
+        </button>
+        <button class="qcard" onclick="sendQuick('Create a 5-slide PowerPoint presentation for a product launch with title, problem, solution, pricing, and next steps slides.')">
+          <span class="qc-icon">📑</span><span class="qc-title">Pitch deck</span><span class="qc-desc">5-slide product launch presentation</span>
+        </button>
+        <button class="qcard" onclick="sendQuick('Write a professional one-page executive summary document for a new market entry strategy in Southeast Asia.')">
+          <span class="qc-icon">📄</span><span class="qc-title">Executive summary</span><span class="qc-desc">One-page Word document</span>
+        </button>
+        <button class="qcard" onclick="sendQuick('What are practical strategies for improving team productivity in a remote-first organization?')">
+          <span class="qc-icon">💡</span><span class="qc-title">Ask anything</span><span class="qc-desc">Research, advice, writing, strategy</span>
+        </button>
+      </div>
+    </div>`;
+    return;
+  }
+  container.innerHTML = conv.messages.map(renderMsg).join('');
+  container.scrollTop = container.scrollHeight;
+}
+
+function renderMsg(m) {
+  const time = new Date(m.timestamp).toLocaleTimeString('en-SG',{hour:'2-digit',minute:'2-digit'});
+  let content = '';
+  if (m.role==='user') {
+    content = `<p>${esc(m.content)}</p>`;
+  } else {
+    content = fmtMd(m.displayContent||m.content);
+    if (m.doc) {
+      const icons={excel:'📊',ppt:'📑',word:'📄'};
+      const safeDoc = encodeURIComponent(JSON.stringify(m.doc));
+      content += `<div class="doc-card" onclick="openDoc('${safeDoc}')">
+        <div class="doc-card-icon">${icons[m.doc.type]||'📄'}</div>
+        <div class="doc-card-info"><div class="doc-card-name">${esc(m.doc.filename)}</div><div class="doc-card-type">${m.doc.type.toUpperCase()} · Click to preview</div></div>
+        <div class="doc-card-action">Preview & download →</div>
+      </div>`;
+    }
+  }
+  return `<div class="msg-row ${m.role}">
+    <div class="msg-inner"><div class="bubble">${content}</div></div>
+    <div class="msg-meta"><span class="msg-time">${time}</span></div>
+  </div>`;
+}
+
+function appendMsg(role, content, displayContent, doc) {
+  const conv = convs[curConv];
+  const m = {role, content, displayContent, doc, timestamp:Date.now()};
+  conv.messages.push(m);
+  conv.updatedAt = Date.now();
+  if (role==='user' && conv.messages.filter(x=>x.role==='user').length===1) {
+    conv.title = content.slice(0,44)+(content.length>44?'…':'');
+    renderConvList();
+  }
+  saveConvs();
+  if (doc) renderArtifacts();
+  const container = document.getElementById('messages');
+  const empty = container.querySelector('.empty');
+  if (empty) empty.remove();
+  const div = document.createElement('div');
+  div.innerHTML = renderMsg(m);
+  container.appendChild(div.firstChild);
+  container.scrollTop = container.scrollHeight;
+}
+
+function showTyping() {
+  const c = document.getElementById('messages');
+  const el = document.createElement('div');
+  el.id='typing'; el.className='typing-row';
+  el.innerHTML='<div class="typing-inner"><div class="typing-bubble"><div class="td"></div><div class="td"></div><div class="td"></div></div></div>';
+  c.appendChild(el); c.scrollTop=c.scrollHeight;
+}
+
+function hideTyping() { document.getElementById('typing')?.remove(); }
+
+// ══════════════════════════════════
+// SEND
+// ══════════════════════════════════
+async function sendMsg() {
+  const input = document.getElementById('userInput');
+  const text = input.value.trim();
+  if (!text||loading) return;
+
+  // Demo limit check
+  if (cfg.mode==='demo' && cfg.demoCount >= PRODUCT_CONFIG.DEMO_MESSAGES) {
+    appendMsg('assistant',
+      `You've used all ${PRODUCT_CONFIG.DEMO_MESSAGES} demo messages. [Get a license key](${PRODUCT_CONFIG.CHECKOUT_URL}) to keep going — plans start at $9/month.`,
+      `You've used all ${PRODUCT_CONFIG.DEMO_MESSAGES} demo messages. Get a license key to keep going — plans start at $9/month.`,
+      null
+    );
+    return;
+  }
+
+  input.value=''; autoResize(input);
+
+  // Build display text for user bubble
+  const attNames = attachments.map(a=>a.name);
+  const displayText = text + (attNames.length ? `\n📎 ${attNames.join(', ')}` : '');
+  appendMsg('user', text, displayText);
+
+  loading=true;
+  document.getElementById('sendBtn').disabled=true;
+  showTyping();
+
+  try {
+    const conv = convs[curConv];
+    const history = conv.messages.slice(0,-1).map(m=>({role:m.role,content:m.content}));
+
+    // Build content with attachments (search now handled natively inside AI calls)
+    const msgContent = buildMessageContent(text);
+
+    // Get active mode system prompt
+    const systemPrompt = getActivePrompt();
+
+    let raw='';
+    if (cfg.mode==='managed') {
+      raw = await callManaged(history, msgContent, systemPrompt);
+    } else if (cfg.provider==='claude') {
+      raw = await callClaude(history, msgContent, systemPrompt);
+    } else if (cfg.provider==='openai') {
+      raw = await callOpenAI(history, msgContent, systemPrompt);
+    } else if (cfg.provider==='gemini') {
+      raw = await callGemini(history, msgContent, systemPrompt);
+    } else if (cfg.provider==='mistral') {
+      raw = await callMistral(history, msgContent, systemPrompt);
+    } else {
+      raw = await callOllama(history, msgContent, systemPrompt);
+    }
+
+    // Clear attachments after send
+    attachments = [];
+    renderAttachments();
+
+    hideTyping();
+
+    // Parse doc
+    const docMatch = raw.match(/<DOCUMENT>([\s\S]*?)<\/DOCUMENT>/);
+    let doc=null;
+    let display = raw.replace(/<DOCUMENT>[\s\S]*?<\/DOCUMENT>/g,'').trim();
+
+    if (docMatch) {
+      try {
+        const p = JSON.parse(docMatch[1].trim());
+        if (p.excel) doc={type:'excel',filename:p.excel.filename||'spreadsheet.xlsx',data:p.excel};
+        else if (p.ppt) doc={type:'ppt',filename:p.ppt.filename||'presentation.pptx',data:p.ppt};
+        else if (p.word) doc={type:'word',filename:p.word.filename||'document.docx',data:p.word};
+      } catch(e){}
+    }
+
+    appendMsg('assistant', raw, display||raw, doc);
+    if (doc) openDoc(encodeURIComponent(JSON.stringify(doc)));
+
+    if (cfg.mode==='demo') {
+      cfg.demoCount++;
+      saveCfg();
+      const remaining = PRODUCT_CONFIG.DEMO_MESSAGES - cfg.demoCount;
+      const badge = document.getElementById('licenseBadge');
+      badge.textContent = `Demo · ${remaining} left`;
+    }
+
+  } catch(e) {
+    hideTyping();
+    appendMsg('assistant','⚠️ '+e.message,'⚠️ '+e.message,null);
+  }
+
+  loading=false;
+  document.getElementById('sendBtn').disabled=false;
+  document.getElementById('userInput').focus();
+}
+
+function sendQuick(t) { document.getElementById('userInput').value=t; sendMsg(); }
+
+async function callManaged(history, content, systemPrompt) {
+  const model = getModel(cfg.selectedModelId) || getDefaultModel();
+  const provider = model.provider;
+  const messages = [...history, {role:'user', content}];
+
+  if (provider === 'anthropic') {
+    const key = PRODUCT_CONFIG.ANTHROPIC_KEY || cfg.claudeKey;
+    if (!key) throw new Error('Managed mode not configured. Contact support.');
+    if (cfg.webSearch) {
+      return await callAnthropicWithSearch(key, model.apiModel, history, content, systemPrompt);
+    }
+    const r = await fetch('https://api.anthropic.com/v1/messages', {
+      method:'POST',
+      headers:{'Content-Type':'application/json','x-api-key':key,'anthropic-version':'2023-06-01','anthropic-dangerous-direct-browser-access':'true'},
+      body:JSON.stringify({model:model.apiModel,max_tokens:4096,system:systemPrompt,messages})
+    });
+    if (!r.ok) { const e=await r.json(); throw new Error(e.error?.message||`Error ${r.status}`); }
+    const d=await r.json(); return d.content?.filter(b=>b.type==='text').map(b=>b.text).join('')||'';
+  } else if (provider === 'openai') {
+    const key = PRODUCT_CONFIG.OPENAI_KEY || cfg.openaiKey;
+    if (!key) throw new Error('OpenAI not configured. Contact support.');
+    return await _callOpenAI(key, model.apiModel, history, content, systemPrompt);
+  } else if (provider === 'gemini') {
+    const key = PRODUCT_CONFIG.GEMINI_KEY || cfg.geminiKey;
+    if (!key) throw new Error('Gemini not configured. Contact support.');
+    return await _callGemini(key, model.apiModel, history, content, systemPrompt);
+  } else if (provider === 'mistral') {
+    const key = PRODUCT_CONFIG.MISTRAL_KEY || cfg.mistralKey;
+    if (!key) throw new Error('Mistral not configured. Contact support.');
+    return await _callMistral(key, model.apiModel, history, content, systemPrompt);
+  }
+  throw new Error('Unknown provider: ' + provider);
+}
+
+async function callClaude(history, content, systemPrompt) {
+  if (!cfg.claudeKey) throw new Error('No Claude API key. Open Settings to add one.');
+  if (cfg.webSearch) {
+    return await callAnthropicWithSearch(cfg.claudeKey, cfg.claudeModel, history, content, systemPrompt);
+  }
+  const messages=[...history,{role:'user',content}];
+  const r=await fetch('https://api.anthropic.com/v1/messages',{
+    method:'POST',
+    headers:{'Content-Type':'application/json','x-api-key':cfg.claudeKey,'anthropic-version':'2023-06-01','anthropic-dangerous-direct-browser-access':'true'},
+    body:JSON.stringify({model:cfg.claudeModel,max_tokens:4096,system:systemPrompt,messages})
+  });
+  if (!r.ok){const e=await r.json();throw new Error(e.error?.message||`Claude error ${r.status}`);}
+  const d=await r.json(); return d.content?.filter(b=>b.type==='text').map(b=>b.text).join('')||'';
+}
+
+async function callOpenAI(history, content, systemPrompt) {
+  if (!cfg.openaiKey) throw new Error('No OpenAI API key. Open Settings to add one.');
+  return await _callOpenAI(cfg.openaiKey, cfg.openaiModel, history, content, systemPrompt);
+}
+
+async function _callOpenAI(key, model, history, content, systemPrompt) {
+  const messages=[{role:'system',content:systemPrompt},...history,{role:'user',content}];
+  const r=await fetch('https://api.openai.com/v1/chat/completions',{
+    method:'POST',
+    headers:{'Content-Type':'application/json','Authorization':'Bearer '+key},
+    body:JSON.stringify({model,max_tokens:4096,messages})
+  });
+  if (!r.ok){const e=await r.json();throw new Error(e.error?.message||`OpenAI error ${r.status}`);}
+  const d=await r.json(); return d.choices?.[0]?.message?.content||'';
+}
+
+async function callGemini(history, content, systemPrompt) {
+  if (!cfg.geminiKey) throw new Error('No Gemini API key. Open Settings to add one.');
+  return await _callGemini(cfg.geminiKey, 'gemini-2.0-flash', history, content, systemPrompt);
+}
+
+async function _callGemini(key, model, history, content, systemPrompt) {
+  const textContent = typeof content === 'string' ? content : content.find?.(p=>p.type==='text')?.text || '';
+  const contents = [
+    ...history.map(m => ({ role: m.role==='assistant'?'model':'user', parts:[{text:typeof m.content==='string'?m.content:JSON.stringify(m.content)}] })),
+    { role:'user', parts:[{text:textContent}] }
+  ];
+  const r = await fetch(`https://generativelanguage.googleapis.com/v1beta/models/${model}:generateContent?key=${key}`, {
+    method:'POST',
+    headers:{'Content-Type':'application/json'},
+    body:JSON.stringify({ systemInstruction:{parts:[{text:systemPrompt}]}, contents, generationConfig:{maxOutputTokens:4096} })
+  });
+  if (!r.ok){const e=await r.json();throw new Error(e.error?.message||`Gemini error ${r.status}`);}
+  const d=await r.json();
+  return d.candidates?.[0]?.content?.parts?.[0]?.text || '';
+}
+
+async function callMistral(history, content, systemPrompt) {
+  if (!cfg.mistralKey) throw new Error('No Mistral API key. Open Settings to add one.');
+  return await _callMistral(cfg.mistralKey, 'mistral-small-latest', history, content, systemPrompt);
+}
+
+async function _callMistral(key, model, history, content, systemPrompt) {
+  const textContent = typeof content === 'string' ? content : content.find?.(p=>p.type==='text')?.text || '';
+  const messages=[{role:'system',content:systemPrompt},...history,{role:'user',content:textContent}];
+  const r=await fetch('https://api.mistral.ai/v1/chat/completions',{
+    method:'POST',
+    headers:{'Content-Type':'application/json','Authorization':'Bearer '+key},
+    body:JSON.stringify({model,max_tokens:4096,messages})
+  });
+  if (!r.ok){const e=await r.json();throw new Error(e.error?.message||`Mistral error ${r.status}`);}
+  const d=await r.json(); return d.choices?.[0]?.message?.content||'';
+}
+
+async function callOllama(history, content, systemPrompt) {
+  const textContent = typeof content === 'string' ? content : content.find?.(p=>p.type==='text')?.text || '';
+  const messages=[{role:'system',content:systemPrompt},...history,{role:'user',content:textContent}];
+  const r=await fetch(`${cfg.ollamaUrl}/api/chat`,{
+    method:'POST',
+    headers:{'Content-Type':'application/json'},
+    body:JSON.stringify({model:cfg.ollamaModel,messages,stream:false})
+  });
+  if (!r.ok) throw new Error(`Ollama error ${r.status}. Is Ollama running?`);
+  const d=await r.json(); return d.message?.content||'';
+}
+
+// ══════════════════════════════════
+// DOCUMENT PREVIEW & DOWNLOAD
+// ══════════════════════════════════
+function openDoc(encoded) {
+  const doc = JSON.parse(decodeURIComponent(encoded));
+  curDoc = doc;
+  // Also store on download button as data attribute for reliability
+  const dlBtn = document.getElementById('pvDl');
+  dlBtn.setAttribute('data-doc', encoded);
+  dlBtn.onclick = () => downloadDoc();
+
+  const panel=document.getElementById('previewPanel');
+  const body=document.getElementById('pvBody');
+  panel.classList.remove('hidden');
+  document.getElementById('pvTitle').textContent=doc.filename;
+  dlBtn.style.display='';
+
+  if (doc.type==='excel') body.innerHTML=renderXLS(doc.data);
+  else if (doc.type==='ppt') body.innerHTML=renderPPT(doc.data);
+  else if (doc.type==='word') body.innerHTML=renderWord(doc.data);
+}
+
+function renderXLS(d) {
+  const sheets = d.sheets || [];
+  if (!sheets.length) return '<p style="color:var(--text-3);padding:10px">No data</p>';
+  return sheets.map(s => {
+    const hc = s.headerColor || '1A4D8F';
+    const headers = s.headers || [];
+    const rows = s.rows || [];
+    const types = s.types || [];
+    // Compute totals
+    let totals = null;
+    if (s.totalsRow) {
+      totals = headers.map((_,i) => {
+        const t = types[i];
+        if (t==='number'||t==='currency'||t==='percent') {
+          const sum = rows.reduce((acc,r) => acc + (parseFloat(String(r[i]).replace(/[^0-9.-]/g,''))||0), 0);
+          if (t==='currency') return '$'+sum.toLocaleString('en',{minimumFractionDigits:2,maximumFractionDigits:2});
+          if (t==='percent') return sum.toFixed(1)+'%';
+          return sum.toLocaleString();
+        }
+        return i===0 ? 'Total' : '';
+      });
+    }
+    const fmtCell = (val, type) => {
+      const v = String(val??'');
+      if (type==='currency') { const n=parseFloat(v.replace(/[^0-9.-]/g,'')); return isNaN(n)?v:'$'+n.toLocaleString('en',{minimumFractionDigits:2,maximumFractionDigits:2}); }
+      if (type==='percent') { const n=parseFloat(v); return isNaN(n)?v:n.toFixed(1)+'%'; }
+      if (type==='number') { const n=parseFloat(v); return isNaN(n)?v:n.toLocaleString(); }
+      return v;
+    };
+    return `<div class="xp" style="margin-bottom:16px">
+      <div style="font-size:11px;font-weight:600;color:#${hc};margin-bottom:8px;font-family:'DM Mono',monospace;text-transform:uppercase;letter-spacing:.05em">${esc(s.name||'Sheet1')}</div>
+      <table>
+        <thead><tr>${headers.map(h=>`<th style="background:#${hc};color:#fff;border-color:#${hc}">${esc(String(h))}</th>`).join('')}</tr></thead>
+        <tbody>
+          ${rows.map((row,ri)=>`<tr style="background:${ri%2===1?'var(--surface2)':'var(--surface)'}">${row.map((c,ci)=>`<td style="text-align:${types[ci]==='number'||types[ci]==='currency'||types[ci]==='percent'?'right':'left'}">${esc(fmtCell(c,types[ci]))}</td>`).join('')}</tr>`).join('')}
+          ${totals?`<tr style="background:var(--surface2);font-weight:600;border-top:2px solid var(--border)">${totals.map((t,ci)=>`<td style="text-align:${types[ci]==='number'||types[ci]==='currency'||types[ci]==='percent'?'right':'left'}">${esc(t)}</td>`).join('')}</tr>`:''}
+        </tbody>
+      </table>
+    </div>`;
+  }).join('');
+}
+
+function renderPPT(d) {
+  const theme = d.theme || { accent:'1A4D8F', dark:'1C1C1A', light:'F7F6F3' };
+  const ac = theme.accent||'1A4D8F';
+  const dk = theme.dark||'1C1C1A';
+
+  return `<div class="ppt-slides">${(d.slides||[]).map((s,i) => {
+    const layout = s.layout || (i===0?'title':'content');
+    const bg = s.bg ? `#${s.bg}` : (layout==='title'?`#${ac}`:'#fff');
+    const titleCol = s.titleColor ? `#${s.titleColor}` : (layout==='title'?'#fff':`#${dk}`);
+    const num = `<div class="ppt-slide-num" style="color:${layout==='title'?'rgba(255,255,255,0.5)':'var(--text-3)'}">${i+1}/${d.slides.length}</div>`;
+
+    if (layout==='title') return `
+      <div class="ppt-slide" style="background:${bg};justify-content:center">
+        <div style="text-align:center;padding:0 32px">
+          <div class="ppt-title" style="color:${titleCol};font-size:22px;margin-bottom:10px">${esc(s.title||'')}</div>
+          ${s.subtitle?`<div style="font-size:13px;color:rgba(255,255,255,0.75);font-family:'DM Sans',sans-serif">${esc(s.subtitle)}</div>`:''}
+        </div>${num}
+      </div>`;
+
+    if (layout==='two-col') return `
+      <div class="ppt-slide" style="background:${bg};flex-direction:column;align-items:flex-start;padding:20px 24px">
+        <div style="font-family:'DM Serif Display',serif;font-size:16px;color:${titleCol};margin-bottom:12px;font-weight:600">${esc(s.title||'')}</div>
+        <div style="display:flex;gap:16px;width:100%;flex:1">
+          ${['left','right'].map(side => {
+            const col = s[side]||{};
+            return `<div style="flex:1;background:${side==='left'?`#${ac}`:'var(--surface2)'};border-radius:6px;padding:12px">
+              <div style="font-size:11px;font-weight:700;color:${side==='left'?'#fff':`#${ac}`};text-transform:uppercase;letter-spacing:.05em;margin-bottom:8px">${esc(col.heading||'')}</div>
+              <ul style="list-style:none;padding:0;margin:0">${(col.points||[]).map(p=>`<li style="font-size:11px;color:${side==='left'?'rgba(255,255,255,0.9)':'var(--text-2)'};padding:3px 0;border-bottom:1px solid ${side==='left'?'rgba(255,255,255,0.15)':'var(--border-light)'}">• ${esc(p)}</li>`).join('')}</ul>
+            </div>`;
+          }).join('')}
+        </div>${num}
+      </div>`;
+
+    if (layout==='metric') return `
+      <div class="ppt-slide" style="background:${bg};flex-direction:column;align-items:flex-start;padding:20px 24px">
+        <div style="font-family:'DM Serif Display',serif;font-size:16px;color:${titleCol};margin-bottom:16px">${esc(s.title||'')}</div>
+        <div style="display:flex;gap:10px;width:100%;justify-content:center;flex:1;align-items:center">
+          ${(s.metrics||[]).map(m=>`
+            <div style="flex:1;background:var(--surface2);border-radius:8px;padding:14px 10px;text-align:center;border:1px solid var(--border)">
+              <div style="font-family:'DM Serif Display',serif;font-size:24px;color:#${ac};font-weight:600;line-height:1">${esc(m.value||'')}</div>
+              <div style="font-size:10px;color:var(--text-3);margin-top:5px;font-weight:500;text-transform:uppercase;letter-spacing:.04em">${esc(m.label||'')}</div>
+            </div>`).join('')}
+        </div>${num}
+      </div>`;
+
+    // default: content layout
+    return `
+      <div class="ppt-slide" style="background:${bg};flex-direction:column;align-items:flex-start;padding:20px 24px">
+        <div style="width:32px;height:3px;background:#${ac};border-radius:2px;margin-bottom:10px"></div>
+        <div class="ppt-title" style="color:${titleCol};font-size:16px;text-align:left;margin-bottom:12px">${esc(s.title||'')}</div>
+        ${s.bullets?.length?`<ul style="list-style:none;padding:0;margin:0;width:100%">
+          ${s.bullets.map(b=>`<li style="display:flex;gap:8px;align-items:flex-start;padding:5px 0;border-bottom:1px solid var(--border-light);font-size:12px;color:var(--text-2)">
+            <span style="color:#${ac};font-weight:700;flex-shrink:0">→</span><span>${esc(b)}</span></li>`).join('')}
+        </ul>`:''}
+        ${s.content?`<p style="font-size:12px;color:var(--text-2);line-height:1.7;margin-top:8px">${esc(s.content)}</p>`:''}
+        ${s.note?`<div style="margin-top:auto;padding-top:8px;font-size:10px;color:var(--text-3);font-style:italic;border-top:1px solid var(--border-light);width:100%">Note: ${esc(s.note)}</div>`:''}
+        ${num}
+      </div>`;
+  }).join('')}</div>`;
+}
+
+function renderWord(d) {
+  return `<div class="wp">${d.title?`<h1>${esc(d.title)}</h1>`:''}
+    ${(d.sections||[]).map(s=>`${s.heading?`<h2>${esc(s.heading)}</h2>`:''}
+    ${(s.content||'').split('\n').filter(Boolean).map(p=>`<p>${esc(p)}</p>`).join('')}`).join('')}</div>`;
+}
+
+async function downloadDoc() {
+  // Re-read from button attribute in case curDoc was lost
+  const dlBtn = document.getElementById('pvDl');
+  const encoded = dlBtn?.getAttribute('data-doc');
+  if (encoded) curDoc = JSON.parse(decodeURIComponent(encoded));
+  if (!curDoc) return;
+  const doc = curDoc;
+  dlBtn.textContent = '↻ Generating…';
+  dlBtn.disabled = true;
+  try {
+  if (doc.type==='excel') {
+    const wb = new ExcelJS.Workbook();
+    wb.creator = 'Aide'; wb.created = new Date();
+
+    for (const s of (doc.data.sheets||[])) {
+      const hc = s.headerColor || '1A4D8F';
+      const headers = s.headers || [];
+      const rows = s.rows || [];
+      const types = s.types || [];
+      const colWidths = s.colWidths || headers.map(()=>16);
+      const formulas = s.formulas || {};
+      const numFmt = { currency:'"$"#,##0.00', percent:'0.0%', number:'#,##0', date:'yyyy-mm-dd' };
+
+      const ws = wb.addWorksheet(s.name || 'Sheet1');
+      ws.columns = headers.map((h,i) => ({ header:'', key:'c'+i, width:colWidths[i]||16 }));
+
+      // Helper: col index → Excel letter(s)
+      const colLetter = i => i < 26 ? String.fromCharCode(65+i) : String.fromCharCode(64+Math.floor(i/26))+String.fromCharCode(65+(i%26));
+
+      // Build formula map: colName → formula template
+      const formulaMap = {};
+      Object.entries(formulas).forEach(([colName, def]) => {
+        const ci = headers.indexOf(colName);
+        if (ci < 0) return;
+        formulaMap[ci] = { template: def.formula };
+      });
+
+      // Header row
+      const headerRow = ws.addRow(headers);
+      headerRow.height = 22;
+      headerRow.eachCell(cell => {
+        cell.fill = { type:'pattern', pattern:'solid', fgColor:{ argb:'FF'+hc } };
+        cell.font = { bold:true, color:{ argb:'FFFFFFFF' }, size:11, name:'Calibri' };
+        cell.alignment = { vertical:'middle', horizontal:'left' };
+        cell.border = { bottom:{ style:'thin', color:{ argb:'FFCCCCCC' } } };
+      });
+      ws.views = [{ state:'frozen', ySplit:1 }];
+
+      // Data rows
+      rows.forEach((row, ri) => {
+        const excelRowNum = ri + 2; // 1=header, 2=first data
+        const rowBg = ri%2===1 ? 'FFF5F4F0' : 'FFFFFFFF';
+
+        const rowData = row.map((v, ci) => {
+          // If this col has a formula, build it
+          if (formulaMap[ci]) {
+            let f = formulaMap[ci].template;
+            // Replace {ColName} with actual cell refs
+            headers.forEach((h, hi) => {
+              f = f.replace(new RegExp(`\\{${h}\\}`, 'g'), colLetter(hi)+excelRowNum);
+            });
+            // Clean up leading =
+            f = f.startsWith('=') ? f : '='+f;
+            return { formula: f };
+          }
+          const t = types[ci];
+          if ((t==='number'||t==='currency'||t==='percent') && v !== '' && !isNaN(parseFloat(String(v).replace(/[^0-9.-]/g,'')))) {
+            return parseFloat(String(v).replace(/[^0-9.-]/g,''));
+          }
+          return v;
+        });
+
+        const dataRow = ws.addRow(rowData);
+        dataRow.height = 18;
+        dataRow.eachCell({ includeEmpty:true }, (cell, colNum) => {
+          const ci = colNum-1;
+          const t = types[ci];
+          cell.fill = { type:'pattern', pattern:'solid', fgColor:{ argb:rowBg } };
+          cell.font = { size:10, name:'Calibri' };
+          cell.alignment = { vertical:'middle', horizontal:(t==='number'||t==='currency'||t==='percent')?'right':'left' };
+          cell.border = { bottom:{ style:'hair', color:{ argb:'FFE8E7E3' } } };
+          if (numFmt[t]) cell.numFmt = numFmt[t];
+        });
+      });
+
+      // Totals row with SUM formulas
+      if (s.totalsRow) {
+        const dataStart = 2, dataEnd = rows.length+1;
+        const totalsData = headers.map((_,i) => {
+          const t = types[i];
+          if (t==='number'||t==='currency') return { formula:`SUM(${colLetter(i)}${dataStart}:${colLetter(i)}${dataEnd})` };
+          if (t==='percent') return { formula:`AVERAGE(${colLetter(i)}${dataStart}:${colLetter(i)}${dataEnd})` };
+          return i===0 ? 'Total' : '';
+        });
+        const totRow = ws.addRow(totalsData);
+        totRow.height = 20;
+        totRow.eachCell({ includeEmpty:true }, (cell, colNum) => {
+          const ci = colNum-1; const t = types[ci];
+          cell.fill = { type:'pattern', pattern:'solid', fgColor:{ argb:'FFE8E7E3' } };
+          cell.font = { bold:true, size:10, name:'Calibri' };
+          cell.alignment = { vertical:'middle', horizontal:(t==='number'||t==='currency'||t==='percent')?'right':'left' };
+          cell.border = { top:{ style:'medium', color:{ argb:'FF999999' } } };
+          if (numFmt[t]) cell.numFmt = numFmt[t];
+        });
+      }
+
+      // Conditional formatting
+      (s.conditionalFormats||[]).forEach(cf => {
+        const ci = cf.col;
+        const dataStart = 2, dataEnd = rows.length+1;
+        const range = `${colLetter(ci)}${dataStart}:${colLetter(ci)}${dataEnd}`;
+        if (cf.type === 'colorScale') {
+          ws.addConditionalFormatting({ ref: range, rules:[{
+            type:'colorScale',
+            cfvo:[{ type:'min' },{ type:'percentile', value:50 },{ type:'max' }],
+            color:[{ argb:'FF'+cf.low },{ argb:'FF'+(cf.mid||'FFFFFF') },{ argb:'FF'+cf.high }]
+          }]});
+        } else if (cf.type === 'aboveBelow') {
+          const thresh = cf.threshold ?? 0;
+          ws.addConditionalFormatting({ ref: range, rules:[
+            { type:'cellIs', operator:'greaterThan', formulae:[thresh], priority:1,
+              style:{ fill:{ type:'pattern', pattern:'solid', fgColor:{ argb:'FF'+cf.above } } } },
+            { type:'cellIs', operator:'lessThan', formulae:[thresh], priority:2,
+              style:{ fill:{ type:'pattern', pattern:'solid', fgColor:{ argb:'FF'+cf.below } } } }
+          ]});
+        }
+      });
+
+      // Charts
+      (s.charts||[]).forEach(chart => {
+        const dataStart = 2, dataEnd = rows.length+1;
+        const labelCol = chart.labelCol ?? 0;
+        const dataCols = chart.dataCols || [1];
+        const pos = chart.position || { col:headers.length+2, row:2, width:10, height:16 };
+
+        const series = dataCols.map(ci => ({
+          name: { name: headers[ci]||'Series', ref:`'${s.name||'Sheet1'}'!${colLetter(ci)}1` },
+          labels: { formula:`'${s.name||'Sheet1'}'!$${colLetter(labelCol)}$${dataStart}:$${colLetter(labelCol)}$${dataEnd}` },
+          values: { formula:`'${s.name||'Sheet1'}'!$${colLetter(ci)}$${dataStart}:$${colLetter(ci)}$${dataEnd}` }
+        }));
+
+        const chartTypeMap = { bar:'bar', line:'line', pie:'pie', area:'area', column:'bar' };
+        const excelChartType = chartTypeMap[chart.type] || 'bar';
+
+        ws.addChart(excelChartType, {
+          title: chart.title || '',
+          series,
+          plotArea: { bar:{ grouping:'clustered', dir:'col' } },
+          legend: dataCols.length > 1 ? { position:'b' } : { position:'none' },
+          tl: { col: pos.col, row: pos.row },
+          br: { col: pos.col + (pos.width||10), row: pos.row + (pos.height||16) },
+          displayBlanksAs: 'gap'
+        });
+      });
+    }
+
+    const buf = await wb.xlsx.writeBuffer();
+    const blob = new Blob([buf], { type:'application/vnd.openxmlformats-officedocument.spreadsheetml.sheet' });
+    const a = document.createElement('a');
+    a.href = URL.createObjectURL(blob); a.download = doc.filename; a.click();
+
+  } else if (doc.type==='ppt') {
+    const d = doc.data;
+    const theme = d.theme || { accent:'1A4D8F', dark:'1C1C1A', light:'F7F6F3' };
+    const ac = theme.accent || '1A4D8F';
+    const dk = theme.dark || '1C1C1A';
+
+    const PptxGenJSClass = window.PptxGenJS || window.pptxgen || window.PptxGenJs;
+    if (!PptxGenJSClass) throw new Error('PowerPoint library failed to load. Check your internet connection and try again.');
+    const pptx = new PptxGenJSClass();
+    pptx.layout = 'LAYOUT_WIDE';
+    pptx.defineLayout({ name:'WIDE', width:13.33, height:7.5 });
+
+    (d.slides||[]).forEach((s, idx) => {
+      const slide = pptx.addSlide();
+      const layout = s.layout || (idx===0 ? 'title' : 'content');
+      const bgColor = s.bg || (layout==='title' ? ac : 'FFFFFF');
+      slide.background = { color: bgColor };
+
+      if (layout === 'title') {
+        // Title slide
+        slide.addText(s.title||'', { x:1, y:2.4, w:11.33, h:1.4, fontSize:36, bold:true, color:s.titleColor||'FFFFFF', fontFace:'Calibri', align:'center' });
+        if (s.subtitle) slide.addText(s.subtitle, { x:1, y:4, w:11.33, h:.6, fontSize:18, color:'DDDDDD', fontFace:'Calibri', align:'center' });
+        // Decorative bar
+        slide.addShape(pptx.ShapeType.rect, { x:5.5, y:3.7, w:2.33, h:.05, fill:{ color:'FFFFFF', transparency:50 } });
+
+      } else if (layout === 'two-col') {
+        // Header bar
+        slide.addShape(pptx.ShapeType.rect, { x:0, y:0, w:13.33, h:1.1, fill:{ color:ac } });
+        slide.addText(s.title||'', { x:.4, y:.15, w:12.5, h:.8, fontSize:20, bold:true, color:'FFFFFF', fontFace:'Calibri' });
+        const cols = ['left','right'];
+        cols.forEach((side, ci) => {
+          const col = s[side] || {};
+          const xOff = ci === 0 ? .3 : 6.9;
+          const bg = ci === 0 ? ac : 'F5F4F0';
+          const textCol = ci === 0 ? 'FFFFFF' : dk;
+          slide.addShape(pptx.ShapeType.rect, { x:xOff, y:1.3, w:6.1, h:5.8, fill:{ color:bg }, line:{ color:'EEEEEE', width:.5 }, rounding:.1 });
+          slide.addText(col.heading||'', { x:xOff+.2, y:1.5, w:5.7, h:.5, fontSize:13, bold:true, color:ci===0?'FFFFFF':ac, fontFace:'Calibri' });
+          (col.points||[]).forEach((p, pi) => {
+            slide.addText('→  '+p, { x:xOff+.2, y:2.2+(pi*.55), w:5.7, h:.5, fontSize:11, color:ci===0?'DDDDDD':textCol, fontFace:'Calibri' });
+          });
+        });
+
+      } else if (layout === 'metric') {
+        slide.addShape(pptx.ShapeType.rect, { x:0, y:0, w:13.33, h:1.1, fill:{ color:ac } });
+        slide.addText(s.title||'', { x:.4, y:.15, w:12.5, h:.8, fontSize:20, bold:true, color:'FFFFFF', fontFace:'Calibri' });
+        const metrics = s.metrics || [];
+        const mw = 11.5 / Math.max(metrics.length, 1);
+        metrics.forEach((m, mi) => {
+          const xOff = .9 + mi * (mw + .2);
+          slide.addShape(pptx.ShapeType.rect, { x:xOff, y:1.8, w:mw, h:4.2, fill:{ color:'F5F4F0' }, line:{ color:'E0E0E0', width:.5 }, rounding:.12 });
+          slide.addText(m.value||'', { x:xOff, y:2.4, w:mw, h:1.5, fontSize:34, bold:true, color:ac, fontFace:'Calibri', align:'center' });
+          slide.addText(m.label||'', { x:xOff, y:4.0, w:mw, h:.5, fontSize:12, bold:true, color:'444444', fontFace:'Calibri', align:'center' });
+          if (m.sub) slide.addText(m.sub, { x:xOff, y:4.55, w:mw, h:.4, fontSize:10, color:'888888', fontFace:'Calibri', align:'center', italic:true });
+        });
+
+      } else if (layout === 'chart') {
+        // Header
+        slide.addShape(pptx.ShapeType.rect, { x:0, y:0, w:13.33, h:1.1, fill:{ color:ac } });
+        slide.addText(s.title||'', { x:.4, y:.15, w:12.5, h:.8, fontSize:20, bold:true, color:'FFFFFF', fontFace:'Calibri' });
+
+        if (s.chartData) {
+          const cd = s.chartData;
+          const chartTypeMap = { bar:'bar', line:'line', pie:'pie', area:'area', column:'bar' };
+          const ct = chartTypeMap[s.chartType||'bar'] || 'bar';
+          const chartData = (cd.series||[]).map(ser => ({
+            name: ser.name||'',
+            labels: cd.labels||[],
+            values: ser.values||[]
+          }));
+
+          const chartColors = ['1A4D8F','51CF66','FF6B6B','FFD43B','845EF7','339AF0'].slice(0, chartData.length);
+
+          slide.addChart(ct === 'bar' ? pptx.ChartType.bar : ct === 'line' ? pptx.ChartType.line : ct === 'pie' ? pptx.ChartType.pie : pptx.ChartType.area,
+            chartData, {
+            x:.4, y:1.3, w:12.5, h:5.8,
+            chartColors,
+            showLegend: chartData.length > 1,
+            legendPos: 'b',
+            showTitle: false,
+            dataLabelFormatCode: s.chartType==='percent' ? '0%' : undefined,
+            bar: { grouping: 'clustered', dir: 'col' },
+            valAxisLabelFormatCode: '#,##0',
+            catAxisLabelColor: '555555',
+            valAxisLabelColor: '555555',
+            plotAreaBorderColor: 'EEEEEE',
+            gridLineColor: 'EEEEEE',
+          });
+        }
+
+      } else if (layout === 'table') {
+        // Header
+        slide.addShape(pptx.ShapeType.rect, { x:0, y:0, w:13.33, h:1.1, fill:{ color:ac } });
+        slide.addText(s.title||'', { x:.4, y:.15, w:12.5, h:.8, fontSize:20, bold:true, color:'FFFFFF', fontFace:'Calibri' });
+
+        if (s.tableHeaders && s.tableRows) {
+          const rows = [
+            s.tableHeaders.map(h => ({ text:h, options:{ bold:true, color:'FFFFFF', fill:ac, align:'center', fontSize:11 } })),
+            ...s.tableRows.map((row, ri) => row.map(cell => ({
+              text: String(cell),
+              options: { color:'333333', fill: ri%2===0 ? 'FFFFFF' : 'F5F4F0', fontSize:10, align:'left' }
+            })))
+          ];
+          const colW = 12.5 / s.tableHeaders.length;
+          slide.addTable(rows, {
+            x:.4, y:1.3, w:12.5,
+            colW: s.tableHeaders.map(()=>colW),
+            border: { type:'solid', color:'DDDDDD', pt:.5 },
+            fontFace: 'Calibri',
+            rowH: .4,
+          });
+        }
+
+      } else {
+        // Content layout
+        slide.addShape(pptx.ShapeType.rect, { x:0, y:0, w:.22, h:7.5, fill:{ color:ac } });
+        slide.addShape(pptx.ShapeType.rect, { x:0, y:0, w:13.33, h:1.1, fill:{ color:'F5F4F0' } });
+        slide.addText(s.title||'', { x:.4, y:.15, w:12.5, h:.8, fontSize:20, bold:true, color:dk, fontFace:'Calibri' });
+        if (s.bullets?.length) {
+          s.bullets.forEach((b, bi) => {
+            const yPos = 1.4 + bi * .72;
+            slide.addShape(pptx.ShapeType.rect, { x:.5, y:yPos+.12, w:.18, h:.18, fill:{ color:ac }, rounding:.5 });
+            slide.addText(b, { x:.9, y:yPos, w:12, h:.6, fontSize:12, color:dk, fontFace:'Calibri', valign:'middle' });
+          });
+        }
+        if (s.content) slide.addText(s.content, { x:.4, y:1.4, w:12.5, h:5.5, fontSize:12, color:'444444', fontFace:'Calibri', valign:'top', wrap:true });
+        if (s.note) slide.addText('Note: '+s.note, { x:.4, y:6.9, w:12.5, h:.4, fontSize:9, color:'999999', fontFace:'Calibri', italic:true });
+      }
+
+      // Slide number
+      slide.addText(`${idx+1}`, { x:12.8, y:7.1, w:.4, h:.25, fontSize:8, color:'AAAAAA', align:'right' });
+    });
+
+    await pptx.writeFile({ fileName: doc.filename });
+
+  } else if (doc.type==='word') {
+    const {Document,Packer,Paragraph,TextRun,HeadingLevel}=docx;
+    const children=[];
+    if (doc.data.title) children.push(new Paragraph({text:doc.data.title,heading:HeadingLevel.TITLE}));
+    (doc.data.sections||[]).forEach(s=>{
+      if (s.heading) children.push(new Paragraph({text:s.heading,heading:HeadingLevel.HEADING_1}));
+      (s.content||'').split('\n').filter(Boolean).forEach(p=>children.push(new Paragraph({children:[new TextRun(p)]})));
+    });
+    const docFile=new Document({sections:[{children}]});
+    const blob=await Packer.toBlob(docFile);
+    const a=document.createElement('a');
+    a.href=URL.createObjectURL(blob); a.download=doc.filename; a.click();
+  }
+  } catch(e) {
+    alert('Download failed: '+e.message);
+  } finally {
+    dlBtn.textContent = '↓ Download';
+    dlBtn.disabled = false;
+  }
+}
+
+function toggleArtifactsPanel() {
+  document.getElementById('artifactsPanel').classList.toggle('hidden');
+}
+
+function closePreview() {
+  document.getElementById('previewPanel').classList.add('hidden');
+  document.getElementById('pvDl').style.display='none';
+  curDoc=null;
+}
+
+function renderArtifacts() {
+  const conv = convs[curConv];
+  const list = document.getElementById('artList');
+  if (!conv) { list.innerHTML='<div class="art-empty">Files you create will appear here.</div>'; return; }
+  const docs = conv.messages.filter(m=>m.doc).map(m=>m.doc);
+  if (!docs.length) { list.innerHTML='<div class="art-empty">Files you create will appear here — Excel, PowerPoint, Word docs.</div>'; return; }
+  const icons={excel:'📊',ppt:'📑',word:'📄'};
+  const types={excel:'Excel spreadsheet',ppt:'PowerPoint',word:'Word document'};
+  list.innerHTML = [...docs].reverse().map(doc => {
+    const encoded=encodeURIComponent(JSON.stringify(doc));
+    return `<div class="art-item" onclick="openDoc('${encoded}')">
+      <div class="art-icon">${icons[doc.type]||'📎'}</div>
+      <div class="art-info">
+        <div class="art-name">${esc(doc.filename)}</div>
+        <div class="art-meta">${types[doc.type]||'File'}</div>
+      </div>
+      <div class="art-dl">Open →</div>
+    </div>`;
+  }).join('');
+}
+
+// ══════════════════════════════════
+// SETTINGS
+// ══════════════════════════════════
+function toggleSettings() { document.getElementById('settingsOverlay').classList.toggle('open'); }
+function handleSettingsClick(e) { if(e.target===document.getElementById('settingsOverlay')) toggleSettings(); }
+
+function loadSettingsUI() {
+  document.getElementById('sClaudeKey').value=cfg.claudeKey;
+  document.getElementById('sOpenAIKey').value=cfg.openaiKey;
+  document.getElementById('sGeminiKey').value=cfg.geminiKey||'';
+  document.getElementById('sMistralKey').value=cfg.mistralKey||'';
+  document.getElementById('sBraveKey').value=cfg.braveKey||'';
+  document.getElementById('sOllamaUrl').value=cfg.ollamaUrl;
+  document.getElementById('sOllamaModel').value=cfg.ollamaModel;
+  document.getElementById('sLicenseKey').value=cfg.licenseKey||'';
+}
+
+function saveSettings() {
+  cfg.claudeKey=document.getElementById('sClaudeKey').value.trim();
+  cfg.openaiKey=document.getElementById('sOpenAIKey').value.trim();
+  cfg.geminiKey=document.getElementById('sGeminiKey').value.trim();
+  cfg.mistralKey=document.getElementById('sMistralKey').value.trim();
+  cfg.braveKey=document.getElementById('sBraveKey').value.trim();
+  cfg.ollamaUrl=document.getElementById('sOllamaUrl').value.trim();
+  cfg.ollamaModel=document.getElementById('sOllamaModel').value.trim();
+  cfg.licenseKey=document.getElementById('sLicenseKey').value.trim();
+  saveCfg();
+  buildProvSwitch();
+  updateStatus();
+  toggleSettings();
+}
+
+function resetApp() {
+  if (!confirm('Reset Aide? This clears your activation but keeps conversations.')) return;
+  cfg.activated=false; cfg.mode=null; cfg.licenseKey=''; cfg.licenseData=null;
+  saveCfg();
+  toggleSettings();
+  document.getElementById('app').classList.remove('active');
+  document.getElementById('activation').classList.add('active');
+}
+
+// ══════════════════════════════════
+// UTILS
+// ══════════════════════════════════
+function handleKey(e) { if(e.key==='Enter'&&!e.shiftKey){e.preventDefault();sendMsg();} }
+function autoResize(el) { el.style.height='auto'; el.style.height=Math.min(el.scrollHeight,140)+'px'; }
+function esc(t) { return String(t).replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;'); }
+
+function fmtMd(text) {
+  return esc(text)
+    .replace(/```([\s\S]*?)```/g,'<pre><code>$1</code></pre>')
+    .replace(/`([^`]+)`/g,'<code>$1</code>')
+    .replace(/\*\*(.+?)\*\*/g,'<strong>$1</strong>')
+    .replace(/\*(.+?)\*/g,'<em>$1</em>')
+    .replace(/^#{1,3} (.+)$/gm,'<strong>$1</strong>')
+    .replace(/^[-•] (.+)$/gm,'<li>$1</li>')
+    .replace(/(<li>[\s\S]*?<\/li>)/g,'<ul>$1</ul>')
+    .replace(/\n\n+/g,'</p><p>')
+    .replace(/\n/g,'<br>')
+    .replace(/^(?!<)(.+)/,'<p>$1</p>')
+    .replace(/<p><\/p>/g,'');
+}
+
+init();
+</script>
+</body>
+</html>
