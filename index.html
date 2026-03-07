@@ -1,5 +1,5 @@
 <!DOCTYPE html>
-<!-- Aide v0.36 -->
+<!-- Aide v0.37 -->
 <html lang="en">
 <head>
 <meta charset="UTF-8">
@@ -588,15 +588,11 @@ body{font-family:'DM Sans',sans-serif;background:var(--bg);color:var(--text);hei
 ════════════════════════════════ -->
 <div id="app" class="screen">
   <div class="topbar">
-    <div class="logo">Aide <span style="font-family:'DM Mono',monospace;font-size:10px;font-weight:400;color:var(--text-3);font-style:normal;letter-spacing:0;margin-left:2px">v0.36</span></div>
+    <div class="logo">Aide <span style="font-family:'DM Mono',monospace;font-size:10px;font-weight:400;color:var(--text-3);font-style:normal;letter-spacing:0;margin-left:2px">v0.37</span></div>
     <div class="tb-divider"></div>
-    <!-- Role picker -->
+    <!-- Role picker — pill buttons like model picker -->
     <div class="role-picker-wrap" id="rolePickerWrap">
-      <button class="role-btn" id="roleBtn" onclick="toggleRolePicker(event)">
-        <span class="rb-icon" id="roleBtnIcon">🎯</span>
-        <span id="roleBtnLabel">Executive</span>
-        <span class="rb-arr">▾</span>
-      </button>
+      <div class="prov-switch" id="roleSwitch"></div>
       <div class="role-dropdown" id="roleDropdown"></div>
     </div>
     <div class="topbar-right">
@@ -747,6 +743,11 @@ body{font-family:'DM Sans',sans-serif;background:var(--bg);color:var(--text);hei
 // CHANGELOG
 // ══════════════════════════════════════════════════════════
 const CHANGELOG = [
+  { version:'v0.37', date:'2026-03-07', changes:[
+    'File generation fixed — document parser now handles {type,data} format correctly',
+    'Role picker now shows as pill buttons (🎯 Executive | 📊 Analyst | …) matching model picker style',
+    'Memory sync: more robust key derivation, better error logging in console',
+  ]},
   { version:'v0.36', date:'2026-03-07', changes:[
     'Login crash fixed — appStatus element null-guarded throughout',
     'Branch fixed — was using wrong variable (currentConvId vs curConv)',
@@ -1135,17 +1136,21 @@ let encPassword = null;
 
 async function initSync() {
   if (!PRODUCT_CONFIG.SUPABASE_URL) return;
-  // Sync key = name (stable across devices) + fixed salt
-  // This means any device where you type the same name will sync the same data
-  const name = currentUser?.name || '';
-  const syncId = 'aide_user_' + name.toLowerCase().trim();
-  if (!name) return;
-  // Encryption password = name + a fixed app secret (keeps data private)
-  encPassword = syncId + '_enc_2026';
+  const name = (currentUser?.name || '').toLowerCase().replace(/[^a-z0-9]/g, '');
+  if (!name) { console.warn('Sync: no user name, skipping'); return; }
+  // Stable cross-device key — same name always hashes to same key
+  const syncId = 'aide_u_' + name;
+  encPassword = syncId + '_k26';
   keyHash = await hashKey(syncId);
+  console.log('Sync init for:', name, '→', keyHash.slice(0,8) + '…');
   setSyncStatus('syncing');
-  await pullFromSupabase();
-  setSyncStatus('synced');
+  try {
+    await pullFromSupabase();
+    setSyncStatus('synced');
+  } catch(e) {
+    console.error('Sync pull error:', e);
+    setSyncStatus('error');
+  }
 }
 
 function setSyncStatus(status) {
@@ -1191,7 +1196,7 @@ async function pushToSupabase() {
         updated_at: new Date().toISOString()
       })
     });
-    if (!res.ok) throw new Error('Push failed: ' + res.status);
+    if (!res.ok) { const t = await res.text(); throw new Error('Push failed: ' + res.status + ' ' + t); }
     setSyncStatus('synced');
   } catch(e) {
     console.error('Sync push error:', e);
@@ -2028,6 +2033,14 @@ const ROLE_TIER_STYLE = {
 };
 
 function renderRolePicker() {
+  // Pill buttons — one per role
+  const sw = document.getElementById('roleSwitch');
+  if (sw) {
+    sw.innerHTML = MODES.map(m =>
+      `<button class="pb ${cfg.activeMode===m.id?'active':''}" onclick="toggleRoleDropdown('${m.id}',event)">${m.icon} ${m.label}</button>`
+    ).join('');
+  }
+  // Dropdown — shows description for the active/hovered role
   const dropdown = document.getElementById('roleDropdown');
   if (!dropdown) return;
   const speedDots = arr => arr.map(on => `<span class="${on?'on':''}"></span>`).join('');
@@ -2043,27 +2056,30 @@ function renderRolePicker() {
         <div class="cp-tier" style="${ROLE_TIER_STYLE[m.id]||''}">${m.label.split(' ')[0]}</div>
       </div>
     </div>`).join('');
-  // Update trigger button
-  const active = MODES.find(m => m.id === cfg.activeMode) || MODES[0];
-  const btnIcon  = document.getElementById('roleBtnIcon');
-  const btnLabel = document.getElementById('roleBtnLabel');
-  if (btnIcon)  btnIcon.textContent  = active.icon;
-  if (btnLabel) btnLabel.textContent = active.label;
 }
 
-function toggleRolePicker(e) {
+function toggleRoleDropdown(modeId, e) {
   e.stopPropagation();
   const dd = document.getElementById('roleDropdown');
   const wrap = document.getElementById('rolePickerWrap');
   if (!dd) return;
-  const isOpen = dd.classList.contains('show');
-  document.querySelectorAll('.role-dropdown,.card-picker').forEach(el => el.classList.remove('show'));
-  document.querySelectorAll('.role-picker-wrap,.model-picker-wrap').forEach(el => el.classList.remove('open'));
-  if (!isOpen) {
-    if (!dd.children.length) renderRolePicker();
-    dd.classList.add('show');
-    if (wrap) wrap.classList.add('open');
+  // If clicking the already-active mode, just activate it directly (no dropdown needed)
+  if (cfg.activeMode === modeId && dd.classList.contains('show')) {
+    dd.classList.remove('show');
+    wrap?.classList.remove('open');
+    return;
   }
+  // Close model picker
+  document.getElementById('cardPicker')?.classList.remove('show');
+  document.getElementById('modelPickerWrap')?.classList.remove('open');
+  dd.classList.add('show');
+  wrap?.classList.add('open');
+}
+
+function toggleRolePicker(e) {
+  // Legacy — just close if open
+  document.getElementById('roleDropdown')?.classList.remove('show');
+  document.getElementById('rolePickerWrap')?.classList.remove('open');
 }
 
 function setMode(id) {
@@ -2670,10 +2686,15 @@ async function sendMsg() {
     if (docMatch) {
       try {
         const p = JSON.parse(docMatch[1].trim());
-        if (p.excel) doc={type:'excel',filename:p.excel.filename||'spreadsheet.xlsx',data:p.excel};
-        else if (p.ppt) doc={type:'ppt',filename:p.ppt.filename||'presentation.pptx',data:p.ppt};
-        else if (p.word) doc={type:'word',filename:p.word.filename||'document.docx',data:p.word};
-      } catch(e){}
+        // Format A: {"type":"excel","filename":"...","data":{...}}  ← current schema
+        if (p.type && p.data) {
+          doc = { type: p.type, filename: p.filename || (p.type+'.'+{excel:'xlsx',ppt:'pptx',word:'docx'}[p.type]||p.type), data: p.data };
+        }
+        // Format B: {"excel":{...}}  ← legacy
+        else if (p.excel) doc={type:'excel',filename:p.excel.filename||'spreadsheet.xlsx',data:p.excel};
+        else if (p.ppt)   doc={type:'ppt',  filename:p.ppt.filename||'presentation.pptx',data:p.ppt};
+        else if (p.word)  doc={type:'word', filename:p.word.filename||'document.docx',    data:p.word};
+      } catch(e){ console.error('Doc parse error:', e); }
     }
 
     appendMsg('assistant', raw, display||raw, doc);
@@ -3431,7 +3452,7 @@ init();
 // ══════════════════════════════════════════════════════════════
 
 // ── Service Worker registration ───────────────────────────────
-const APP_VERSION = 'v0.36';
+const APP_VERSION = 'v0.37';
 if ('serviceWorker' in navigator) {
   window.addEventListener('load', async () => {
     // Unregister all old service workers and clear all caches on version change
