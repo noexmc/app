@@ -1540,6 +1540,7 @@ async function activateBYOK() {
 // ══════════════════════════════════════════════════════════════════════
 
 const PASSKEY_RP_NAME = 'Aide';
+// Domain: noexmc.github.io — rpId is intentionally omitted so browser auto-matches
 
 function b64url(buf) {
   return btoa(String.fromCharCode(...new Uint8Array(buf)))
@@ -1553,10 +1554,8 @@ function b64urlDecode(s) {
 function passkeySupported() {
   return !!(window.PublicKeyCredential && navigator.credentials?.create);
 }
-function getRpId() {
-  // localhost or real domain
-  return window.location.hostname || 'localhost';
-}
+// rpId intentionally omitted from all WebAuthn calls —
+// browser uses the current origin automatically, which always matches.
 
 // ── Load / save passkey store (localStorage) ─────────────────────────
 function loadPasskeys() {
@@ -1582,7 +1581,7 @@ async function passkeySetup() {
     document.getElementById('setupBtn').textContent = 'Waiting for Face ID…';
     const cred = await navigator.credentials.create({ publicKey: {
       challenge,
-      rp: { name: PASSKEY_RP_NAME, id: getRpId() },
+      rp: { name: PASSKEY_RP_NAME },
       user: {
         id: new TextEncoder().encode(userId),
         name: name,
@@ -1650,7 +1649,7 @@ async function passkeySignIn() {
       allowCredentials: stored.map(s => ({
         type: 'public-key',
         id: b64urlDecode(s.credId),
-        transports: ['internal'],
+        transports: ['internal', 'hybrid'],
       })),
       userVerification: 'required',
       timeout: 60000,
@@ -3332,7 +3331,7 @@ async function passkeyAddAnother() {
   try {
     const cred = await navigator.credentials.create({ publicKey: {
       challenge,
-      rp: { name: PASSKEY_RP_NAME, id: getRpId() },
+      rp: { name: PASSKEY_RP_NAME },
       user: {
         id: new TextEncoder().encode((currentUser.id||'user').slice(0,32).padEnd(32,'0')),
         name: currentUser.name||'User', displayName: currentUser.name||'User',
