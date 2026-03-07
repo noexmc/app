@@ -52,32 +52,69 @@ body{font-family:'DM Sans',sans-serif;background:var(--bg);color:var(--text);hei
 .screen{display:none;width:100%;height:100%}
 .screen.active{display:flex}
 
-
-
-
 /* ════════════════════
-   AUTH SCREEN
+   ACTIVATION SCREEN
 ════════════════════ */
-#authScreen{align-items:center;justify-content:center;background:var(--bg)}
-.auth-wrap{width:100%;height:100%;display:flex;align-items:center;justify-content:center;padding:24px}
-.auth-card{width:100%;max-width:360px;background:var(--surface);border:1px solid var(--border);border-radius:16px;padding:36px 32px;box-shadow:0 8px 30px rgba(0,0,0,.10)}
-.auth-logo{font-family:'DM Serif Display',serif;font-size:24px;letter-spacing:-.02em;font-style:italic;margin-bottom:4px}
-.auth-logo span{font-family:'DM Sans',sans-serif;font-size:13px;color:var(--text-3);font-style:normal;font-weight:400;margin-left:6px}
-.auth-tagline{font-size:12px;color:var(--text-3);margin-bottom:28px}
-.auth-view{display:none}.auth-view.active{display:block}
-.auth-title{font-size:17px;font-weight:600;color:var(--text);margin-bottom:6px}
-.auth-sub{font-size:13px;color:var(--text-2);line-height:1.5;margin-bottom:20px}
-.auth-btn{width:100%;padding:11px;border-radius:8px;font-family:'DM Sans',sans-serif;font-size:13px;font-weight:600;cursor:pointer;transition:all .15s;margin-bottom:8px;border:none;display:flex;align-items:center;justify-content:center;gap:8px}
-.auth-btn-primary{background:var(--text);color:#fff}.auth-btn-primary:hover{opacity:.85}
-.auth-btn-ghost{background:transparent;border:1.5px solid var(--border)!important;color:var(--text-2)}.auth-btn-ghost:hover{border-color:var(--text)!important;color:var(--text)}
-.auth-input{width:100%;padding:9px 12px;border:1px solid var(--border);border-radius:8px;font-family:'DM Sans',sans-serif;font-size:13px;color:var(--text);background:var(--surface);outline:none;transition:border .15s;box-sizing:border-box;margin-bottom:10px}
-.auth-input:focus{border-color:var(--accent);box-shadow:0 0 0 3px rgba(28,28,26,.06)}
-.auth-error{font-size:12px;color:var(--red);min-height:16px;margin-bottom:8px}
-.auth-divider{text-align:center;font-size:11px;color:var(--text-3);margin:10px 0;position:relative}
-.auth-divider::before,.auth-divider::after{content:'';position:absolute;top:50%;width:42%;height:1px;background:var(--border)}
-.auth-divider::before{left:0}.auth-divider::after{right:0}
-.auth-link{font-size:12px;color:var(--text-3);text-align:center;margin-top:14px;padding-top:14px;border-top:1px solid var(--border)}
-.auth-link a{color:var(--text-3);text-decoration:none;font-weight:500}.auth-link a:hover{color:var(--text)}
+#activation{align-items:center;justify-content:center;flex-direction:column;background:var(--bg);position:relative;overflow:hidden}
+#activation::before{content:'';position:absolute;width:500px;height:500px;background:radial-gradient(circle,rgba(42,110,71,0.07) 0%,transparent 70%);top:-80px;right:-80px;pointer-events:none}
+
+.act-card{background:var(--surface);border:1px solid var(--border);border-radius:var(--r-lg);box-shadow:var(--sh-lg);width:480px;max-width:calc(100vw - 32px);animation:cardIn .35s cubic-bezier(.16,1,.3,1)}
+@keyframes cardIn{from{opacity:0;transform:translateY(14px) scale(.98)}to{opacity:1;transform:translateY(0) scale(1)}}
+
+.act-header{padding:28px 32px 22px;border-bottom:1px solid var(--border-light)}
+.act-logo{font-family:'DM Serif Display',serif;font-size:26px;letter-spacing:-.02em;font-style:italic}
+.act-logo span{color:var(--text-3);font-size:16px;font-style:normal;font-family:'DM Sans',sans-serif;font-weight:400;margin-left:4px}
+.act-tagline{font-size:13px;color:var(--text-3);margin-top:5px}
+
+.act-body{padding:26px 32px 30px;display:flex;flex-direction:column;gap:0}
+
+.act-tabs{display:flex;background:var(--surface2);border:1px solid var(--border);border-radius:var(--r-sm);padding:3px;gap:2px;margin-bottom:22px}
+.act-tab{flex:1;padding:8px;border:none;background:transparent;border-radius:4px;font-family:'DM Sans',sans-serif;font-size:13px;font-weight:500;cursor:pointer;color:var(--text-3);transition:all .15s}
+.act-tab.active{background:var(--surface);color:var(--text);box-shadow:0 1px 3px rgba(0,0,0,0.06)}
+
+/* Managed tab */
+.managed-pane,.byok-pane{display:none;flex-direction:column;gap:14px}
+.managed-pane.show,.byok-pane.show{display:flex}
+
+.plan-grid{display:grid;grid-template-columns:1fr 1fr 1fr;gap:8px}
+.plan-card{border:2px solid var(--border);border-radius:var(--r);padding:12px 10px;cursor:pointer;transition:all .15s;text-align:center;background:var(--surface);position:relative}
+.plan-card:hover{border-color:var(--text-2)}
+.plan-card.selected{border-color:var(--accent);background:var(--surface2)}
+.plan-price{font-size:18px;font-weight:600;letter-spacing:-.02em;color:var(--text)}
+.plan-name{font-size:11px;font-weight:600;color:var(--text-2);margin-top:3px}
+.plan-detail{font-size:10.5px;color:var(--text-3);margin-top:2px;line-height:1.3}
+.plan-badge{position:absolute;top:-8px;left:50%;transform:translateX(-50%);background:var(--green);color:#fff;font-size:9px;font-weight:600;padding:2px 7px;border-radius:10px;white-space:nowrap;text-transform:uppercase;letter-spacing:.04em}
+
+.act-label{font-size:11px;font-weight:600;color:var(--text-3);text-transform:uppercase;letter-spacing:.06em;display:block;margin-bottom:6px}
+.act-input{width:100%;padding:10px 12px;border:1.5px solid var(--border);border-radius:var(--r-sm);font-family:'DM Mono',monospace;font-size:13px;color:var(--text);background:var(--bg);outline:none;transition:border-color .15s}
+.act-input:focus{border-color:var(--accent)}
+.act-input::placeholder{color:var(--text-3);font-family:'DM Sans',sans-serif}
+
+.act-btn{width:100%;padding:11px;background:var(--accent);color:#fff;border:none;border-radius:var(--r-sm);font-family:'DM Sans',sans-serif;font-size:14px;font-weight:500;cursor:pointer;transition:opacity .15s}
+.act-btn:hover{opacity:.85}
+.act-btn:disabled{opacity:.4;cursor:not-allowed}
+.act-btn-ghost{width:100%;padding:10px;background:transparent;color:var(--text-2);border:1.5px solid var(--border);border-radius:var(--r-sm);font-family:'DM Sans',sans-serif;font-size:13px;cursor:pointer;transition:all .15s}
+.act-btn-ghost:hover{border-color:var(--text-2);color:var(--text)}
+
+.info-pill{display:inline-flex;align-items:center;gap:5px;padding:5px 10px;border-radius:20px;font-size:12px}
+.info-pill.green{background:var(--green-bg);color:var(--green)}
+.info-pill.amber{background:var(--amber-bg);color:var(--amber)}
+.info-pill.blue{background:var(--blue-bg);color:var(--blue)}
+
+.act-result{padding:9px 12px;border-radius:var(--r-sm);font-size:12.5px;display:none;margin-top:4px}
+.act-result.success{background:var(--green-bg);color:var(--green);display:block}
+.act-result.error{background:var(--red-bg);color:var(--red);display:block}
+
+/* Provider guide steps */
+.provider-steps{background:var(--surface2);border:1px solid var(--border);border-radius:var(--r);padding:14px 16px;display:flex;flex-direction:column;gap:10px}
+.ps-row{display:flex;gap:10px;align-items:flex-start;font-size:13px;color:var(--text-2);line-height:1.45}
+.ps-num{width:20px;height:20px;border-radius:50%;background:var(--accent);color:#fff;font-size:11px;font-weight:600;display:flex;align-items:center;justify-content:center;flex-shrink:0;margin-top:1px}
+.ps-row a{color:var(--green);text-decoration:none;font-weight:500}
+.ps-row a:hover{text-decoration:underline}
+.pstep{display:none}.pstep.show{display:flex;flex-direction:column;gap:14px}
+.byok-provider-row{display:flex;gap:6px;margin-bottom:4px}
+.bpr-btn{flex:1;padding:7px 8px;border:1.5px solid var(--border);border-radius:var(--r-sm);background:var(--surface);cursor:pointer;font-family:'DM Sans',sans-serif;font-size:12px;font-weight:500;color:var(--text-2);transition:all .15s;text-align:center}
+.bpr-btn.selected{border-color:var(--accent);background:var(--surface2);color:var(--text)}
 
 /* ════════════════════
    MAIN APP
@@ -130,7 +167,37 @@ body{font-family:'DM Sans',sans-serif;background:var(--bg);color:var(--text);hei
 .tb-btn{width:30px;height:30px;border:1px solid var(--border);border-radius:var(--r-sm);background:var(--surface);cursor:pointer;display:flex;align-items:center;justify-content:center;color:var(--text-2);transition:all .15s;font-size:15px}
 .tb-btn:hover{background:var(--surface2);color:var(--text)}
 
+/* Passkey button */
+.passkey-btn{width:100%;padding:11px;background:var(--text);color:#fff;border:none;border-radius:8px;font-family:'DM Sans',sans-serif;font-size:13px;font-weight:600;cursor:pointer;display:flex;align-items:center;justify-content:center;gap:8px;margin-bottom:8px;transition:opacity .15s}
+.passkey-btn:hover{opacity:.88}
+.passkey-btn svg{flex-shrink:0}
+.passkey-divider{display:flex;align-items:center;gap:10px;margin:10px 0;color:var(--text-3);font-size:11px}
+.passkey-divider::before,.passkey-divider::after{content:'';flex:1;height:1px;background:var(--border)}
 
+/* Auth Screen */
+.auth-wrap{display:flex;align-items:center;justify-content:center;width:100%;height:100%;background:var(--bg);padding:24px}
+.auth-card{width:100%;max-width:380px;background:var(--surface);border:1px solid var(--border);border-radius:16px;padding:36px 32px;box-shadow:0 4px 24px rgba(0,0,0,.07)}
+.auth-logo{font-family:'DM Serif Display',serif;font-size:22px;color:var(--text);letter-spacing:-.02em}
+.auth-logo span{font-family:'DM Sans',sans-serif;font-size:13px;color:var(--text-3);font-style:italic;font-weight:400}
+.auth-tagline{font-size:12px;color:var(--text-3);margin-top:3px;margin-bottom:28px}
+.auth-view{display:none}.auth-view.active{display:block}
+.auth-title{font-size:18px;font-weight:600;color:var(--text);margin-bottom:16px}
+.auth-subtitle{font-size:13px;color:var(--text-2);line-height:1.5;margin-bottom:18px}
+.auth-field{margin-bottom:12px}
+.auth-label{display:block;font-size:11px;font-weight:600;color:var(--text-2);margin-bottom:5px;letter-spacing:.02em}
+.auth-input{width:100%;padding:9px 12px;border:1px solid var(--border);border-radius:8px;font-family:'DM Sans',sans-serif;font-size:13px;color:var(--text);background:var(--surface);outline:none;transition:border .15s;box-sizing:border-box}
+.auth-input:focus{border-color:var(--accent);box-shadow:0 0 0 3px rgba(26,58,92,.08)}
+.auth-btn{width:100%;padding:10px;border-radius:8px;font-family:'DM Sans',sans-serif;font-size:13px;font-weight:600;cursor:pointer;transition:all .15s;margin-bottom:8px;border:none}
+.auth-btn-primary{background:var(--accent);color:#fff}.auth-btn-primary:hover{opacity:.9}
+.auth-btn-ghost{background:transparent;border:1px solid var(--border)!important;color:var(--text-2)}.auth-btn-ghost:hover{border-color:var(--text-2)!important;color:var(--text)}
+.auth-divider{display:flex;align-items:center;gap:10px;margin:8px 0;color:var(--text-3);font-size:11px}
+.auth-divider::before,.auth-divider::after{content:'';flex:1;height:1px;background:var(--border)}
+.auth-switch{font-size:12px;color:var(--text-3);text-align:center;margin-top:6px}
+.auth-switch a{color:var(--accent);text-decoration:none;font-weight:500}
+.auth-demo-row{font-size:11px;color:var(--text-3);text-align:center;margin-top:14px;padding-top:14px;border-top:1px solid var(--border)}
+.auth-demo-row a{color:var(--text-3);text-decoration:none}.auth-demo-row a:hover{color:var(--text)}
+.auth-error{font-size:12px;color:var(--red);min-height:16px;margin-bottom:6px}
+.auth-icon-lg{font-size:40px;text-align:center;margin-bottom:12px}
 /* User row in sidebar footer */
 .user-row{display:flex;align-items:center;justify-content:space-between;margin-top:8px;padding-top:8px;border-top:1px solid var(--border-light)}
 .user-email{font-size:10px;color:var(--text-3);overflow:hidden;text-overflow:ellipsis;white-space:nowrap;flex:1;font-family:'DM Mono',monospace}
@@ -545,7 +612,6 @@ body{font-family:'DM Sans',sans-serif;background:var(--bg);color:var(--text);hei
   }
 }
 </style>
-<script src="paparapupi.js"></script>
 </head>
 <body>
 
@@ -574,46 +640,193 @@ body{font-family:'DM Sans',sans-serif;background:var(--bg);color:var(--text);hei
 <div id="authScreen" class="screen active">
   <div class="auth-wrap">
     <div class="auth-card">
-      <div class="auth-logo">Aide <span>/ private AI</span></div>
+      <div class="auth-logo">Aide <span>/ private AI assistant</span></div>
       <div class="auth-tagline">Your AI. Your data. Nobody else's.</div>
 
-      <!-- VIEW: face id login (returning user) -->
+      <!-- VIEW: returning user with passkey registered -->
       <div class="auth-view active" id="authView_login">
         <div class="auth-title">Welcome back</div>
-        <button class="auth-btn auth-btn-primary" onclick="passkeySignIn()">
-          <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><rect x="3" y="11" width="18" height="11" rx="2"/><path d="M7 11V7a5 5 0 0 1 10 0v4"/></svg>
+        <button class="passkey-btn" onclick="passkeySignIn()">
+          <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><rect x="3" y="11" width="18" height="11" rx="2" ry="2"/><path d="M7 11V7a5 5 0 0 1 10 0v4"/></svg>
           Sign in with Face ID / Touch ID
         </button>
-        <div class="auth-error" id="loginError"></div>
-        <div class="auth-link">
-          First time on this device? <a href="#" onclick="setAuthView('setup');return false">Set up →</a>
-          &nbsp;·&nbsp; <a href="#" onclick="setAuthView('friends');return false">Guest access</a>
+        <div class="auth-error" id="authError"></div>
+        <div class="auth-demo-row" style="margin-top:16px">
+          First time? <a href="#" onclick="setAuthView('setup');return false">Set up this device →</a>
+        </div>
+        <div class="auth-demo-row"><a href="#" onclick="tryDemoFromAuth();return false">Try without an account (5 messages)</a></div>
+      </div>
+
+      <!-- VIEW: first-time setup — just a name, then Face ID -->
+      <div class="auth-view" id="authView_setup">
+        <div class="auth-title">Set up Aide</div>
+        <div class="auth-subtitle">No email needed. Just choose a name and register your device with Face ID or Touch ID.</div>
+        <div class="auth-field">
+          <label class="auth-label">Your name</label>
+          <input class="auth-input" id="setupName" type="text" placeholder="Alex" autocomplete="name"
+            onkeydown="if(event.key==='Enter')passkeySetup()" />
+        </div>
+        <div class="auth-error" id="setupError"></div>
+        <button class="passkey-btn" onclick="passkeySetup()" id="setupBtn">
+          <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><rect x="3" y="11" width="18" height="11" rx="2" ry="2"/><path d="M7 11V7a5 5 0 0 1 10 0v4"/></svg>
+          Register with Face ID / Touch ID
+        </button>
+        <div class="auth-demo-row" style="margin-top:10px">
+          <a href="#" onclick="setAuthView('login');return false">← Back</a>
         </div>
       </div>
 
-      <!-- VIEW: first-time setup -->
-      <div class="auth-view" id="authView_setup">
-        <div class="auth-title">Set up this device</div>
-        <div class="auth-sub">Enter your name and register with Face ID or Touch ID. No email needed.</div>
-        <input class="auth-input" id="setupName" type="text" placeholder="Your name (e.g. Alex)"
-          autocomplete="name" onkeydown="if(event.key==='Enter')passkeySetup()" />
-        <div class="auth-error" id="setupError"></div>
-        <button class="auth-btn auth-btn-primary" onclick="passkeySetup()" id="setupBtn">
-          <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><rect x="3" y="11" width="18" height="11" rx="2"/><path d="M7 11V7a5 5 0 0 1 10 0v4"/></svg>
-          Register with Face ID / Touch ID
-        </button>
-        <div class="auth-link"><a href="#" onclick="setAuthView('login');return false">← Back</a></div>
+      <!-- VIEW: not supported fallback -->
+      <div class="auth-view" id="authView_fallback">
+        <div class="auth-icon-lg">🔒</div>
+        <div class="auth-title">Passkeys not supported</div>
+        <div class="auth-subtitle">Your browser doesn't support passkeys. Use a modern browser (Safari on iPhone, Chrome on desktop) or continue without an account.</div>
+        <button class="auth-btn auth-btn-primary" onclick="tryDemoFromAuth()">Continue without account</button>
       </div>
 
-      <!-- VIEW: guest / friends access -->
-      <div class="auth-view" id="authView_friends">
-        <div class="auth-title">Guest access</div>
-        <div class="auth-sub">Enter the access password. Each session is fresh — 10 messages.</div>
-        <input class="auth-input" id="friendsPassword" type="password" placeholder="Password"
-          onkeydown="if(event.key==='Enter')friendsSignIn()" />
-        <div class="auth-error" id="friendsError"></div>
-        <button class="auth-btn auth-btn-primary" onclick="friendsSignIn()">Enter</button>
-        <div class="auth-link"><a href="#" onclick="setAuthView('login');return false">← Back</a></div>
+    </div>
+  </div>
+</div>
+
+<!-- ════════════════════════════════
+     ACTIVATION SCREEN (BYOK only path)
+════════════════════════════════ -->
+<div id="activation" class="screen">
+  <div class="act-card">
+    <div class="act-header">
+      <div class="act-logo">Aide <span>/ private AI assistant</span></div>
+      <div class="act-tagline">Your AI. Your data. Nobody else's.</div>
+    </div>
+    <div class="act-body">
+
+      <div class="act-tabs">
+        <button class="act-tab active" onclick="switchActTab('managed',this)">✦ Managed — we handle it</button>
+        <button class="act-tab" onclick="switchActTab('byok',this)">🔑 Bring your own key</button>
+      </div>
+
+      <!-- MANAGED PANE -->
+      <div class="managed-pane show" id="managedPane">
+        <div class="plan-grid" id="planGrid">
+          <div class="plan-card" onclick="selectPlan('starter',this)">
+            <div class="plan-price">$9<span style="font-size:12px;font-weight:400;color:var(--text-3)">/mo</span></div>
+            <div class="plan-name">Starter</div>
+            <div class="plan-detail">500 msgs/month<br>Fast model</div>
+          </div>
+          <div class="plan-card selected" onclick="selectPlan('pro',this)">
+            <div class="plan-badge">Most popular</div>
+            <div class="plan-price">$19<span style="font-size:12px;font-weight:400;color:var(--text-3)">/mo</span></div>
+            <div class="plan-name">Pro</div>
+            <div class="plan-detail">Unlimited msgs<br>Best model</div>
+          </div>
+          <div class="plan-card" onclick="selectPlan('byok_lifetime',this)">
+            <div class="plan-price">$49<span style="font-size:12px;font-weight:400;color:var(--text-3)"> once</span></div>
+            <div class="plan-name">Lifetime</div>
+            <div class="plan-detail">Own key included<br>Forever</div>
+          </div>
+        </div>
+
+        <div>
+          <label class="act-label">License key</label>
+          <input class="act-input" id="licenseKeyInput" type="text" placeholder="AIDE-XXXX-XXXX-XXXX" autocomplete="off" spellcheck="false" oninput="formatLicenseInput(this)" />
+        </div>
+
+        <div style="font-size:12.5px;color:var(--text-2);line-height:1.5">
+          Don't have a key? <a href="#" onclick="openCheckout(event)" style="color:var(--green);font-weight:500;text-decoration:none">Get one at aide.app →</a>
+        </div>
+
+        <div id="licenseResult" class="act-result"></div>
+        <button class="act-btn" id="activateBtn" onclick="activateLicense()">Activate</button>
+        <button class="act-btn-ghost" onclick="tryDemoFromAuth()">Try demo (5 free messages)</button>
+      </div>
+
+      <!-- BYOK PANE -->
+      <div class="byok-pane" id="byokPane">
+        <div>
+          <label class="act-label">Choose your AI provider</label>
+          <div class="byok-provider-row">
+            <button class="bpr-btn selected" onclick="selectBYOKProvider('claude',this)">🤖 Claude</button>
+            <button class="bpr-btn" onclick="selectBYOKProvider('openai',this)">⚡ ChatGPT</button>
+            <button class="bpr-btn" onclick="selectBYOKProvider('gemini',this)">✦ Gemini</button>
+            <button class="bpr-btn" onclick="selectBYOKProvider('mistral',this)">🌊 Mistral</button>
+            <button class="bpr-btn" onclick="selectBYOKProvider('ollama',this)">💻 Local</button>
+          </div>
+        </div>
+
+        <!-- Claude steps -->
+        <div class="pstep show" id="bpClaude">
+          <div class="provider-steps">
+            <div class="ps-row"><div class="ps-num">1</div><div>Go to <a href="https://console.anthropic.com" target="_blank">console.anthropic.com</a> → create free account</div></div>
+            <div class="ps-row"><div class="ps-num">2</div><div>API Keys → <strong>Create Key</strong> → copy it</div></div>
+            <div class="ps-row"><div class="ps-num">3</div><div>Add billing (pay-as-you-go, ~$1–3/month typical use)</div></div>
+          </div>
+          <div>
+            <label class="act-label">Your Claude API key</label>
+            <input class="act-input" id="claudeKeyBYOK" type="password" placeholder="sk-ant-api03-..." />
+          </div>
+          <select class="act-input" id="claudeModelBYOK" style="font-family:'DM Sans',sans-serif;font-size:13px">
+            <option value="claude-sonnet-4-20250514">Claude Sonnet 4 — best quality</option>
+            <option value="claude-haiku-4-5-20251001">Claude Haiku 4.5 — faster & cheaper</option>
+          </select>
+        </div>
+
+        <!-- OpenAI steps -->
+        <div class="pstep" id="bpOpenAI">
+          <div class="provider-steps">
+            <div class="ps-row"><div class="ps-num">1</div><div>Go to <a href="https://platform.openai.com" target="_blank">platform.openai.com</a> → sign in</div></div>
+            <div class="ps-row"><div class="ps-num">2</div><div>Profile → API keys → <strong>Create new secret key</strong></div></div>
+            <div class="ps-row"><div class="ps-num">3</div><div>Copy the key (starts with <code style="font-family:monospace;font-size:11px;background:#f0efe9;padding:1px 4px;border-radius:3px">sk-</code>)</div></div>
+          </div>
+          <div>
+            <label class="act-label">Your OpenAI API key</label>
+            <input class="act-input" id="openaiKeyBYOK" type="password" placeholder="sk-..." />
+          </div>
+          <select class="act-input" id="openaiModelBYOK" style="font-family:'DM Sans',sans-serif;font-size:13px">
+            <option value="gpt-4o">GPT-4o — best quality</option>
+            <option value="gpt-4o-mini">GPT-4o mini — fast & cheap</option>
+          </select>
+        </div>
+
+        <!-- Ollama steps -->
+        <div class="pstep" id="bpOllama">
+          <div class="provider-steps">
+            <div class="ps-row"><div class="ps-num">1</div><div>Download <a href="https://ollama.com" target="_blank">ollama.com</a> → drag to Applications</div></div>
+            <div class="ps-row"><div class="ps-num">2</div><div>Open Terminal → run: <code style="font-family:monospace;font-size:11px;background:#1C1C1A;color:#a8e6c0;padding:2px 6px;border-radius:3px">ollama pull qwen2.5:14b</code></div></div>
+            <div class="ps-row"><div class="ps-num">3</div><div>Keep Ollama running in your menu bar. 100% free & offline.</div></div>
+          </div>
+          <input class="act-input" id="ollamaUrlBYOK" type="text" value="http://localhost:11434" placeholder="Ollama URL" />
+          <input class="act-input" id="ollamaModelBYOK" type="text" value="qwen2.5:14b" placeholder="Model name" />
+        </div>
+
+        <!-- Gemini steps -->
+        <div class="pstep" id="bpGemini">
+          <div class="provider-steps">
+            <div class="ps-row"><div class="ps-num">1</div><div>Go to <a href="https://aistudio.google.com" target="_blank">aistudio.google.com</a> → sign in with Google</div></div>
+            <div class="ps-row"><div class="ps-num">2</div><div>Click <strong>Get API key</strong> → <strong>Create API key</strong></div></div>
+            <div class="ps-row"><div class="ps-num">3</div><div>Free tier available — no billing required to start</div></div>
+          </div>
+          <input class="act-input" id="geminiKeyBYOK" type="password" placeholder="AIzaSy..." />
+          <select class="act-input" id="geminiModelBYOK" style="font-family:'DM Sans',sans-serif;font-size:13px">
+            <option value="gemini-2.0-flash">Gemini 2.0 Flash — fast & free</option>
+            <option value="gemini-2.0-pro-exp">Gemini 2.0 Pro — best quality</option>
+          </select>
+        </div>
+
+        <!-- Mistral steps -->
+        <div class="pstep" id="bpMistral">
+          <div class="provider-steps">
+            <div class="ps-row"><div class="ps-num">1</div><div>Go to <a href="https://console.mistral.ai" target="_blank">console.mistral.ai</a> → create account</div></div>
+            <div class="ps-row"><div class="ps-num">2</div><div>API Keys → <strong>Create new key</strong> → copy it</div></div>
+            <div class="ps-row"><div class="ps-num">3</div><div>Free trial credits included — no card needed initially</div></div>
+          </div>
+          <input class="act-input" id="mistralKeyBYOK" type="password" placeholder="Mistral API key..." />
+          <select class="act-input" id="mistralModelBYOK" style="font-family:'DM Sans',sans-serif;font-size:13px">
+            <option value="mistral-small-latest">Mistral Small — fast & cheap</option>
+            <option value="mistral-large-latest">Mistral Large — best quality</option>
+          </select>
+        </div>
+
+        <div id="byokResult" class="act-result"></div>
+        <button class="act-btn" onclick="activateBYOK()">Test & start →</button>
       </div>
 
     </div>
@@ -624,17 +837,11 @@ body{font-family:'DM Sans',sans-serif;background:var(--bg);color:var(--text);hei
      MAIN APP
 ════════════════════════════════ -->
 <div id="app" class="screen">
-  <!-- Hidden utility elements referenced by JS -->
-  <div id="aideToast" style="display:none;position:fixed;bottom:80px;left:50%;transform:translateX(-50%);background:var(--text);color:#fff;padding:8px 16px;border-radius:20px;font-size:12px;font-weight:500;z-index:9999;pointer-events:none"></div>
-  <div id="branchBar" style="display:none"></div>
-  <span id="branchBarLabel"></span>
-  <div id="searchIndicator" style="display:none"></div>
-  <div id="typing" style="display:none"></div>
   <div class="topbar">
     <button class="mob-menu-btn" id="mobMenuBtn" onclick="toggleMobileSidebar()" style="display:none" title="Menu">
       <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"><line x1="3" y1="6" x2="21" y2="6"/><line x1="3" y1="12" x2="21" y2="12"/><line x1="3" y1="18" x2="21" y2="18"/></svg>
     </button>
-    <div class="logo">Aide <span style="font-family:'DM Mono',monospace;font-size:9px;font-weight:400;color:var(--text-3);letter-spacing:0;vertical-align:middle;margin-left:2px" id="appVersion"></span></div>
+    <div class="logo">Aide</div>
     <div class="tb-divider"></div>
     <div class="status-pill">
       <div class="sdot on" id="appDot"></div>
@@ -775,41 +982,39 @@ body{font-family:'DM Sans',sans-serif;background:var(--bg);color:var(--text);hei
       <button class="btn-ghost-sm" style="width:auto;padding:5px 10px;font-size:12px;margin:0" onclick="toggleSettings()">Close</button>
     </div>
     <div class="drawer-body">
-      <!-- Proxy status banner — shown when AIDE_SECRET is configured -->
-      <div id="proxyBanner" style="display:none;background:var(--green-bg);border:1px solid #b2dfca;border-radius:var(--r-sm);padding:9px 12px;margin-bottom:10px;font-size:12px;color:var(--green);line-height:1.5">
-        <b>🔒 Secure proxy active</b><br>
-        <span style="color:var(--text-2)">All AI calls route through your private Railway server. No keys needed here.</span>
+      <div class="sg"><div class="sl">Claude API key</div><input class="si" id="sClaudeKey" type="password" placeholder="sk-ant-..." /></div>
+      <div class="sg"><div class="sl">OpenAI API key</div><input class="si" id="sOpenAIKey" type="password" placeholder="sk-..." /></div>
+      <div class="sg"><div class="sl">Gemini API key</div><input class="si" id="sGeminiKey" type="password" placeholder="AIza..." /></div>
+      <div class="sg"><div class="sl">Mistral API key</div><input class="si" id="sMistralKey" type="password" placeholder="..." /></div>
+      <div class="sg">
+        <div class="sl" style="display:flex;align-items:center;gap:6px">OpenRouter key <span style="font-size:9px;background:#E8F0FF;color:#1A4D8F;padding:1px 5px;border-radius:8px;font-weight:600">300+ models</span></div>
+        <input class="si" id="sOpenRouterKey" type="password" placeholder="sk-or-v1-..." />
+        <div style="font-size:10.5px;color:var(--text-3);margin-top:4px">Claude, GPT-4o, Gemini, DeepSeek, Llama, Grok and more. <a href="https://openrouter.ai/keys" target="_blank" style="color:var(--green)">Get key →</a></div>
       </div>
-      <!-- Key fields — hidden when proxy is active -->
-      <div id="keyFieldsSection">
-        <div class="sg"><div class="sl">Claude API key</div><input class="si" id="sClaudeKey" type="password" placeholder="sk-ant-..." /></div>
-        <div class="sg"><div class="sl">OpenAI API key</div><input class="si" id="sOpenAIKey" type="password" placeholder="sk-..." /></div>
-        <div class="sg"><div class="sl">Gemini API key</div><input class="si" id="sGeminiKey" type="password" placeholder="AIza..." /></div>
-        <div class="sg"><div class="sl">Mistral API key</div><input class="si" id="sMistralKey" type="password" placeholder="..." /></div>
-        <div class="sg">
-          <div class="sl" style="display:flex;align-items:center;gap:6px">OpenRouter key <span style="font-size:9px;background:#E8F0FF;color:#1A4D8F;padding:1px 5px;border-radius:8px;font-weight:600">300+ models</span></div>
-          <input class="si" id="sOpenRouterKey" type="password" placeholder="sk-or-v1-..." />
-        </div>
-        <div class="sg"><div class="sl">Tavily Search key</div><input class="si" id="sBraveKey" type="password" placeholder="tvly-..." /><div style="font-size:11px;color:var(--text-3);margin-top:4px">Free at <a href="https://tavily.com" target="_blank" style="color:var(--blue)">tavily.com</a> · 1,000/month free</div></div>
-      </div>
+      <div class="sg"><div class="sl">Tavily Search key</div><input class="si" id="sBraveKey" type="password" placeholder="tvly-..." /><div style="font-size:11px;color:var(--text-3);margin-top:4px">Free at <a href="https://tavily.com" target="_blank" style="color:var(--blue)">tavily.com</a> · 1,000 searches/month free</div></div>
       <div class="sg">
         <div class="sl">Ollama (local AI)</div>
         <input class="si" id="sOllamaUrl" placeholder="http://localhost:11434" />
         <input class="si" id="sOllamaModel" placeholder="Model e.g. qwen2.5:14b" style="margin-top:6px"/>
+        <div style="font-size:10.5px;color:var(--text-3);margin-top:6px;line-height:1.6">
+          <b style="color:var(--text-2)">One-time setup</b> — paste in Terminal, then quit &amp; reopen Ollama:<br>
+          <code style="font-size:10px;background:var(--surface2);padding:3px 6px;border-radius:3px;display:block;margin-top:4px;user-select:all;cursor:text">launchctl setenv OLLAMA_ORIGINS 'https://noexmc.github.io/app'</code>
+        </div>
       </div>
+      <div class="sg"><div class="sl">License key</div><input class="si" id="sLicenseKey" type="text" /></div>
       <div class="sg">
         <div class="sl">Conversations</div>
-        <button class="btn-ghost-sm" onclick="exportConversations();toggleSettings()">↓ Export all</button>
-        <button class="btn-ghost-sm" style="margin-top:4px" onclick="importConversations()">↑ Import</button>
+        <button class="btn-ghost-sm" onclick="exportConversations();toggleSettings()">↓ Export all conversations</button>
+        <button class="btn-ghost-sm" style="margin-top:4px" onclick="importConversations()">↑ Import conversations</button>
       </div>
+      <div id="passkeySettingsRow"></div>
       <div class="sg">
         <div class="sl">API Usage</div>
         <button class="btn-ghost-sm" id="fetchUsageBtn" onclick="fetchApiUsage()">↻ Fetch usage</button>
         <div id="usageResult" style="font-size:11.5px;color:var(--text-2);margin-top:8px;line-height:1.7"></div>
       </div>
-      <div id="passkeySettingsRow"></div>
       <button class="btn-save" onclick="saveSettings()">Save settings</button>
-      <button class="btn-ghost-sm" onclick="resetApp()">Reset app</button>
+      <button class="btn-ghost-sm" onclick="resetApp()">Reset & re-activate</button>
     </div>
   </div>
 </div>
@@ -818,30 +1023,25 @@ body{font-family:'DM Sans',sans-serif;background:var(--bg);color:var(--text);hei
 // ══════════════════════════════════
 // CONFIG — SET THESE FOR YOUR PRODUCT
 // ══════════════════════════════════
-// Keys loaded from config.js (window.AIDE_CONFIG) — falls back to '' if not set
-const _K = window.AIDE_CONFIG || {};
-
-const AIDE_VERSION = 'v0.16';
-
 const PRODUCT_CONFIG = {
-  // ── Shared secret — must match AIDE_SECRET env var on Railway ──
-  AIDE_SECRET:      _K.AIDE_SECRET      || '',
-  // ── Personal keys (BYOK only — not needed when using Railway proxy) ──
-  ANTHROPIC_KEY:    _K.ANTHROPIC_KEY    || '',
-  OPENAI_KEY:       _K.OPENAI_KEY       || '',
-  GEMINI_KEY:       _K.GEMINI_KEY       || '',
-  MISTRAL_KEY:      _K.MISTRAL_KEY      || '',
-  OPENROUTER_KEY:   _K.OPENROUTER_KEY   || '',
-  TAVILY_KEY:       _K.TAVILY_KEY       || '',
-  BRAVE_SEARCH_KEY: '', // legacy
+  // ── YOUR API KEYS (managed mode) ──
+  ANTHROPIC_KEY: '',   // console.anthropic.com
+  OPENAI_KEY: '',      // platform.openai.com
+  GEMINI_KEY: '',      // aistudio.google.com (free tier available)
+  MISTRAL_KEY: '',     // console.mistral.ai (free tier available)
+  BRAVE_SEARCH_KEY: '', // legacy, use TAVILY below
+  TAVILY_SEARCH_KEY: '', // tavily.com — free 1000 searches/month
 
   // ── SUPABASE (encrypted sync) ──
   SUPABASE_URL: 'https://mranmvybghfqelyhgknh.supabase.co',
   SUPABASE_ANON_KEY: 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6Im1yYW5tdnliZ2hmcWVseWhna25oIiwicm9sZSI6ImFub24iLCJpYXQiOjE3NzI4MDY5MjUsImV4cCI6MjA4ODM4MjkyNX0.AbsdDfX9BOzWOlBuTYM3qjnB47bC6J3Eu9v2L7CEoDk',
 
   // ── YOUR GITHUB PAGES URL ──
+  KEYS_VALIDATION_URL: 'https://YOUR-USERNAME.github.io/aide-keys/keys.json',
 
   // ── DEMO ──
+  DEMO_MESSAGES: 5,
+  CHECKOUT_URL: 'https://aide.app/pricing',
 
   // ── MODEL REGISTRY ──
   // Each model: { id, label, provider, apiModel, tier, badge? }
@@ -873,7 +1073,16 @@ const PRODUCT_CONFIG = {
     { id:'or-grok',    label:'Grok 2',           badge:'',         provider:'openrouter', apiModel:'x-ai/grok-2-1212',                   tier:'byok' },
   ],
 
+  // ── PLAN → MAX TIER ──
+  PLAN_TIERS: {
+    demo:     'demo',
+    starter:  'starter',
+    pro:      'pro',
+    lifetime: 'lifetime',
+    byok:     'lifetime', // BYOK users always see all models (they use their own keys)
+  },
 
+  TIER_ORDER: ['demo', 'starter', 'pro', 'lifetime'],
 
   BACKEND_URL: 'https://ea-app-production-b9f2.up.railway.app',
 };
@@ -1083,6 +1292,9 @@ const MODES = [
 // STATE
 // ══════════════════════════════════
 let cfg = {
+  mode: null,
+  licenseKey: '',
+  licenseData: null,
   provider: 'claude',
   selectedModelId: 'haiku',
   activeMode: 'executive',  // which MODES preset is active
@@ -1090,9 +1302,10 @@ let cfg = {
   openrouterKey: '',
   openaiKey: '', openaiModel: 'gpt-4o',
   geminiKey: '', mistralKey: '',
-  braveKey: PRODUCT_CONFIG?.TAVILY_KEY || '',
+  braveKey: '',
   ollamaUrl: 'http://localhost:11434', ollamaModel: 'qwen2.5:14b',
   webSearch: false,
+  demoCount: 0,
   activated: false
 };
 
@@ -1141,6 +1354,11 @@ async function decrypt(b64, password) {
   return new TextDecoder().decode(dec);
 }
 
+async function hashKey(licenseKey) {
+  const enc = new TextEncoder();
+  const hash = await crypto.subtle.digest('SHA-256', enc.encode(licenseKey));
+  return Array.from(new Uint8Array(hash)).map(b=>b.toString(16).padStart(2,'0')).join('').slice(0,32);
+}
 
 // ══════════════════════════════════
 // SUPABASE SYNC
@@ -1153,9 +1371,9 @@ let encPassword = null;
 async function initSync() {
   if (!PRODUCT_CONFIG.SUPABASE_URL) return;
   // Use user ID for keyHash (sync key), license key for encryption password
-  const syncId = currentUser?.id || 'aide-user';
+  const syncId = currentUser?.id || cfg.licenseKey;
   if (!syncId) return;
-  const encKey = currentUser?.id || 'aide-user';
+  const encKey = cfg.licenseKey || currentUser?.id || 'aide-default';
   encPassword = encKey;
   keyHash = await hashKey(syncId);
   setSyncStatus('syncing');
@@ -1243,6 +1461,13 @@ async function pullFromSupabase() {
       if (typeof buildProvSwitch === 'function') buildProvSwitch();
       if (typeof loadSettingsUI === 'function') loadSettingsUI();
     }
+    // Always re-apply lifetime for passkey users after pull
+    if (typeof loadPasskeys === 'function' && loadPasskeys().length > 0) {
+      cfg.mode = 'byok';
+      cfg.licenseData = { plan: 'lifetime', customer: currentUser?.name || 'User' };
+      cfg.activated = true;
+      saveCfg();
+    }
 
     // Merge: remote wins for conversations updated more recently
     let changed = false;
@@ -1292,180 +1517,64 @@ const LAST_KEY     = null; // deprecated — use KEYS().last
 // ══════════════════════════════════
 // INIT
 // ══════════════════════════════════
-// ══════════════════════════════════
-// AUTH — 3 users: Alex + Chuin (passkey), Friends (password)
-// ══════════════════════════════════
-
 function init() {
+  // Check for existing Supabase auth session first
   checkAuthSession();
 }
 
-function setAuthView(view) {
-  document.querySelectorAll('.auth-view').forEach(el => el.classList.remove('active'));
-  const el = document.getElementById('authView_' + view);
-  if (el) el.classList.add('active');
-}
-
-function showAuthScreen() {
-  document.getElementById('authScreen').classList.add('active');
-  document.getElementById('app').classList.remove('active');
-}
-
-function launchFromAuth(user, mode) {
-  currentUser = user;
-  if (mode !== 'friends') loadUserData();
-  cfg.provider = cfg.provider || 'claude';
-  document.getElementById('authScreen').classList.remove('active');
-  document.getElementById('app').classList.add('active');
-  launchApp();
-}
-
-// ── Silent restore on revisit ────────────────────────────────
-function checkAuthSession() {
-  try {
-    const sc = JSON.parse(localStorage.getItem('aide_session') || 'null');
-    if (sc && sc.userId && sc.name) {
-      const pk = loadPasskeys().find(p => p.userId === sc.userId);
-      if (pk) {
-        launchFromAuth({ id: sc.userId, name: sc.name, email: sc.name }, 'passkey');
+async function checkAuthSession() {
+  // Try to restore Supabase auth session
+  const authToken = localStorage.getItem('aide_auth_token');
+  if (authToken) {
+    try {
+      const res = await fetch(`${PRODUCT_CONFIG.SUPABASE_URL}/auth/v1/user`, {
+        headers: {
+          'apikey': PRODUCT_CONFIG.SUPABASE_ANON_KEY,
+          'Authorization': 'Bearer ' + authToken
+        }
+      });
+      if (res.ok) {
+        const user = await res.json();
+        currentUser = { id: user.id, email: user.email, name: user.email.split('@')[0] };
+        loadUserData();
+        launchApp();
         return;
       }
-    }
-  } catch(e) {}
-  // No valid session — show auth
-  showAuthScreen();
-  setAuthView(hasPasskeys() ? 'login' : 'setup');
-}
-
-function persistSession(user) {
-  localStorage.setItem('aide_session', JSON.stringify({ userId: user.id, name: user.name }));
-}
-
-// ── Passkey helpers ──────────────────────────────────────────
-function b64url(buf) {
-  return btoa(String.fromCharCode(...new Uint8Array(buf)))
-    .replace(/\+/g,'-').replace(/\//g,'_').replace(/=+$/,'');
-}
-function b64urlDecode(s) {
-  s = (s||'').replace(/-/g,'+').replace(/_/g,'/');
-  while (s.length%4) s+='=';
-  return Uint8Array.from(atob(s), ch=>ch.charCodeAt(0));
-}
-function loadPasskeys() {
-  try { return JSON.parse(localStorage.getItem('aide_passkeys')||'[]'); } catch(e) { return []; }
-}
-function savePasskeys(list) { localStorage.setItem('aide_passkeys', JSON.stringify(list)); }
-function hasPasskeys() { return loadPasskeys().length > 0; }
-
-// ── Passkey setup (first time on device) ─────────────────────
-async function passkeySetup() {
-  const name = (document.getElementById('setupName')?.value||'').trim();
-  const err  = document.getElementById('setupError');
-  err.textContent = '';
-  if (!name) { err.textContent = 'Enter your name first.'; return; }
-  if (!window.PublicKeyCredential) { err.textContent = 'Passkeys not supported on this browser.'; return; }
-
-  const userId  = 'aide_' + Date.now().toString(36) + '_' + Math.random().toString(36).slice(2,8);
-  const challenge = crypto.getRandomValues(new Uint8Array(32));
-  const btn = document.getElementById('setupBtn');
-  btn.textContent = 'Waiting for Face ID…';
-
-  try {
-    const cred = await navigator.credentials.create({ publicKey: {
-      challenge,
-      rp: { name: 'Aide' },
-      user: { id: new TextEncoder().encode(userId), name, displayName: name },
-      pubKeyCredParams: [{ type:'public-key', alg:-7 }, { type:'public-key', alg:-257 }],
-      authenticatorSelection: { authenticatorAttachment:'platform', userVerification:'required', residentKey:'required' },
-      timeout: 60000,
-    }});
-    const stored = loadPasskeys();
-    stored.push({ credId: b64url(cred.rawId), userId, name, created: Date.now() });
-    savePasskeys(stored);
-    persistSession({ id: userId, name });
-    launchFromAuth({ id: userId, name, email: name }, 'passkey');
-  } catch(e) {
-    btn.textContent = 'Register with Face ID / Touch ID';
-    err.textContent = e.name === 'NotAllowedError' ? 'Cancelled — try again.' :
-                      e.name === 'InvalidStateError' ? 'Passkey already registered on this device.' :
-                      e.message || 'Registration failed.';
+    } catch(e) {}
+    // Token invalid — clear it
+    localStorage.removeItem('aide_auth_token');
   }
-}
-
-// ── Passkey sign-in ──────────────────────────────────────────
-async function passkeySignIn() {
-  const stored = loadPasskeys();
-  const err = document.getElementById('loginError');
-  err.textContent = '';
-  if (!stored.length) { setAuthView('setup'); return; }
-
-  try {
-    const assertion = await navigator.credentials.get({ publicKey: {
-      challenge: crypto.getRandomValues(new Uint8Array(32)),
-      allowCredentials: stored.map(s => ({ type:'public-key', id: b64urlDecode(s.credId), transports:['internal','hybrid'] })),
-      userVerification: 'required',
-      timeout: 60000,
-    }});
-    const match = stored.find(s => s.credId === b64url(assertion.rawId));
-    if (!match) throw new Error('Passkey not recognised.');
-    persistSession({ id: match.userId, name: match.name });
-    launchFromAuth({ id: match.userId, name: match.name, email: match.name }, 'passkey');
-  } catch(e) {
-    err.textContent = e.name === 'NotAllowedError' ? 'Cancelled — try again.' : (e.message || 'Sign in failed.');
-  }
-}
-
-// ── Friends / guest access ───────────────────────────────────
-function friendsSignIn() {
-  const pw  = (document.getElementById('friendsPassword')?.value || '').trim();
-  const err = document.getElementById('friendsError');
-  err.textContent = '';
-  if (pw !== 'smokey') { err.textContent = 'Wrong password.'; return; }
-  currentUser = { id: 'friends_' + Date.now(), name: 'Guest', email: 'guest' };
-  cfg.mode      = 'friends';
-  cfg.demoCount = 0;
-  convs = {}; msgs = [];
-  document.getElementById('authScreen').classList.remove('active');
-  document.getElementById('app').classList.add('active');
-  launchApp();
-}
-
-// ── Logout ───────────────────────────────────────────────────
-function confirmLogout() {
-  if (!confirm('Sign out?')) return;
-  localStorage.removeItem('aide_session');
-  currentUser = null; convs = {}; projects = {}; curConv = null;
-  document.getElementById('app').classList.remove('active');
+  // No valid session — show auth screen
   showAuthScreen();
-  setAuthView(hasPasskeys() ? 'login' : 'setup');
 }
-
-
 
 function loadUserData() {
-  // 1. Load global settings (keys shared across devices)
+  // 1. Load global settings first (API keys only — shared across all devices)
   const globalSaved = localStorage.getItem('aide_cfg_global');
   if (globalSaved) {
     try {
       const g = JSON.parse(globalSaved);
+      // Only restore keys, never restore provider/model (those are per-device)
       const KEY_FIELDS = ['claudeKey','openrouterKey','openaiKey','geminiKey','mistralKey','ollamaUrl','ollamaModel'];
       KEY_FIELDS.forEach(k => { if (g[k]) cfg[k] = g[k]; });
     } catch(e) {}
   }
-  // 2. Load per-user cfg
+  // 2. Load per-user cfg (conversations, mode, preferences)
   const k = KEYS();
   const saved = localStorage.getItem(k.cfg);
   if (saved) {
-    try {
-      const parsed = JSON.parse(saved);
-      delete parsed.mode; delete parsed.demoCount;
-      cfg = { ...cfg, ...parsed };
-    } catch(e) {}
+    try { cfg = { ...cfg, ...JSON.parse(saved) }; } catch(e) {}
   }
   const savedC = localStorage.getItem(k.convs);
   if (savedC) { try { convs = JSON.parse(savedC); } catch(e) {} }
   const savedP = localStorage.getItem(k.projects);
   if (savedP) { try { projects = JSON.parse(savedP); } catch(e) {} }
+  // 3. Always ensure passkey users have lifetime plan
+  if (loadPasskeys().length > 0) {
+    cfg.mode = 'byok';
+    cfg.licenseData = { plan: 'lifetime', customer: currentUser?.name || 'User' };
+    cfg.activated = true;
+  }
 }
 
 // Save API keys to global (cross-device) storage — keys only, not model/provider preferences
@@ -1482,21 +1591,480 @@ function saveGlobalKeys() {
   localStorage.setItem('aide_cfg_global', JSON.stringify(keys));
 }
 
-
+function showAuthScreen() {
+  document.getElementById('activation').classList.remove('active');
+  document.getElementById('app').classList.remove('active');
+  document.getElementById('authScreen').classList.add('active');
+}
 
 function saveCfg() { localStorage.setItem(KEYS().cfg, JSON.stringify(cfg)); }
 function saveConvs() { localStorage.setItem(KEYS().convs, JSON.stringify(convs)); schedulePush(); }
 function saveProjects() { localStorage.setItem(KEYS().projects, JSON.stringify(projects)); schedulePush(); }
 
 // ══════════════════════════════════
+// ACTIVATION — MANAGED
+// ══════════════════════════════════
+let actTab = 'managed';
+
+function switchActTab(tab, el) {
+  actTab = tab;
+  document.querySelectorAll('.act-tab').forEach(t => t.classList.remove('active'));
+  el.classList.add('active');
+  document.getElementById('managedPane').classList.toggle('show', tab==='managed');
+  document.getElementById('byokPane').classList.toggle('show', tab==='byok');
+}
+
+function selectPlan(plan, el) {
+  selectedPlan = plan;
+  document.querySelectorAll('.plan-card').forEach(c => c.classList.remove('selected'));
+  el.classList.add('selected');
+}
+
+function formatLicenseInput(input) {
+  let v = input.value.toUpperCase().replace(/[^A-Z0-9]/g,'');
+  let parts = [];
+  for (let i = 0; i < v.length && parts.length < 4; i+=4) {
+    parts.push(v.substr(i,4));
+  }
+  input.value = parts.join('-');
+}
+
+function openCheckout(e) {
+  e.preventDefault();
+  window.open(PRODUCT_CONFIG.CHECKOUT_URL, '_blank');
+}
+
+async function activateLicense() {
+  const key = document.getElementById('licenseKeyInput').value.trim();
+  const result = document.getElementById('licenseResult');
+  const btn = document.getElementById('activateBtn');
+
+  if (!key || key.length < 10) {
+    result.className = 'act-result error';
+    result.textContent = 'Please enter your license key.';
+    return;
+  }
+
+  btn.disabled = true;
+  btn.textContent = 'Validating…';
+  result.className = 'act-result';
+
+  try {
+    // Demo key bypass
+    if (key === 'AIDE-DEMO-TEST-0001') {
+      cfg.mode = 'managed';
+      cfg.licenseKey = key;
+      cfg.licenseData = { plan:'pro', expires:'2030-12-31', customer:'Demo User' };
+      cfg.provider = 'claude';
+      cfg.activated = true;
+      saveCfg();
+      launchApp();
+      return;
+    }
+
+    // Fetch validation JSON from GitHub
+    const r = await fetch(PRODUCT_CONFIG.KEYS_VALIDATION_URL + '?t=' + Date.now(), {
+      signal: AbortSignal.timeout(8000)
+    });
+
+    if (!r.ok) throw new Error('Could not reach validation server. Check your internet connection.');
+
+    const data = await r.json();
+    const keyData = data.keys?.[key];
+
+    if (!keyData) {
+      result.className = 'act-result error';
+      result.textContent = '✕ Invalid license key. Check for typos or get one at aide.app';
+      return;
+    }
+
+    // Check expiry
+    if (keyData.expires !== '2030-12-31' && new Date(keyData.expires) < new Date()) {
+      result.className = 'act-result error';
+      result.textContent = `✕ This key expired on ${keyData.expires}. Please renew at aide.app`;
+      return;
+    }
+
+    // Valid!
+    cfg.mode = 'managed';
+    cfg.licenseKey = key;
+    cfg.licenseData = keyData;
+    cfg.provider = 'claude';
+    cfg.activated = true;
+    saveCfg();
+    launchApp();
+
+  } catch(e) {
+    if (e.name === 'TimeoutError') {
+      result.className = 'act-result error';
+      result.textContent = '✕ Validation timed out. Check your internet and try again.';
+    } else {
+      result.className = 'act-result error';
+      result.textContent = '✕ ' + e.message;
+    }
+  }
+
+  btn.disabled = false;
+  btn.textContent = 'Activate';
+}
+
+function tryDemo() {
+  cfg.mode = 'demo';
+  cfg.demoCount = 0;
+  cfg.licenseData = { plan:'demo', customer:'Demo' };
+  cfg.activated = true;
+  saveCfg();
+  launchApp();
+}
+
+// ══════════════════════════════════
+// ACTIVATION — BYOK
+// ══════════════════════════════════
+function selectBYOKProvider(p, el) {
+  byokProvider = p;
+  document.querySelectorAll('.bpr-btn').forEach(b => b.classList.remove('selected'));
+  el.classList.add('selected');
+  ['bpClaude','bpOpenAI','bpOllama','bpGemini','bpMistral'].forEach(id => {
+    document.getElementById(id).classList.remove('show');
+  });
+  const map = { claude:'bpClaude', openai:'bpOpenAI', ollama:'bpOllama', gemini:'bpGemini', mistral:'bpMistral' };
+  document.getElementById(map[p])?.classList.add('show');
+}
+
+async function activateBYOK() {
+  const result = document.getElementById('byokResult');
+  result.className = 'act-result';
+
+  try {
+    if (byokProvider === 'claude') {
+      const key = document.getElementById('claudeKeyBYOK').value.trim();
+      if (!key) throw new Error('Enter your Claude API key');
+      const r = await fetch('https://api.anthropic.com/v1/messages', {
+        method:'POST',
+        headers:{'Content-Type':'application/json','x-api-key':key,'anthropic-version':'2023-06-01','anthropic-dangerous-direct-browser-access':'true'},
+        body:JSON.stringify({model:'claude-haiku-4-5-20251001',max_tokens:5,messages:[{role:'user',content:'hi'}]})
+      });
+      if (!r.ok) { const e=await r.json(); throw new Error(e.error?.message||'Invalid key'); }
+      cfg.claudeKey = key;
+      cfg.claudeModel = document.getElementById('claudeModelBYOK').value;
+
+    } else if (byokProvider === 'openai') {
+      const key = document.getElementById('openaiKeyBYOK').value.trim();
+      if (!key) throw new Error('Enter your OpenAI API key');
+      const r = await fetch('https://api.openai.com/v1/chat/completions', {
+        method:'POST',
+        headers:{'Content-Type':'application/json','Authorization':'Bearer '+key},
+        body:JSON.stringify({model:'gpt-4o-mini',max_tokens:5,messages:[{role:'user',content:'hi'}]})
+      });
+      if (!r.ok) { const e=await r.json(); throw new Error(e.error?.message||'Invalid key'); }
+      cfg.openaiKey = key;
+      cfg.openaiModel = document.getElementById('openaiModelBYOK').value;
+
+    } else if (byokProvider === 'gemini') {
+      const key = document.getElementById('geminiKeyBYOK').value.trim();
+      if (!key) throw new Error('Enter your Gemini API key');
+      const model = document.getElementById('geminiModelBYOK').value;
+      const r = await fetch(`https://generativelanguage.googleapis.com/v1beta/models/${model}:generateContent?key=${key}`, {
+        method:'POST', headers:{'Content-Type':'application/json'},
+        body:JSON.stringify({contents:[{role:'user',parts:[{text:'hi'}]}],generationConfig:{maxOutputTokens:5}})
+      });
+      if (!r.ok) { const e=await r.json(); throw new Error(e.error?.message||'Invalid Gemini key'); }
+      cfg.geminiKey = key;
+
+    } else if (byokProvider === 'mistral') {
+      const key = document.getElementById('mistralKeyBYOK').value.trim();
+      if (!key) throw new Error('Enter your Mistral API key');
+      const model = document.getElementById('mistralModelBYOK').value;
+      const r = await fetch('https://api.mistral.ai/v1/chat/completions', {
+        method:'POST',
+        headers:{'Content-Type':'application/json','Authorization':'Bearer '+key},
+        body:JSON.stringify({model,max_tokens:5,messages:[{role:'user',content:'hi'}]})
+      });
+      if (!r.ok) { const e=await r.json(); throw new Error(e.error?.message||'Invalid Mistral key'); }
+      cfg.mistralKey = key;
+
+    } else {
+      const url = document.getElementById('ollamaUrlBYOK').value.trim();
+      const r = await fetch(`${url}/api/tags`, {signal:AbortSignal.timeout(4000)});
+      if (!r.ok) throw new Error('Cannot reach Ollama. Make sure it is running.');
+      cfg.ollamaUrl = url;
+      cfg.ollamaModel = document.getElementById('ollamaModelBYOK').value.trim();
+    }
+
+    cfg.mode = 'byok';
+    cfg.provider = byokProvider;
+    cfg.licenseData = { plan:'byok', customer:'Self-hosted' };
+    cfg.activated = true;
+    saveCfg();
+    launchApp();
+
+  } catch(e) {
+    result.className = 'act-result error';
+    result.textContent = '✕ ' + e.message;
+  }
+}
+
+
+// ══════════════════════════════════════════════════════════════════════
+// PASSKEY-ONLY AUTH — no email, no password
+// Works on: iPhone (Face ID), Mac (Touch ID), Windows Hello
+// ══════════════════════════════════════════════════════════════════════
+
+const PASSKEY_RP_NAME = 'Aide';
+// Domain: noexmc.github.io — rpId is intentionally omitted so browser auto-matches
+
+function b64url(buf) {
+  return btoa(String.fromCharCode(...new Uint8Array(buf)))
+    .replace(/\+/g,'-').replace(/\//g,'_').replace(/=+$/,'');
+}
+function b64urlDecode(s) {
+  s = (s||'').replace(/-/g,'+').replace(/_/g,'/');
+  while (s.length%4) s+='=';
+  return Uint8Array.from(atob(s), ch=>ch.charCodeAt(0));
+}
+function passkeySupported() {
+  return !!(window.PublicKeyCredential && navigator.credentials?.create);
+}
+// rpId intentionally omitted from all WebAuthn calls —
+// browser uses the current origin automatically, which always matches.
+
+// ── Load / save passkey store (localStorage) ─────────────────────────
+function loadPasskeys() {
+  try { return JSON.parse(localStorage.getItem('aide_passkeys')||'[]'); } catch(e) { return []; }
+}
+function savePasskeys(list) {
+  localStorage.setItem('aide_passkeys', JSON.stringify(list));
+}
+function hasPasskeys() { return loadPasskeys().length > 0; }
+
+// ── SETUP: first-time registration ───────────────────────────────────
+async function passkeySetup() {
+  if (!passkeySupported()) { setAuthView('fallback'); return; }
+  const name = (document.getElementById('setupName')?.value||'').trim() || 'User';
+  const err  = document.getElementById('setupError');
+  err.textContent = '';
+
+  // Generate a stable local user ID
+  const userId = 'aide_' + Date.now().toString(36) + '_' + Math.random().toString(36).slice(2,8);
+  const challenge = crypto.getRandomValues(new Uint8Array(32));
+
+  try {
+    document.getElementById('setupBtn').textContent = 'Waiting for Face ID…';
+    const cred = await navigator.credentials.create({ publicKey: {
+      challenge,
+      rp: { name: PASSKEY_RP_NAME },
+      user: {
+        id: new TextEncoder().encode(userId),
+        name: name,
+        displayName: name,
+      },
+      pubKeyCredParams: [
+        { type:'public-key', alg:-7   },  // ES256  (preferred)
+        { type:'public-key', alg:-257 },  // RS256  (fallback)
+      ],
+      authenticatorSelection: {
+        authenticatorAttachment: 'platform',
+        userVerification: 'required',
+        residentKey: 'required',
+      },
+      timeout: 60000,
+    }});
+
+    // Store credential
+    const stored = loadPasskeys();
+    stored.push({
+      credId:  b64url(cred.rawId),
+      userId:  userId,
+      name:    name,
+      created: Date.now(),
+    });
+    savePasskeys(stored);
+
+    // Log in immediately after registration
+    currentUser = { id: userId, name: name, email: name };
+    loadUserData();
+    cfg.activated = true;
+    cfg.mode = 'byok';
+    cfg.licenseData = { plan:'lifetime', customer: name };
+    saveCfg();
+    launchApp();
+
+  } catch(e) {
+    document.getElementById('setupBtn').textContent = 'Register with Face ID / Touch ID';
+    if (e.name === 'NotAllowedError') {
+      err.textContent = 'Registration cancelled. Try again.';
+    } else if (e.name === 'InvalidStateError') {
+      err.textContent = 'A passkey for this device already exists.';
+    } else {
+      err.textContent = e.message || 'Registration failed.';
+    }
+  }
+}
+
+// ── SIGN IN: authenticate with existing passkey ───────────────────────
+async function passkeySignIn() {
+  if (!passkeySupported()) { setAuthView('fallback'); return; }
+  const stored = loadPasskeys();
+  const err = document.getElementById('authError');
+  err.textContent = '';
+
+  if (!stored.length) {
+    err.textContent = 'No passkey on this device yet.';
+    setTimeout(() => setAuthView('setup'), 1200);
+    return;
+  }
+
+  const challenge = crypto.getRandomValues(new Uint8Array(32));
+  try {
+    const assertion = await navigator.credentials.get({ publicKey: {
+      challenge,
+      allowCredentials: stored.map(s => ({
+        type: 'public-key',
+        id: b64urlDecode(s.credId),
+        transports: ['internal', 'hybrid'],
+      })),
+      userVerification: 'required',
+      timeout: 60000,
+    }});
+
+    const credId = b64url(assertion.rawId);
+    const match  = stored.find(s => s.credId === credId);
+    if (!match) throw new Error('Passkey not recognised.');
+
+    // Restore or create user session
+    currentUser = { id: match.userId, name: match.name, email: match.name };
+    loadUserData();
+    cfg.activated = true;
+    cfg.mode = 'byok';
+    cfg.licenseData = cfg.licenseData || { plan:'lifetime', customer: match.name };
+    saveCfg();
+    launchApp();
+
+  } catch(e) {
+    if (e.name === 'NotAllowedError') {
+      err.textContent = 'Verification cancelled.';
+    } else {
+      err.textContent = e.message || 'Sign in failed.';
+    }
+  }
+}
+
+// ── checkAuthSession: called on app start ────────────────────────────
+async function checkAuthSession() {
+  // If passkeys registered + active session in localStorage, restore silently
+  const savedCfg = localStorage.getItem('aide_cfg_restore');
+  if (savedCfg) {
+    try {
+      const sc = JSON.parse(savedCfg);
+      if (sc.userId && sc.activated) {
+        // Prefer passkey match but fall back to stored name (works on new/reinstalled device)
+        const pk = loadPasskeys().find(p => p.userId === sc.userId);
+        const name = pk?.name || sc.name || 'User';
+        currentUser = { id: sc.userId, name, email: name };
+        loadUserData();
+        cfg.activated = true;
+        cfg.mode = 'byok';
+        cfg.licenseData = { plan: 'lifetime', customer: name };
+        saveCfg();
+        launchApp();
+        return;
+      }
+    } catch(e) {}
+  }
+  // Show auth screen — detect if passkeys exist to choose right view
+  showAuthScreen();
+  if (hasPasskeys()) {
+    setAuthView('login');
+  } else if (!passkeySupported()) {
+    setAuthView('fallback');
+  } else {
+    setAuthView('setup');
+  }
+}
+
+// ── Auth helpers ──────────────────────────────────────────────────────
+function setAuthView(view) {
+  document.querySelectorAll('.auth-view').forEach(el => el.classList.remove('active'));
+  const el = document.getElementById('authView_' + view);
+  if (el) el.classList.add('active');
+}
+function showAuthScreen() {
+  document.getElementById('activation').classList.remove('active');
+  document.getElementById('app').classList.remove('active');
+  document.getElementById('authScreen').classList.add('active');
+}
+function tryDemoFromAuth() {
+  currentUser = { id: 'demo_' + Date.now(), name: 'Demo', email: 'demo' };
+  cfg.mode = 'demo'; cfg.activated = true; cfg.demoCount = 0;
+  saveCfg(); launchApp();
+}
+async function authSignIn() {}   // stub — no longer used
+async function authRegister() {} // stub
+async function authMagicLink() {}// stub
+
+// Persist session for silent restore
+function persistSession() {
+  if (currentUser && currentUser.email !== 'demo') {
+    localStorage.setItem('aide_cfg_restore', JSON.stringify({
+      userId: currentUser.id,
+      name:   currentUser.name,
+      activated: true,
+      savedAt: Date.now()
+    }));
+  }
+}
+
+function confirmLogout() {
+  if (confirm('Sign out? Your conversations are saved and will be here when you return.')) {
+    logout();
+  }
+}
+
+async function logout() {
+  // Revoke token server-side
+  const token = localStorage.getItem('aide_auth_token');
+  if (token) {
+    fetch(`${PRODUCT_CONFIG.SUPABASE_URL}/auth/v1/logout`, {
+      method: 'POST',
+      headers: { 'apikey': PRODUCT_CONFIG.SUPABASE_ANON_KEY, 'Authorization': 'Bearer ' + token }
+    }).catch(()=>{});
+  }
+  // Clear local session (keep cfg for re-login convenience)
+  localStorage.removeItem('aide_auth_token');
+  localStorage.removeItem('aide_cfg_restore');
+  currentUser = null;
+  convs = {}; projects = {}; curConv = null;
+  cfg.activated = false;
+  document.getElementById('app').classList.remove('active');
+  showAuthScreen();
+  if (hasPasskeys()) setAuthView('login');
+  else setAuthView('setup');
+}
+
+function tryDemoFromAuth() {
+  currentUser = { id: 'demo_' + Date.now(), email: 'demo', name: 'Demo' };
+  cfg.mode = 'demo';
+  cfg.activated = true;
+  cfg.demoCount = 0;
+  saveCfg();
+  launchApp();
+}
+
+function setAuthLoading(on) {
+  document.querySelectorAll('.auth-btn').forEach(b => b.disabled = on);
+  document.querySelectorAll('.auth-btn').forEach(b => {
+    if (on) b.dataset.origText = b.textContent, b.textContent = '…';
+    else if (b.dataset.origText) b.textContent = b.dataset.origText;
+  });
+}
+
+// ══════════════════════════════════
 // APP LAUNCH
 // ══════════════════════════════════
 function launchApp() {
-  // Version badge
-  const vEl = document.getElementById('appVersion');
-  if (vEl) vEl.textContent = AIDE_VERSION;
-  // Ensure valid provider
-  if (!cfg.provider) cfg.provider = 'claude';
+  document.getElementById('activation').classList.remove('active');
+  document.getElementById('authScreen').classList.remove('active');
+  document.getElementById('app').classList.add('active');
   buildProvSwitch();
   updateStatus();
   loadSettingsUI();
@@ -1505,32 +2073,44 @@ function launchApp() {
   renderProjList();
   initSync();
 
-  // Badge
-  const badge = document.getElementById('licenseBadge');
-  if (badge) {
-    if (cfg.mode === 'friends') {
-      badge.style.cssText = 'background:#fef3e2;color:#92530a';
-      badge.textContent = `Guest · ${10 - (cfg.demoCount||0)} left`;
-    } else {
-      badge.className = 'license-badge managed';
-      badge.textContent = '✦ Active';
+  // Set default model for plan if not already set or if locked
+  if (cfg.mode === 'managed') {
+    const avail = getAvailableModels();
+    const cur = getModel(cfg.selectedModelId);
+    const curRank = cur ? tierRank(cur.tier) : -1;
+    const planRank = tierRank(getPlanTier());
+    if (!cur || curRank > planRank) {
+      cfg.selectedModelId = avail[avail.length - 1]?.id || 'haiku';
+      saveCfg();
     }
   }
 
-  // User row
+  // License badge
+  const badge = document.getElementById('licenseBadge');
+  if (cfg.mode === 'managed') {
+    badge.className = 'license-badge managed';
+    badge.textContent = '✦ ' + (cfg.licenseData?.plan||'managed').charAt(0).toUpperCase() + (cfg.licenseData?.plan||'managed').slice(1);
+  } else if (cfg.mode === 'byok') {
+    const _plan = cfg.licenseData?.plan || '';
+    badge.className = 'license-badge ' + (_plan === 'lifetime' ? 'managed' : 'byok');
+    badge.textContent = _plan === 'lifetime' ? '✦ Lifetime' : '🔑 BYOK';
+  } else {
+    badge.className = 'license-badge';
+    badge.style.background = '#fef3e2';
+    badge.style.color = '#92530a';
+    badge.textContent = `Demo · ${PRODUCT_CONFIG.DEMO_MESSAGES - cfg.demoCount} left`;
+  }
+
+  // User row — email + logout
   const userRow = document.getElementById('userRow');
-  if (userRow) {
-    if (cfg.mode === 'friends') {
-      userRow.innerHTML = `<span class="user-email">👥 Guest session</span>
-        <button class="logout-btn" onclick="location.reload()">End session</button>`;
-      userRow.style.display = 'flex';
-    } else if (currentUser && currentUser.name) {
-      userRow.innerHTML = `<span class="user-email">👤 ${currentUser.name}</span>
-        <button class="logout-btn" onclick="confirmLogout()">Sign out</button>`;
-      userRow.style.display = 'flex';
-    } else {
-      userRow.style.display = 'none';
-    }
+  if (currentUser && currentUser.email !== 'demo') {
+    const displayName = currentUser.name || currentUser.email;
+    userRow.innerHTML = `
+      <span class="user-email" title="${displayName}">👤 ${displayName}</span>
+      <button class="logout-btn" onclick="confirmLogout()" title="Sign out">Sign out</button>`;
+    userRow.style.display = 'flex';
+  } else {
+    userRow.style.display = 'none';
   }
 
   const keys = Object.keys(convs);
@@ -1541,17 +2121,30 @@ function launchApp() {
     newConv();
   }
   // Persist session for silent restore on next open
+  if (typeof persistSession === 'function') persistSession();
   setupMobileUI();
   setupConnectivity();
 }
 
 // ── MODEL HELPERS ──
-function getPlanTier() { return 'lifetime'; }
+function getPlanTier() {
+  const plan = cfg.licenseData?.plan || 'demo';
+  return PRODUCT_CONFIG.PLAN_TIERS[plan] || 'demo';
+}
 
-function tierRank(tier) { return 0; }
+function tierRank(tier) {
+  return PRODUCT_CONFIG.TIER_ORDER.indexOf(tier);
+}
 
 function getAvailableModels() {
-  return PRODUCT_CONFIG.MODELS.filter(m => m.provider !== 'openrouter');
+  const planTier = getPlanTier();
+  const planRank = tierRank(planTier);
+  const base = PRODUCT_CONFIG.MODELS.filter(m => m.provider !== 'openrouter' && tierRank(m.tier) <= planRank);
+  if (cfg.openrouterKey) {
+    const orModels = PRODUCT_CONFIG.MODELS.filter(m => m.provider === 'openrouter');
+    return [...base, ...orModels];
+  }
+  return base;
 }
 
 function getLockedModels() {
@@ -1597,57 +2190,100 @@ const MODEL_META = {
 };
 
 function buildProvSwitch() {
-  const sw = document.getElementById('provSwitch');
-  const cp = document.getElementById('cardPicker');
-  if (!sw || !cp) return;
+  const sw   = document.getElementById('provSwitch');
+  const cp   = document.getElementById('cardPicker');
+  const wrap = document.getElementById('modelPickerWrap');
 
-  const available = getAvailableModels();
-  const cur       = getModel(cfg.selectedModelId) || getDefaultModel();
-  const isOllama  = cfg.selectedModelId === 'ollama' || cfg.provider === 'ollama';
+  if (cfg.mode === 'managed' || cfg.mode === 'demo') {
+    const available = getAvailableModels();
+    const locked    = getLockedModels();
+    const cur       = getModel(cfg.selectedModelId) || getDefaultModel();
+    const isOllama  = cfg.selectedModelId === 'ollama';
+    const meta      = MODEL_META[cur.id] || MODEL_META.haiku;
 
-  // Trigger button showing current model
-  sw.className = '';
-  sw.innerHTML = `<button class="model-btn" onclick="toggleCardPicker(event)">
-    <div class="mb-dot"></div>
-    <span class="mb-name">${isOllama ? (cfg.ollamaModel||'Ollama') : cur.label}</span>
-    ${cur.badge ? `<span class="mb-tier">${cur.badge}</span>` : ''}
-    <span class="mb-arr">▾</span>
-  </button>`;
+    // Trigger button
+    sw.innerHTML = `<button class="model-btn" onclick="toggleCardPicker(event)">
+      <div class="mb-dot"></div>
+      <span class="mb-name">${isOllama ? (cfg.ollamaModel||'Ollama') : cur.label}</span>
+      ${cur.badge ? `<span class="mb-tier">${cur.badge === 'Best' ? '⭐' : cur.badge}</span>` : ''}
+      <span class="mb-arr">▾</span>
+    </button>`;
 
-  // Speed dots helper
-  const speedDots = (arr) => arr.map(on => `<span class="${on?'on':''}${on&&arr[0]&&arr[1]&&arr[2]?' g':''}"></span>`).join('');
+    // Card picker content
+    const speedDots = (arr) => arr.map(on => `<span class="${on?'on':''} ${on&&arr[0]&&arr[1]&&arr[2]?'g':''}"></span>`).join('');
 
-  // Card picker — all models
-  let html = available.map(m => {
-    const mm = MODEL_META[m.id] || {};
-    const active = m.id === cur.id && !isOllama;
-    return `<div class="cp-item ${active?'cp-active':''}" onclick="selectCardModel('${m.id}')">
-      <div class="cp-icon" style="background:${mm.iconBg||'#eee'}">${mm.icon||'·'}</div>
-      <div><div class="cp-name">${m.label}${m.badge?` <span style="font-size:9px;color:var(--gold)">${m.badge}</span>`:''}</div><div class="cp-use">${mm.use||''}</div></div>
-      <div class="cp-right">
-        <div class="cp-speed">${speedDots(mm.speed||[1,0,0])}</div>
-        <div class="cp-tier" style="${mm.tierStyle||''}">${m.provider.charAt(0).toUpperCase()+m.provider.slice(1)}</div>
+    let html = available.map(m => {
+      const mm = MODEL_META[m.id] || {};
+      const active = m.id === cur.id && !isOllama;
+      return `<div class="cp-item ${active?'cp-active':''}" onclick="selectCardModel('${m.id}')">
+        <div class="cp-icon" style="background:${mm.iconBg||'#eee'}">${mm.icon||'·'}</div>
+        <div><div class="cp-name">${m.label}${m.badge?` <span style="font-size:9px;color:var(--gold)">${m.badge==='Best'?'⭐':m.badge}</span>`:''}</div><div class="cp-use">${mm.use||''}</div></div>
+        <div class="cp-right">
+          <div class="cp-speed">${speedDots(mm.speed||[1,0,0])}</div>
+          <div class="cp-tier" style="${mm.tierStyle||''}">${m.tier==='demo'?'Free':m.tier.charAt(0).toUpperCase()+m.tier.slice(1)}</div>
+        </div>
+      </div>`;
+    }).join('');
+
+    if (locked.length) {
+      html += `<div class="cp-divider"></div>`;
+      html += locked.map(m => {
+        const mm = MODEL_META[m.id] || {};
+        return `<div class="cp-item cp-locked" title="Upgrade to unlock">
+          <div class="cp-icon" style="background:${mm.iconBg||'#eee'}">${mm.icon||'·'}</div>
+          <div><div class="cp-name">${m.label}</div><div class="cp-use">${mm.use||''}</div></div>
+          <div class="cp-right">
+            <div class="cp-speed">${speedDots(mm.speed||[1,0,0])}</div>
+            <div class="cp-tier" style="background:#F0EFE9;color:#9C9B94">🔒 ${m.tier.charAt(0).toUpperCase()+m.tier.slice(1)}</div>
+          </div>
+        </div>`;
+      }).join('');
+    }
+
+    html += `<div class="cp-divider"></div>
+      <div class="cp-item ${isOllama?'cp-active':''}" onclick="selectCardModel('ollama')">
+        <div class="cp-icon" style="background:#F0EFE9">💻</div>
+        <div><div class="cp-name" style="display:flex;align-items:center;gap:5px">Local (Ollama)<div class="ollama-dot ${_ollamaRunning?'running':'stopped'}" title="${_ollamaRunning?'Ollama running':'Ollama not detected'}"></div></div><div class="cp-use">Offline · private · free</div></div>
+        <div class="cp-right">
+          <div class="cp-speed"><span class="on g"></span><span class="on g"></span><span></span></div>
+          <div class="cp-tier" style="background:#F0EFE9;color:#5C5B55">Local</div>
+        </div>
       </div>
-    </div>`;
-  }).join('');
+      <div class="cp-ollama-row ${isOllama?'show':''}" id="cpOllamaRow">
+        <select id="cpOllamaSelect" onchange="selectOllamaModel(this.value)" onclick="event.stopPropagation()">
+          <option value="${cfg.ollamaModel||'qwen2.5:14b'}">${cfg.ollamaModel||'qwen2.5:14b'}</option>
+        </select>
+        <div class="ollama-fetch-hint" id="ollamaFetchHint">↻ detecting models…</div>
+      </div>`;
+    // Fetch models after render
+    if (isOllama) setTimeout(fetchOllamaModels, 80);
 
-  html += `<div class="cp-divider"></div>
-    <div class="cp-item ${isOllama?'cp-active':''}" onclick="selectCardModel('ollama')">
-      <div class="cp-icon" style="background:#F0EFE9">💻</div>
-      <div><div class="cp-name" style="display:flex;align-items:center;gap:5px">Local (Ollama)<div class="ollama-dot ${_ollamaRunning?'running':'stopped'}"></div></div><div class="cp-use">Offline · private · free</div></div>
-      <div class="cp-right">
-        <div class="cp-speed">${speedDots([1,1,0])}</div>
-        <div class="cp-tier" style="background:#F0EFE9;color:#5C5B55">Local</div>
-      </div>
-    </div>
-    <div class="cp-ollama-row ${isOllama?'show':''}" id="cpOllamaRow">
-      <input id="cpOllamaInput" value="${cfg.ollamaModel||'qwen2.5:14b'}"
-        placeholder="model name e.g. qwen2.5:14b"
-        onchange="cfg.ollamaModel=this.value;saveCfg();updateStatus();buildProvSwitch()"
-        onclick="event.stopPropagation()" />
-    </div>`;
+    cp.innerHTML = html;
 
-  cp.innerHTML = html;
+  } else {
+    // BYOK mode — compact provider pill buttons in trigger, picker for model selection
+    const provs = [];
+    if (cfg.claudeKey)  provs.push({ id:'claude',  label:'Claude' });
+    if (cfg.openaiKey)  provs.push({ id:'openai',  label:'GPT' });
+    if (cfg.geminiKey)  provs.push({ id:'gemini',  label:'Gemini' });
+    if (cfg.mistralKey) provs.push({ id:'mistral', label:'Mistral' });
+    provs.push({ id:'ollama', label:'💻 Local' });
+
+    const btns = provs.map(p =>
+      `<button class="pb ${cfg.provider===p.id?'active':''}" onclick="setProvider('${p.id}',this)">${p.label}</button>`
+    ).join('');
+    const ollamaExtra = cfg.provider === 'ollama'
+      ? `<select id="tbOllamaSelect" onchange="selectOllamaModel(this.value)"
+          style="font-family:'DM Mono',monospace;font-size:11px;padding:3px 7px;border:1px solid var(--border);
+          border-radius:var(--r-sm);background:var(--surface2);color:var(--text);outline:none;cursor:pointer;max-width:130px">
+          <option value="${cfg.ollamaModel||'qwen2.5:14b'}">${cfg.ollamaModel||'qwen2.5:14b'}</option>
+         </select>` : '';
+    if (cfg.provider === 'ollama') setTimeout(fetchOllamaModels, 80);
+
+    sw.className = 'prov-switch';
+    sw.innerHTML = btns + ollamaExtra;
+    cp.innerHTML = '';
+  }
 }
 const renderSwitcher = buildProvSwitch;
 
@@ -1662,8 +2298,7 @@ function toggleCardPicker(e) {
 
 function selectCardModel(id) {
   cfg.selectedModelId = id;
-  const rawProv = id === 'ollama' ? 'ollama' : (getModel(id)?.provider || 'anthropic');
-  cfg.provider = rawProv === 'anthropic' ? 'claude' : rawProv;
+  cfg.provider = id === 'ollama' ? 'ollama' : (getModel(id)?.provider || 'claude');
   saveCfg();
   buildProvSwitch();
   updateStatus();
@@ -1698,10 +2333,18 @@ function updateStatus() {
   const isOllama = cfg.provider === 'ollama' || cfg.selectedModelId === 'ollama';
   if (isOllama) {
     document.getElementById('appStatus').textContent = `💻 ${cfg.ollamaModel||'Ollama'}`;
+  } else if (cfg.mode === 'managed' || cfg.mode === 'demo') {
+    const m = getModel(cfg.selectedModelId) || getDefaultModel();
+    document.getElementById('appStatus').textContent = m.label;
   } else {
-    const cur = getModel(cfg.selectedModelId);
-    const label = cur ? cur.label : (cfg.provider.charAt(0).toUpperCase()+cfg.provider.slice(1));
-    document.getElementById('appStatus').textContent = label;
+    const labels = {
+      claude: `Claude · ${cfg.claudeModel.split('-').slice(0,2).join('-')}`,
+      openai: `GPT · ${cfg.openaiModel}`,
+      gemini: `Gemini`,
+      mistral: `Mistral`,
+      ollama: `Local · ${cfg.ollamaModel}`
+    };
+    document.getElementById('appStatus').textContent = labels[cfg.provider] || 'Ready';
   }
 }
 
@@ -2199,9 +2842,10 @@ function renderMessages() {
   const container = document.getElementById('messages');
   const conv = convs[curConv];
   if (!conv||!conv.messages.length) {
-      container.innerHTML = `<div class="empty">
-      <div class="empty-title">What can I help with?</div>
-      <div class="empty-sub">Ask me anything, or create Excel, PowerPoint, and Word files.</div>
+    const isDemo = cfg.mode === 'demo';
+    container.innerHTML = `<div class="empty">
+      <div class="empty-title">${isDemo?'Try Aide free':'What can I help with?'}</div>
+      <div class="empty-sub">${isDemo?`${PRODUCT_CONFIG.DEMO_MESSAGES} free messages. No signup needed.`:'Ask me anything, or create Excel, PowerPoint, and Word files.'}</div>
       <div class="qgrid">
         <button class="qcard" onclick="sendQuick('Create an Excel spreadsheet with a monthly budget tracker including income, expenses by category, and a savings summary.')">
           <span class="qc-icon">📊</span><span class="qc-title">Budget tracker</span><span class="qc-desc">Excel with income & expense categories</span>
@@ -2294,11 +2938,16 @@ async function sendMsg() {
   const text = input.value.trim();
   if (!text||loading) return;
 
-  // Friends session limit
-  if (cfg.mode === 'friends' && (cfg.demoCount||0) >= 10) {
-    appendMsg('system', '⚠️ Guest session limit reached (10 messages). Refresh the page to start a new session.', '⚠️ Guest session limit reached (10 messages). Refresh the page to start a new session.', null);
+  // Demo limit check
+  if (cfg.mode==='demo' && cfg.demoCount >= PRODUCT_CONFIG.DEMO_MESSAGES) {
+    appendMsg('assistant',
+      `You've used all ${PRODUCT_CONFIG.DEMO_MESSAGES} demo messages. [Get a license key](${PRODUCT_CONFIG.CHECKOUT_URL}) to keep going — plans start at $9/month.`,
+      `You've used all ${PRODUCT_CONFIG.DEMO_MESSAGES} demo messages. Get a license key to keep going — plans start at $9/month.`,
+      null
+    );
     return;
   }
+
   input.value=''; autoResize(input);
 
   // Build display text for user bubble
@@ -2368,11 +3017,12 @@ async function sendMsg() {
     appendMsg('assistant', raw, display||raw, doc);
     if (doc) openDoc(encodeURIComponent(JSON.stringify(doc)));
 
-    // Friends session counter
-    if (cfg.mode === 'friends') {
-      cfg.demoCount = (cfg.demoCount||0) + 1;
+    if (cfg.mode==='demo') {
+      cfg.demoCount++;
+      saveCfg();
+      const remaining = PRODUCT_CONFIG.DEMO_MESSAGES - cfg.demoCount;
       const badge = document.getElementById('licenseBadge');
-      if (badge) badge.textContent = `Guest · ${10 - cfg.demoCount} left`;
+      badge.textContent = `Demo · ${remaining} left`;
     }
 
   } catch(e) {
@@ -2425,27 +3075,55 @@ async function callManaged(history, content, systemPrompt) {
   throw new Error('Unknown provider: ' + provider);
 }
 
-
-// ══════════════════════════════════════════════════════════════
-// AI PROXY — all calls route through Railway; keys never in browser
-// ══════════════════════════════════════════════════════════════
-
-async function _proxyChat(provider, model, history, content, systemPrompt, extra = {}) {
-  const secret = PRODUCT_CONFIG.AIDE_SECRET;
-  if (!secret) throw new Error('AIDE_SECRET not set in config.js');
-  const backendUrl = PRODUCT_CONFIG.BACKEND_URL || 'https://ea-app-production-b9f2.up.railway.app';
-  const messages = [...history, { role: 'user', content }];
-  const r = await fetch(`${backendUrl}/ai/chat`, {
+async function _callOpenRouter(key, model, history, content, systemPrompt) {
+  // OpenRouter uses OpenAI-compatible API
+  const messages = [
+    ...(systemPrompt ? [{role:'system', content: systemPrompt}] : []),
+    ...history,
+    {role:'user', content}
+  ];
+  const r = await fetch('https://openrouter.ai/api/v1/chat/completions', {
     method: 'POST',
-    headers: { 'Content-Type': 'application/json', 'X-Aide-Secret': secret },
-    body: JSON.stringify({ provider, model, messages, system: systemPrompt, max_tokens: 4096, ...extra }),
+    headers: {
+      'Content-Type': 'application/json',
+      'Authorization': 'Bearer ' + key,
+      'HTTP-Referer': window.location.origin,
+      'X-Title': 'Aide',
+    },
+    body: JSON.stringify({
+      model,
+      messages,
+      max_tokens: 4096,
+      stream: false,
+    })
   });
   if (!r.ok) {
-    const err = await r.json().catch(() => ({ detail: r.statusText }));
-    throw new Error(err.detail || `Server error ${r.status}`);
+    const e = await r.json().catch(() => ({}));
+    throw new Error(e.error?.message || `OpenRouter error ${r.status}`);
   }
-  const data = await r.json();
-  return data.text || '';
+  const d = await r.json();
+  return d.choices?.[0]?.message?.content || '';
+}
+
+async function callClaude(history, content, systemPrompt) {
+  const key = PRODUCT_CONFIG.ANTHROPIC_KEY || cfg.claudeKey;
+  if (!key) throw new Error('No Anthropic key. Open ⚙ Settings → Claude API key.');
+  if (cfg.webSearch) {
+    return await callAnthropicWithSearch(key, cfg.claudeModel, history, content, systemPrompt);
+  }
+  const messages=[...history,{role:'user',content}];
+  const r=await fetch('https://api.anthropic.com/v1/messages',{
+    method:'POST',
+    headers:{'Content-Type':'application/json','x-api-key':key,'anthropic-version':'2023-06-01','anthropic-dangerous-direct-browser-access':'true'},
+    body:JSON.stringify({model:cfg.claudeModel,max_tokens:4096,system:systemPrompt,messages})
+  });
+  if (!r.ok){const e=await r.json();throw new Error(e.error?.message||`Claude error ${r.status}`);}
+  const d=await r.json(); return d.content?.filter(b=>b.type==='text').map(b=>b.text).join('')||'';
+}
+
+async function callOpenAI(history, content, systemPrompt) {
+  if (!cfg.openaiKey) throw new Error('No OpenAI API key. Open Settings to add one.');
+  return await _callOpenAI(cfg.openaiKey, cfg.openaiModel, history, content, systemPrompt);
 }
 
 async function _callOpenAI(key, model, history, content, systemPrompt) {
@@ -2459,6 +3137,11 @@ async function _callOpenAI(key, model, history, content, systemPrompt) {
   const d=await r.json(); return d.choices?.[0]?.message?.content||'';
 }
 
+async function callGemini(history, content, systemPrompt) {
+  if (!cfg.geminiKey) throw new Error('No Gemini API key. Open Settings to add one.');
+  return await _callGemini(cfg.geminiKey, 'gemini-2.0-flash', history, content, systemPrompt);
+}
+
 async function _callGemini(key, model, history, content, systemPrompt) {
   const textContent = typeof content === 'string' ? content : content.find?.(p=>p.type==='text')?.text || '';
   const contents = [
@@ -2466,12 +3149,18 @@ async function _callGemini(key, model, history, content, systemPrompt) {
     { role:'user', parts:[{text:textContent}] }
   ];
   const r = await fetch(`https://generativelanguage.googleapis.com/v1beta/models/${model}:generateContent?key=${key}`, {
-    method:'POST', headers:{'Content-Type':'application/json'},
+    method:'POST',
+    headers:{'Content-Type':'application/json'},
     body:JSON.stringify({ systemInstruction:{parts:[{text:systemPrompt}]}, contents, generationConfig:{maxOutputTokens:4096} })
   });
   if (!r.ok){const e=await r.json();throw new Error(e.error?.message||`Gemini error ${r.status}`);}
   const d=await r.json();
   return d.candidates?.[0]?.content?.parts?.[0]?.text || '';
+}
+
+async function callMistral(history, content, systemPrompt) {
+  if (!cfg.mistralKey) throw new Error('No Mistral API key. Open Settings to add one.');
+  return await _callMistral(cfg.mistralKey, 'mistral-small-latest', history, content, systemPrompt);
 }
 
 async function _callMistral(key, model, history, content, systemPrompt) {
@@ -2489,13 +3178,19 @@ async function _callMistral(key, model, history, content, systemPrompt) {
 async function callOllama(history, content, systemPrompt) {
   const ollamaUrl   = (cfg.ollamaUrl  || 'http://localhost:11434').replace(/\/$/,'');
   const ollamaModel = (cfg.ollamaModel || 'qwen2.5:14b').trim();
+
+  // GitHub Pages is HTTPS — direct calls to http://localhost are blocked by mixed-content policy.
+  // Solution: use the Ollama origin header trick and ensure OLLAMA_ORIGINS is set.
+  // We catch the TypeError (network fail) and give a clear message.
   const textContent = typeof content === 'string' ? content
     : content.find?.(p=>p.type==='text')?.text || JSON.stringify(content);
+
   const messages = [
     { role: 'system', content: systemPrompt },
     ...history.map(m => ({ role: m.role, content: typeof m.content === 'string' ? m.content : (m.content?.find?.(p=>p.type==='text')?.text||'') })),
     { role: 'user', content: textContent }
   ];
+
   let r;
   try {
     r = await fetch(`${ollamaUrl}/api/chat`, {
@@ -2504,94 +3199,25 @@ async function callOllama(history, content, systemPrompt) {
       body: JSON.stringify({ model: ollamaModel, messages, stream: false })
     });
   } catch(netErr) {
-    throw new Error('Cannot reach Ollama. Make sure it is running and OLLAMA_ORIGINS is set to https://noexmc.github.io');
+    // Mixed-content or network error — give actionable guidance
+    throw new Error(
+      '⚠ Cannot reach Ollama.\n\n' +
+      'One-time fix — paste in Terminal, then quit & reopen Ollama:\n\n' +
+      'launchctl setenv OLLAMA_ORIGINS \'https://noexmc.github.io/app\'\n\n' +
+      '(Survives reboots — you only need to do this once.)'
+    );
   }
-  if (!r.ok) { const body = await r.text().catch(()=>''); throw new Error(`Ollama error ${r.status}: ${body}`); }
+
+  if (!r.ok) {
+    const body = await r.text().catch(()=>'');
+    throw new Error(`Ollama error ${r.status}: ${body || 'Is the model pulled?'}`);
+  }
+
   const d = await r.json();
   return d.message?.content || '';
 }
 
-async function fetchOllamaModels() {
-  const url = (cfg.ollamaUrl || 'http://localhost:11434').replace(/\/$/,'');
-  const sel = document.getElementById('tbOllamaSelect');
-  if (!sel) return;
-  try {
-    const r = await fetch(`${url}/api/tags`, { signal: AbortSignal.timeout(2000) });
-    if (!r.ok) return;
-    const d = await r.json();
-    const models = (d.models || []).map(m => m.name);
-    if (!models.length) return;
-    sel.innerHTML = models.map(m => `<option value="${m}" ${m===cfg.ollamaModel?'selected':''}>${m}</option>`).join('');
-  } catch(e) {}
-}
-
-function selectOllamaModel(val) {
-  cfg.ollamaModel = val;
-  saveCfg();
-  updateStatus();
-}
-
-async function callClaude(history, content, systemPrompt) {
-  if (PRODUCT_CONFIG.AIDE_SECRET) {
-    const m = getModel(cfg.selectedModelId);
-    const apiModel = (m && m.provider === 'anthropic') ? m.apiModel : (cfg.claudeModel || 'claude-sonnet-4-6');
-    return await _proxyChat('anthropic', apiModel,
-      history, content, systemPrompt, { web_search: cfg.webSearch });
-  }
-  // BYOK fallback — direct browser call when no proxy secret configured
-  const key = cfg.claudeKey;
-  if (!key) throw new Error('No Anthropic key. Open ⚙ Settings → Claude API key.');
-  if (cfg.webSearch) return await callAnthropicWithSearch(key, cfg.claudeModel, history, content, systemPrompt);
-  const messages = [...history, { role: 'user', content }];
-  const r = await fetch('https://api.anthropic.com/v1/messages', {
-    method: 'POST',
-    headers: { 'Content-Type': 'application/json', 'x-api-key': key,
-               'anthropic-version': '2023-06-01', 'anthropic-dangerous-direct-browser-access': 'true' },
-    body: JSON.stringify({ model: cfg.claudeModel, max_tokens: 4096, system: systemPrompt, messages }),
-  });
-  if (!r.ok) { const e = await r.json(); throw new Error(e.error?.message || `Claude error ${r.status}`); }
-  const d = await r.json(); return d.content?.filter(b => b.type === 'text').map(b => b.text).join('') || '';
-}
-
-async function callOpenAI(history, content, systemPrompt) {
-  if (PRODUCT_CONFIG.AIDE_SECRET) {
-    const m = getModel(cfg.selectedModelId);
-    const apiModel = (m && m.provider === 'openai') ? m.apiModel : (cfg.openaiModel || 'gpt-4o-mini');
-    return await _proxyChat('openai', apiModel, history, content, systemPrompt);
-  }
-  if (!cfg.openaiKey) throw new Error('No OpenAI key. Open ⚙ Settings.');
-  return await _callOpenAI(cfg.openaiKey, cfg.openaiModel, history, content, systemPrompt);
-}
-
-async function callGemini(history, content, systemPrompt) {
-  const m = getModel(cfg.selectedModelId);
-  const model = (m && m.provider === 'gemini') ? m.apiModel : 'gemini-2.0-flash';
-  if (PRODUCT_CONFIG.AIDE_SECRET) return await _proxyChat('gemini', model, history, content, systemPrompt);
-  if (!cfg.geminiKey) throw new Error('No Gemini key. Open ⚙ Settings.');
-  return await _callGemini(cfg.geminiKey, model, history, content, systemPrompt);
-}
-
-async function callMistral(history, content, systemPrompt) {
-  const m2 = getModel(cfg.selectedModelId);
-  const model = (m2 && m2.provider === 'mistral') ? m2.apiModel : 'mistral-small-latest';
-  if (PRODUCT_CONFIG.AIDE_SECRET) return await _proxyChat('mistral', model, history, content, systemPrompt);
-  if (!cfg.mistralKey) throw new Error('No Mistral key. Open ⚙ Settings.');
-  return await _callMistral(cfg.mistralKey, model, history, content, systemPrompt);
-}
-
-async function _callOpenRouter(key, model, history, content, systemPrompt) {
-  if (PRODUCT_CONFIG.AIDE_SECRET) return await _proxyChat('openrouter', model, history, content, systemPrompt, { openrouter_model: model });
-  if (!key) throw new Error('No OpenRouter key. Open ⚙ Settings.');
-  const messages = [{ role: 'system', content: systemPrompt }, ...history, { role: 'user', content }];
-  const r = await fetch('https://openrouter.ai/api/v1/chat/completions', {
-    method: 'POST',
-    headers: { 'Authorization': `Bearer ${key}`, 'HTTP-Referer': 'https://noexmc.github.io', 'Content-Type': 'application/json' },
-    body: JSON.stringify({ model, messages }),
-  });
-  if (!r.ok) { const e = await r.json(); throw new Error(e.error?.message || `OpenRouter error ${r.status}`); }
-  const d = await r.json(); return d.choices?.[0]?.message?.content || '';
-}
-
+// ══════════════════════════════════
 // DOCUMENT PREVIEW & DOWNLOAD
 // ══════════════════════════════════
 function openDoc(encoded) {
@@ -3289,24 +3915,55 @@ async function fetchApiUsage() {
   btn.disabled = false;
 }
 
+function showPasskeySettingsRow() {
+  if (!passkeySupported()) return '<div style="font-size:12px;color:var(--text-3);margin-top:8px">Passkeys not supported on this browser.</div>';
+  const stored = loadPasskeys();
+  const mine = stored.filter(s => s.userId === currentUser?.id);
+  return `<div style="margin-top:10px;padding-top:10px;border-top:1px solid var(--border-light)">
+    <div style="font-size:11px;font-weight:600;color:var(--text-3);text-transform:uppercase;letter-spacing:.05em;margin-bottom:7px">Passkey · Face ID / Touch ID</div>
+    <div style="font-size:12px;color:${mine.length?'var(--green)':'var(--text-3)'};margin-bottom:8px">${mine.length ? '✓ '+mine.length+' passkey'+(mine.length>1?'s':'')+' on this device' : 'No passkey on this device yet'}</div>
+    <button onclick="passkeyAddAnother()" style="padding:7px 14px;background:var(--accent);color:#fff;border:none;border-radius:6px;font-family:'DM Sans',sans-serif;font-size:12px;font-weight:500;cursor:pointer">${mine.length?'+ Add another passkey':'Register this device'}</button>
+  </div>`;
+}
 
+async function passkeyAddAnother() {
+  if (!currentUser) return;
+  const challenge = crypto.getRandomValues(new Uint8Array(32));
+  try {
+    const cred = await navigator.credentials.create({ publicKey: {
+      challenge,
+      rp: { name: PASSKEY_RP_NAME },
+      user: {
+        id: new TextEncoder().encode((currentUser.id||'user').slice(0,32).padEnd(32,'0')),
+        name: currentUser.name||'User', displayName: currentUser.name||'User',
+      },
+      pubKeyCredParams: [{type:'public-key',alg:-7},{type:'public-key',alg:-257}],
+      authenticatorSelection: { authenticatorAttachment:'platform', userVerification:'required', residentKey:'required' },
+      timeout: 60000,
+    }});
+    const stored = loadPasskeys();
+    stored.push({ credId:b64url(cred.rawId), userId:currentUser.id, name:currentUser.name, created:Date.now() });
+    savePasskeys(stored);
+    const row = document.getElementById('passkeySettingsRow');
+    if (row) row.innerHTML = showPasskeySettingsRow();
+    alert('Passkey registered on this device.');
+  } catch(e) {
+    alert('Failed: '+(e.message||e.name));
+  }
+}
 
 function loadSettingsUI() {
-  // Show proxy banner or key fields depending on whether proxy is configured
-  const hasProxy = !!PRODUCT_CONFIG.AIDE_SECRET;
-  const proxyBanner = document.getElementById('proxyBanner');
-  const keyFields   = document.getElementById('keyFieldsSection');
-  if (proxyBanner) proxyBanner.style.display = hasProxy ? 'block' : 'none';
-  if (keyFields)   keyFields.style.display   = hasProxy ? 'none'  : 'block';
-
+  const pkRow = document.getElementById('passkeySettingsRow');
+  if (pkRow && currentUser) pkRow.innerHTML = showPasskeySettingsRow ? showPasskeySettingsRow() : '';
   document.getElementById('sClaudeKey').value=cfg.claudeKey || PRODUCT_CONFIG.ANTHROPIC_KEY;
   document.getElementById('sOpenRouterKey').value=cfg.openrouterKey||'';
   document.getElementById('sOpenAIKey').value=cfg.openaiKey;
   document.getElementById('sGeminiKey').value=cfg.geminiKey||'';
   document.getElementById('sMistralKey').value=cfg.mistralKey||'';
-  document.getElementById('sBraveKey').value=cfg.braveKey||PRODUCT_CONFIG.TAVILY_KEY||'';
+  document.getElementById('sBraveKey').value=cfg.braveKey||'';
   document.getElementById('sOllamaUrl').value=cfg.ollamaUrl;
   document.getElementById('sOllamaModel').value=cfg.ollamaModel;
+  document.getElementById('sLicenseKey').value=cfg.licenseKey||'';
 }
 
 function saveSettings() {
@@ -3318,6 +3975,7 @@ function saveSettings() {
   cfg.braveKey=document.getElementById('sBraveKey').value.trim();
   cfg.ollamaUrl=document.getElementById('sOllamaUrl').value.trim();
   cfg.ollamaModel=document.getElementById('sOllamaModel').value.trim();
+  cfg.licenseKey=document.getElementById('sLicenseKey').value.trim();
   saveCfg();
   buildProvSwitch();
   updateStatus();
@@ -3325,12 +3983,12 @@ function saveSettings() {
 }
 
 function resetApp() {
-  if (!confirm('Reset Aide? This clears your settings but keeps conversations.')) return;
-  cfg.claudeKey=''; cfg.openaiKey=''; cfg.geminiKey=''; cfg.mistralKey='';
-  cfg.openrouterKey=''; cfg.braveKey=''; cfg.provider='claude';
+  if (!confirm('Reset Aide? This clears your activation but keeps conversations.')) return;
+  cfg.activated=false; cfg.mode=null; cfg.licenseKey=''; cfg.licenseData=null;
   saveCfg();
   toggleSettings();
-  buildProvSwitch();
+  document.getElementById('app').classList.remove('active');
+  document.getElementById('activation').classList.add('active');
 }
 
 // ══════════════════════════════════
@@ -3355,7 +4013,7 @@ function fmtMd(text) {
     .replace(/<p><\/p>/g,'');
 }
 
-document.addEventListener("DOMContentLoaded", init);
+init();
 
 // ══════════════════════════════════════════════════════════════
 // PWA — Service Worker, Offline Detection, Sync Queue
