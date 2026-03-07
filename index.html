@@ -4,6 +4,12 @@
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
 <title>Aide — Private AI Assistant</title>
+<meta name="description" content="Your private AI executive assistant">
+<meta name="theme-color" content="#1C1C1A">
+<meta name="apple-mobile-web-app-capable" content="yes">
+<meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
+<meta name="apple-mobile-web-app-title" content="Aide">
+<link rel="manifest" href="manifest.json">
 <link href="https://fonts.googleapis.com/css2?family=DM+Serif+Display:ital@0;1&family=DM+Sans:wght@300;400;500;600&family=DM+Mono:wght@400;500&display=swap" rel="stylesheet">
 <script src="https://cdnjs.cloudflare.com/ajax/libs/xlsx/0.18.5/xlsx.full.min.js"></script>
 <script src="https://cdn.jsdelivr.net/npm/exceljs@4.4.0/dist/exceljs.min.js"></script>
@@ -11,6 +17,24 @@
 <script src="https://cdnjs.cloudflare.com/ajax/libs/docx/7.8.2/docx.umd.min.js"></script>
 <style>
 *,*::before,*::after{box-sizing:border-box;margin:0;padding:0}
+/* ── Offline banner ── */
+.offline-banner{display:none;position:fixed;top:0;left:0;right:0;z-index:9999;background:#92530A;color:#fff;
+  font-family:'DM Sans',sans-serif;font-size:12px;font-weight:500;padding:6px 16px;
+  align-items:center;justify-content:center;gap:8px}
+.offline-banner.show{display:flex}
+.offline-banner .ob-dot{width:7px;height:7px;border-radius:50%;background:#FFD43B;flex-shrink:0}
+/* ── Install prompt ── */
+.install-prompt{display:none;position:fixed;bottom:20px;right:20px;z-index:9998;
+  background:var(--surface);border:1px solid var(--border);border-radius:var(--r);
+  padding:14px 16px;width:260px;box-shadow:0 4px 20px rgba(0,0,0,0.12);font-family:'DM Sans',sans-serif}
+.install-prompt.show{display:block}
+.ip-title{font-size:13px;font-weight:600;color:var(--text);margin-bottom:4px}
+.ip-sub{font-size:11px;color:var(--text-2);margin-bottom:12px;line-height:1.5}
+.ip-btns{display:flex;gap:8px}
+.ip-install{flex:1;padding:7px;background:var(--accent);color:#fff;border:none;border-radius:var(--r-sm);
+  font-family:'DM Sans',sans-serif;font-size:12px;font-weight:500;cursor:pointer}
+.ip-dismiss{padding:7px 10px;background:transparent;color:var(--text-3);border:1px solid var(--border);
+  border-radius:var(--r-sm);font-family:'DM Sans',sans-serif;font-size:12px;cursor:pointer}
 :root{
   --bg:#F7F6F3;--surface:#FFFFFF;--surface2:#F0EFE9;
   --border:#E4E2DA;--border-light:#EEEDEA;
@@ -254,9 +278,15 @@ body{font-family:'DM Sans',sans-serif;background:var(--bg);color:var(--text);hei
 .btn-ghost-sm:hover{border-color:var(--text-2);color:var(--text)}
 
 /* ── MODE PICKER ── */
-.mode-bar{padding:6px 10px;border-bottom:1px solid var(--border-light)}
-.mode-select{width:100%;padding:5px 8px;border:1px solid var(--border);border-radius:var(--r-sm);font-family:'DM Sans',sans-serif;font-size:12px;font-weight:500;color:var(--text);background:var(--surface2);outline:none;cursor:pointer;transition:border-color .15s}
+.mode-bar{padding:6px 10px;border-bottom:1px solid var(--border-light);display:flex;align-items:center;gap:6px}
+.mode-select{flex:1;padding:5px 8px;border:1px solid var(--border);border-radius:var(--r-sm);font-family:'DM Sans',sans-serif;font-size:12px;font-weight:500;color:var(--text);background:var(--surface2);outline:none;cursor:pointer;transition:border-color .15s}
 .mode-select:focus{border-color:var(--accent)}
+.mode-help{width:18px;height:18px;border-radius:50%;border:1px solid var(--border);background:var(--surface2);color:var(--text-3);font-size:10px;font-weight:600;cursor:pointer;display:flex;align-items:center;justify-content:center;flex-shrink:0;position:relative}
+.mode-help:hover{border-color:var(--accent);color:var(--accent)}
+.mode-tooltip{position:absolute;left:24px;top:50%;transform:translateY(-50%);width:240px;background:var(--surface);border:1px solid var(--border);border-radius:var(--r);padding:10px 12px;font-size:11px;color:var(--text-2);line-height:1.5;z-index:200;box-shadow:0 4px 16px rgba(0,0,0,0.12);display:none}
+.mode-tooltip.show{display:block}
+.mode-tooltip b{color:var(--text);display:block;margin-top:6px}
+.mode-tooltip b:first-child{margin-top:0}
 
 /* ── PROJECTS ── */
 .proj-section{border-bottom:1px solid var(--border-light)}
@@ -317,6 +347,22 @@ body{font-family:'DM Sans',sans-serif;background:var(--bg);color:var(--text);hei
 </style>
 </head>
 <body>
+
+<!-- Offline banner -->
+<div class="offline-banner" id="offlineBanner">
+  <div class="ob-dot"></div>
+  You're offline — using local Ollama model. Conversations will sync when back online.
+</div>
+
+<!-- Install prompt -->
+<div class="install-prompt" id="installPrompt">
+  <div class="ip-title">Install Aide</div>
+  <div class="ip-sub">Add to your home screen for offline access and a native app experience.</div>
+  <div class="ip-btns">
+    <button class="ip-install" onclick="installPWA()">Install</button>
+    <button class="ip-dismiss" onclick="dismissInstall()">Not now</button>
+  </div>
+</div>
 
 <!-- ════════════════════════════════
      ACTIVATION SCREEN
@@ -494,6 +540,15 @@ body{font-family:'DM Sans',sans-serif;background:var(--bg);color:var(--text);hei
       <!-- Mode picker -->
       <div class="mode-bar">
         <select class="mode-select" id="modeSelect" onchange="setMode(this.value)"></select>
+        <div class="mode-help" onclick="toggleModeTooltip(event)">?
+          <div class="mode-tooltip" id="modeTooltip">
+            <b>🎯 Executive</b>Strategic, concise, boardroom-ready. Leads with key insight and business impact.
+            <b>📊 Analyst</b>Data-driven. Numbers first, structured sections, detailed Excel with formulas.
+            <b>💻 Coder</b>Production-ready code, full implementations, explains architectural decisions.
+            <b>✍️ Writer</b>Clear, precise prose. Matches your tone, proper document structure.
+            <b>🧠 Research</b>Comprehensive analysis, cites sources, distinguishes facts from opinion.
+          </div>
+        </div>
       </div>
 
       <!-- Projects -->
@@ -663,6 +718,8 @@ const PRODUCT_CONFIG = {
   },
 
   TIER_ORDER: ['demo', 'starter', 'pro', 'lifetime'],
+
+  BACKEND_URL: 'https://ea-app-production-b9f2.up.railway.app',
 };
 
 const DOC_INSTRUCTIONS = `
@@ -1256,25 +1313,38 @@ function getDefaultModel() {
 function buildProvSwitch() {
   const sw = document.getElementById('provSwitch');
 
-  if (cfg.mode === 'managed') {
-    // Show model picker dropdown for managed users
+  if (cfg.mode === 'managed' || cfg.mode === 'demo') {
+    // Show model picker dropdown
     const available = getAvailableModels();
     const locked = getLockedModels();
     const current = getModel(cfg.selectedModelId) || getDefaultModel();
 
+    const ollamaSelected = cfg.selectedModelId === 'ollama';
+
     const options = [
-      ...available.map(m => `<option value="${m.id}" ${m.id===current.id?'selected':''}>${m.label}${m.badge?' · '+m.badge:''}</option>`),
+      ...available.map(m => `<option value="${m.id}" ${m.id===current.id && !ollamaSelected ?'selected':''}>${m.label}${m.badge?' · '+m.badge:''}</option>`),
       locked.length ? `<optgroup label="── Upgrade to unlock ──">` : '',
       ...locked.map(m => `<option value="${m.id}" disabled>${m.label} 🔒</option>`),
       locked.length ? `</optgroup>` : '',
+      `<option value="ollama" ${ollamaSelected?'selected':''}>💻 Local (Ollama)</option>`,
     ].join('');
 
-    sw.innerHTML = `<select id="modelSelect" onchange="onModelSelect(this)"
-      style="font-family:'DM Mono',sans-serif;font-size:11px;font-weight:500;padding:4px 8px;
-      border:1px solid var(--border);border-radius:var(--r-sm);background:var(--surface2);
-      color:var(--text);outline:none;cursor:pointer;max-width:160px">
-      ${options}
-    </select>`;
+    const ollamaInput = ollamaSelected ? `
+      <input id="tbOllamaModel" value="${cfg.ollamaModel||'qwen2.5:14b'}"
+        title="Ollama model name"
+        onchange="cfg.ollamaModel=this.value;saveCfg();updateStatus()"
+        placeholder="model name"
+        style="margin-top:4px;font-family:'DM Mono',sans-serif;font-size:11px;padding:3px 7px;border:1px solid var(--border);
+        border-radius:var(--r-sm);background:var(--surface2);color:var(--text);outline:none;width:100%;box-sizing:border-box"/>` : '';
+
+    sw.innerHTML = `<div style="display:flex;flex-direction:column;min-width:150px">
+      <select id="modelSelect" onchange="onModelSelect(this)"
+        style="font-family:'DM Mono',sans-serif;font-size:11px;font-weight:500;padding:4px 8px;
+        border:1px solid var(--border);border-radius:var(--r-sm);background:var(--surface2);
+        color:var(--text);outline:none;cursor:pointer;">
+        ${options}
+      </select>${ollamaInput}
+    </div>`;
 
   } else {
     // BYOK mode — show provider buttons
@@ -1283,31 +1353,48 @@ function buildProvSwitch() {
     if (cfg.openaiKey) provs.push({ id:'openai', label:'GPT' });
     if (cfg.geminiKey) provs.push({ id:'gemini', label:'Gemini' });
     if (cfg.mistralKey) provs.push({ id:'mistral', label:'Mistral' });
-    provs.push({ id:'ollama', label:'Local' });
-    sw.innerHTML = provs.map(p =>
+    provs.push({ id:'ollama', label:'💻 Local' });
+
+    const btns = provs.map(p =>
       `<button class="pb ${cfg.provider===p.id?'active':''}" onclick="setProvider('${p.id}',this)">${p.label}</button>`
     ).join('');
+
+    // When Local is active, show inline model name input
+    const ollamaExtra = cfg.provider === 'ollama' ? `
+      <input id="tbOllamaModel" value="${cfg.ollamaModel||'qwen2.5:14b'}"
+        title="Ollama model name"
+        onchange="cfg.ollamaModel=this.value;saveCfg();updateStatus()"
+        style="font-family:'DM Mono',sans-serif;font-size:11px;padding:3px 7px;border:1px solid var(--border);
+        border-radius:var(--r-sm);background:var(--surface2);color:var(--text);outline:none;width:120px"/>` : '';
+
+    sw.innerHTML = btns + ollamaExtra;
   }
 }
+const renderSwitcher = buildProvSwitch;
 
 function onModelSelect(sel) {
-  cfg.selectedModelId = sel.value;
+  const val = sel.value;
+  cfg.selectedModelId = val;
+  cfg.provider = val === 'ollama' ? 'ollama' : (getModel(val)?.provider || cfg.provider);
   saveCfg();
+  renderSwitcher();
   updateStatus();
 }
 
 function setProvider(p, el) {
   cfg.provider = p;
   saveCfg();
-  document.querySelectorAll('.pb').forEach(b => b.classList.remove('active'));
-  el.classList.add('active');
+  renderSwitcher(); // re-render so ollama model input shows/hides
   updateStatus();
 }
 
 function updateStatus() {
-  if (cfg.mode === 'managed') {
+  const isOllama = cfg.provider === 'ollama' || cfg.selectedModelId === 'ollama';
+  if (isOllama) {
+    document.getElementById('appStatus').textContent = `💻 ${cfg.ollamaModel||'Ollama'}`;
+  } else if (cfg.mode === 'managed' || cfg.mode === 'demo') {
     const m = getModel(cfg.selectedModelId) || getDefaultModel();
-    document.getElementById('appStatus').textContent = `${m.label}`;
+    document.getElementById('appStatus').textContent = m.label;
   } else {
     const labels = {
       claude: `Claude · ${cfg.claudeModel.split('-').slice(0,2).join('-')}`,
@@ -1872,7 +1959,13 @@ async function sendMsg() {
     const systemPrompt = getActivePrompt();
 
     let raw='';
-    if (cfg.mode==='managed') {
+    // Read current selection directly from DOM as source of truth
+    const modelSelectEl = document.getElementById('modelSelect');
+    const currentModelId = modelSelectEl ? modelSelectEl.value : cfg.selectedModelId;
+    const useOllama = currentModelId === 'ollama' || cfg.provider === 'ollama';
+    if (useOllama) {
+      raw = await callOllama(history, msgContent, systemPrompt);
+    } else if (cfg.mode==='managed' || cfg.mode==='demo') {
       raw = await callManaged(history, msgContent, systemPrompt);
     } else if (cfg.provider==='claude') {
       raw = await callClaude(history, msgContent, systemPrompt);
@@ -2184,6 +2277,30 @@ async function downloadDoc() {
   const doc = curDoc;
   dlBtn.textContent = '↻ Generating…';
   dlBtn.disabled = true;
+
+  // ── Try Python backend first (higher quality) ──────────────
+  if (PRODUCT_CONFIG.BACKEND_URL) {
+    try {
+      const res = await fetch(`${PRODUCT_CONFIG.BACKEND_URL}/generate`, {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ type: doc.type, filename: doc.filename, data: doc.data })
+      });
+      if (res.ok) {
+        const blob = await res.blob();
+        const a = document.createElement('a');
+        a.href = URL.createObjectURL(blob);
+        a.download = doc.filename;
+        a.click();
+        dlBtn.textContent = '↓ Download';
+        dlBtn.disabled = false;
+        return;
+      }
+    } catch(e) {
+      console.warn('Backend unavailable, falling back to browser generation:', e.message);
+    }
+  }
+  // ── Fallback: browser-side generation ─────────────────────
   try {
   if (doc.type==='excel') {
     const wb = new ExcelJS.Workbook();
@@ -2491,6 +2608,14 @@ async function downloadDoc() {
   }
 }
 
+function toggleModeTooltip(e) {
+  e.stopPropagation();
+  document.getElementById('modeTooltip').classList.toggle('show');
+}
+document.addEventListener('click', () => {
+  document.getElementById('modeTooltip')?.classList.remove('show');
+});
+
 function toggleArtifactsPanel() {
   document.getElementById('artifactsPanel').classList.toggle('hidden');
 }
@@ -2586,6 +2711,168 @@ function fmtMd(text) {
 }
 
 init();
+
+// ══════════════════════════════════════════════════════════════
+// PWA — Service Worker, Offline Detection, Sync Queue
+// ══════════════════════════════════════════════════════════════
+
+// ── Service Worker registration ───────────────────────────────
+if ('serviceWorker' in navigator) {
+  window.addEventListener('load', () => {
+    navigator.serviceWorker.register('./sw.js')
+      .then(reg => {
+        // Check for updates every 60 minutes
+        setInterval(() => reg.update(), 60 * 60 * 1000);
+        reg.addEventListener('updatefound', () => {
+          const newSW = reg.installing;
+          newSW.addEventListener('statechange', () => {
+            if (newSW.state === 'installed' && navigator.serviceWorker.controller) {
+              // New version available — silently activate
+              newSW.postMessage('skipWaiting');
+            }
+          });
+        });
+      })
+      .catch(e => console.warn('SW registration failed:', e));
+  });
+}
+
+// ── Offline / Online detection ────────────────────────────────
+let isOnline = navigator.onLine;
+let offlineModelBackup = null; // stores model before going offline
+
+function handleOffline() {
+  isOnline = false;
+  document.getElementById('offlineBanner').classList.add('show');
+  // Shift topbar down to make room for banner
+  const app = document.getElementById('app');
+  if (app) app.style.paddingTop = '34px';
+
+  // Auto-switch to Ollama if not already using it
+  const modelSel = document.getElementById('modelSelect');
+  if (modelSel && modelSel.value !== 'ollama') {
+    offlineModelBackup = { modelId: cfg.selectedModelId, provider: cfg.provider };
+    cfg.selectedModelId = 'ollama';
+    cfg.provider = 'ollama';
+    saveCfg();
+    renderSwitcher();
+    updateStatus();
+    setSyncStatus('idle');
+    showToast('Switched to local Ollama — offline mode');
+  }
+}
+
+function handleOnline() {
+  isOnline = true;
+  document.getElementById('offlineBanner').classList.remove('show');
+  const app = document.getElementById('app');
+  if (app) app.style.paddingTop = '';
+
+  // Restore previous model if we auto-switched
+  if (offlineModelBackup) {
+    cfg.selectedModelId = offlineModelBackup.modelId;
+    cfg.provider = offlineModelBackup.provider;
+    offlineModelBackup = null;
+    saveCfg();
+    renderSwitcher();
+    updateStatus();
+    showToast('Back online — syncing conversations…');
+  }
+
+  // Flush any queued sync operations
+  flushSyncQueue();
+}
+
+window.addEventListener('offline', handleOffline);
+window.addEventListener('online', handleOnline);
+
+// Set initial state
+if (!navigator.onLine) handleOffline();
+
+// ── Sync queue — persist conversations offline, push when online ──
+let syncQueue = JSON.parse(localStorage.getItem('aide_sync_queue') || '[]');
+
+function queueSync() {
+  // Mark that we have pending changes to push
+  syncQueue.push({ timestamp: Date.now() });
+  // Keep queue small — just track that a push is needed
+  if (syncQueue.length > 1) syncQueue = [syncQueue[syncQueue.length - 1]];
+  localStorage.setItem('aide_sync_queue', JSON.stringify(syncQueue));
+}
+
+async function flushSyncQueue() {
+  if (!syncQueue.length || !keyHash) return;
+  syncQueue = [];
+  localStorage.setItem('aide_sync_queue', '[]');
+  await pushToSupabase();
+}
+
+// Hook into saveConvs to queue when offline
+const _origSaveConvs = saveConvs;
+window.saveConvs = function() {
+  localStorage.setItem('aide_v2_convs', JSON.stringify(convs));
+  if (isOnline) {
+    schedulePush();
+  } else {
+    queueSync();
+    setSyncStatus('idle');
+  }
+};
+
+// ── Toast notification ─────────────────────────────────────────
+function showToast(msg, duration = 3000) {
+  let toast = document.getElementById('aideToast');
+  if (!toast) {
+    toast = document.createElement('div');
+    toast.id = 'aideToast';
+    toast.style.cssText = `position:fixed;bottom:24px;left:50%;transform:translateX(-50%);
+      background:#1C1C1A;color:#fff;padding:10px 18px;border-radius:20px;font-family:'DM Sans',sans-serif;
+      font-size:12px;font-weight:500;z-index:9999;opacity:0;transition:opacity .2s;pointer-events:none;
+      white-space:nowrap`;
+    document.body.appendChild(toast);
+  }
+  toast.textContent = msg;
+  toast.style.opacity = '1';
+  clearTimeout(toast._t);
+  toast._t = setTimeout(() => toast.style.opacity = '0', duration);
+}
+
+// ── Install prompt (PWA) ──────────────────────────────────────
+let deferredInstallPrompt = null;
+
+window.addEventListener('beforeinstallprompt', e => {
+  e.preventDefault();
+  deferredInstallPrompt = e;
+  // Show install prompt after 30 seconds if not dismissed before
+  const dismissed = localStorage.getItem('aide_install_dismissed');
+  if (!dismissed) {
+    setTimeout(() => {
+      document.getElementById('installPrompt').classList.add('show');
+    }, 30000);
+  }
+});
+
+function installPWA() {
+  document.getElementById('installPrompt').classList.remove('show');
+  if (deferredInstallPrompt) {
+    deferredInstallPrompt.prompt();
+    deferredInstallPrompt.userChoice.then(choice => {
+      if (choice.outcome === 'accepted') showToast('Aide installed ✓');
+      deferredInstallPrompt = null;
+    });
+  }
+}
+
+function dismissInstall() {
+  document.getElementById('installPrompt').classList.remove('show');
+  localStorage.setItem('aide_install_dismissed', '1');
+}
+
+// Show install option in settings too
+window.addEventListener('appinstalled', () => {
+  showToast('Aide installed successfully ✓');
+  deferredInstallPrompt = null;
+});
 </script>
 </body>
 </html>

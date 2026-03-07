@@ -1,0 +1,32 @@
+{
+  "name": "Aide — Private AI Assistant",
+  "short_name": "Aide",
+  "description": "Your private AI executive assistant",
+  "start_url": "/",
+  "display": "standalone",
+  "background_color": "#F7F6F3",
+  "theme_color": "#1C1C1A",
+  "orientation": "any",
+  "icons": [
+    {
+      "src": "data:image/svg+xml,<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 192 192'><rect width='192' height='192' rx='42' fill='%231C1C1A'/><text x='50%' y='58%' dominant-baseline='middle' text-anchor='middle' font-family='Georgia,serif' font-size='110' fill='white'>A</text></svg>",
+      "sizes": "192x192",
+      "type": "image/svg+xml"
+    },
+    {
+      "src": "data:image/svg+xml,<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 512 512'><rect width='512' height='512' rx='112' fill='%231C1C1A'/><text x='50%' y='58%' dominant-baseline='middle' text-anchor='middle' font-family='Georgia,serif' font-size='300' fill='white'>A</text></svg>",
+      "sizes": "512x512",
+      "type": "image/svg+xml",
+      "purpose": "any maskable"
+    }
+  ],
+  "categories": ["productivity", "utilities"],
+  "shortcuts": [
+    {
+      "name": "New conversation",
+      "short_name": "New chat",
+      "url": "/?new=1",
+      "description": "Start a new conversation"
+    }
+  ]
+}
