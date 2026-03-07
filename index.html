@@ -1,5 +1,5 @@
 <!DOCTYPE html>
-<!-- Aide v0.43 -->
+<!-- Aide v0.54 -->
 <html lang="en">
 <head>
 <meta charset="UTF-8">
@@ -242,17 +242,23 @@ body{font-family:'DM Sans',sans-serif;background:var(--bg);color:var(--text);hei
 .msg-inner{max-width:720px;margin:0 auto;padding:0 20px;display:flex}
 .msg-row.user .msg-inner{justify-content:flex-end}
 .msg-row.assistant .msg-inner{justify-content:flex-start}
-.bubble{max-width:74%;padding:10px 14px;border-radius:12px;font-size:13.5px;line-height:1.65;word-break:break-word}
+.bubble{position:relative;max-width:74%;padding:10px 14px;border-radius:12px;font-size:13.5px;line-height:1.5;word-break:break-word}
 .msg-row.user .bubble{background:var(--accent);color:#fff;border-bottom-right-radius:3px}
 .msg-row.assistant .bubble{background:var(--surface);color:var(--text);border:1px solid var(--border);box-shadow:0 1px 3px rgba(0,0,0,0.04);border-bottom-left-radius:3px}
-.bubble p{margin-bottom:8px}.bubble p:last-child{margin-bottom:0}
+.bubble p{margin:0 0 4px}.bubble p:last-child{margin-bottom:0}
 .bubble strong{font-weight:600}.bubble em{font-style:italic}
 .bubble code{font-family:'DM Mono',monospace;font-size:11.5px;background:rgba(0,0,0,0.06);padding:1px 5px;border-radius:3px}
 .msg-row.user .bubble code{background:rgba(255,255,255,0.15)}
 .bubble pre{background:#1C1C1A;color:#a8e6c0;padding:12px 14px;border-radius:var(--r-sm);overflow-x:auto;margin:8px 0;font-family:'DM Mono',monospace;font-size:11.5px;line-height:1.5}
 .bubble pre code{background:none;padding:0}
-.bubble ul,.bubble ol{padding-left:18px;margin:6px 0}.bubble li{margin-bottom:3px}
+.bubble ul,.bubble ol{padding-left:18px;margin:3px 0}.bubble li{margin-bottom:1px}
 
+/* File chips */
+.msg-files{display:flex;flex-wrap:wrap;gap:4px;margin-top:6px}
+.msg-file-chip{display:inline-flex;align-items:center;gap:3px;font-size:11px;padding:2px 8px;background:rgba(0,0,0,.06);border-radius:10px;cursor:pointer;color:var(--text-2);transition:background .15s;white-space:nowrap}
+.msg-file-chip:hover{background:rgba(0,0,0,.12)}
+.msg-row.user .msg-file-chip{background:rgba(255,255,255,.2);color:#fff}
+.msg-row.user .msg-file-chip:hover{background:rgba(255,255,255,.3)}
 /* Doc card */
 .doc-card{display:flex;align-items:center;gap:10px;background:var(--bg);border:1px solid var(--border);border-radius:var(--r-sm);padding:10px 12px;margin-top:10px;cursor:pointer;transition:all .15s}
 .doc-card:hover{border-color:var(--text-2);box-shadow:var(--sh)}
@@ -272,6 +278,9 @@ body{font-family:'DM Sans',sans-serif;background:var(--bg);color:var(--text);hei
 .msg-meta{max-width:720px;margin:2px auto 0;padding:0 20px;display:flex}
 .msg-row.user .msg-meta{justify-content:flex-end}
 .msg-time{font-size:10px;color:var(--text-3);font-family:'DM Mono',monospace}
+.copy-msg-btn{position:absolute;top:5px;right:5px;width:20px;height:20px;border:none;border-radius:3px;background:transparent;color:var(--text-3);cursor:pointer;font-size:12px;opacity:0;display:flex;align-items:center;justify-content:center;padding:0;transition:opacity .15s,background .15s}
+.copy-msg-btn:hover{opacity:1!important;background:var(--surface2)}
+.bubble:hover .copy-msg-btn{opacity:.5}
 
 /* Input */
 .input-area{padding:12px 20px 16px;background:var(--bg);flex-shrink:0}
@@ -284,6 +293,8 @@ body{font-family:'DM Sans',sans-serif;background:var(--bg);color:var(--text);hei
 .search-toggle.active{opacity:1;background:#EEF4FB;border-color:var(--accent)}
 .send-btn{width:32px;height:32px;border-radius:var(--r-sm);border:none;background:var(--accent);color:#fff;cursor:pointer;display:flex;align-items:center;justify-content:center;flex-shrink:0;transition:opacity .15s,transform .1s}
 .send-btn:hover{opacity:.85}.send-btn:active{transform:scale(.95)}.send-btn:disabled{opacity:.3;cursor:not-allowed}
+.stop-btn{width:32px;height:32px;border-radius:var(--r-sm);border:none;background:#fee2e2;color:#dc2626;cursor:pointer;display:flex;align-items:center;justify-content:center;flex-shrink:0}
+.stop-btn:hover{background:#fecaca}
 .input-footer{padding:0 12px 8px;display:flex;align-items:center;justify-content:space-between}
 .input-hint{font-size:11px;color:var(--text-3);font-family:'DM Mono',monospace}
 .ws-btn{display:flex;align-items:center;gap:5px;font-size:11px;color:var(--text-3);cursor:pointer;padding:2px 7px;border-radius:20px;border:1px solid transparent;transition:all .15s;background:none;font-family:'DM Sans',sans-serif}
@@ -507,6 +518,231 @@ body{font-family:'DM Sans',sans-serif;background:var(--bg);color:var(--text);hei
 .role-tooltip.show{display:block}
 .role-tooltip-name{font-weight:600;font-size:12px;color:var(--text);margin-bottom:4px}
 .role-tooltip-desc{font-size:11.5px;color:var(--text-2);line-height:1.5}
+
+/* ════════════════════════════════════════════════════════════
+   MOBILE — Full native app experience (≤768px)
+   Architecture:
+   - Topbar: logo + model pill + hamburger only
+   - Sidebar: full-screen slide-in drawer with overlay
+   - Bottom bar: role + compose actions (native tab bar feel)
+   - Input: sticks to keyboard (env safe-area-inset)
+   - Messages: full width, tighter bubbles
+   ════════════════════════════════════════════════════════════ */
+
+@media (max-width: 768px) {
+
+  /* ── App shell ──────────────────────────────────── */
+  .app { display: flex; flex-direction: column; }
+  .app-body { flex-direction: column; overflow: hidden; }
+
+  /* ── Topbar: minimal — logo, model, menu ────────── */
+  .topbar {
+    height: 52px;
+    padding: 0 12px;
+    gap: 8px;
+    position: relative;
+    z-index: 100;
+  }
+  .logo { font-size: 17px; }
+  .tb-divider { display: none; }
+
+  /* Hide role pills + model status bar from topbar on mobile */
+  #rolePickerWrap, .model-status-bar { display: none !important; }
+
+  /* Model picker — compact pill in topbar */
+  #modelPickerWrap { margin-left: auto; }
+  #provSwitch .prov-switch { gap: 1px; padding: 2px; }
+  #provSwitch .pb { font-size: 10px; padding: 3px 7px; }
+
+  /* Card picker drops full-width on mobile */
+  .card-picker {
+    position: fixed;
+    top: auto;
+    bottom: 0;
+    left: 0;
+    right: 0;
+    width: 100%;
+    border-radius: 16px 16px 0 0;
+    max-height: 80vh;
+    overflow-y: auto;
+    box-shadow: 0 -4px 32px rgba(0,0,0,.18);
+    z-index: 400;
+    padding: 8px 8px 32px;
+  }
+  .card-picker::before {
+    content: '';
+    display: block;
+    width: 36px;
+    height: 4px;
+    background: var(--border);
+    border-radius: 2px;
+    margin: 6px auto 10px;
+  }
+
+  /* ── Sidebar → full-screen drawer ───────────────── */
+  .sidebar {
+    position: fixed;
+    top: 0; left: 0; bottom: 0;
+    width: 85%;
+    max-width: 320px;
+    z-index: 300;
+    transform: translateX(-100%);
+    transition: transform .28s cubic-bezier(.4,0,.2,1);
+    box-shadow: 4px 0 32px rgba(0,0,0,.15);
+  }
+  .sidebar.mobile-open {
+    transform: translateX(0);
+  }
+
+  /* Overlay behind sidebar */
+  #sidebarOverlay {
+    display: none;
+    position: fixed;
+    inset: 0;
+    background: rgba(0,0,0,.4);
+    z-index: 299;
+    backdrop-filter: blur(2px);
+    -webkit-backdrop-filter: blur(2px);
+  }
+  #sidebarOverlay.show { display: block; }
+
+  /* ── Chat panel: full screen ────────────────────── */
+  .chat-panel {
+    width: 100%;
+    height: 100%;
+    flex: 1;
+  }
+
+  /* ── Messages: full width, tighter ─────────────── */
+  .msg-inner {
+    max-width: 100%;
+    padding: 0 12px;
+  }
+  .bubble {
+    max-width: 88%;
+    font-size: 14px;
+    padding: 10px 13px;
+  }
+  .msg-row { padding: 2px 0; }
+  .msg-meta { padding: 0 12px; }
+
+  /* ── Bottom bar: role switcher ───────────────────── */
+  #mobileBottomBar {
+    display: flex;
+    align-items: center;
+    justify-content: space-around;
+    background: var(--surface);
+    border-top: 1px solid var(--border);
+    padding: 6px 8px;
+    padding-bottom: max(6px, env(safe-area-inset-bottom));
+    flex-shrink: 0;
+    gap: 4px;
+  }
+  .mb-role-btn {
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    gap: 2px;
+    padding: 5px 8px;
+    border: none;
+    background: none;
+    cursor: pointer;
+    border-radius: 8px;
+    flex: 1;
+    transition: background .15s;
+    min-width: 0;
+  }
+  .mb-role-btn.active { background: var(--surface2); }
+  .mb-role-btn .mb-icon { font-size: 18px; line-height: 1; }
+  .mb-role-btn .mb-label {
+    font-size: 9px;
+    font-weight: 500;
+    color: var(--text-3);
+    font-family: 'DM Sans', sans-serif;
+    white-space: nowrap;
+    overflow: hidden;
+    text-overflow: ellipsis;
+    max-width: 52px;
+  }
+  .mb-role-btn.active .mb-label { color: var(--accent); }
+
+  /* Sidebar toggle button in topbar */
+  #mobileSidebarBtn {
+    display: flex !important;
+    width: 32px; height: 32px;
+    border: 1px solid var(--border);
+    border-radius: var(--r-sm);
+    background: var(--surface);
+    cursor: pointer;
+    align-items: center;
+    justify-content: center;
+    color: var(--text-2);
+    flex-shrink: 0;
+    order: -1; /* appears before logo */
+  }
+
+  /* ── Input area: keyboard-safe ───────────────────── */
+  .input-area {
+    padding: 8px 12px;
+    padding-bottom: max(8px, env(safe-area-inset-bottom));
+  }
+  .input-wrap { border-radius: 14px; }
+  .input-row { padding: 8px 10px; gap: 6px; }
+  #userInput { font-size: 16px !important; } /* prevents iOS zoom on focus */
+
+  /* ── Settings panel: full screen sheet ───────────── */
+  .settings-overlay.open .settings-panel {
+    position: fixed;
+    top: 0; left: 0; right: 0; bottom: 0;
+    width: 100%;
+    max-width: 100%;
+    height: 100%;
+    border-radius: 0;
+    max-height: 100%;
+  }
+
+  /* ── Artifacts panel: hidden on mobile by default ── */
+  .artifacts-panel { display: none !important; }
+
+  /* ── Auth screen: full screen, no card border ─────── */
+  .auth-card {
+    width: 100%;
+    border: none;
+    box-shadow: none;
+    padding: 32px 24px;
+    border-radius: 0;
+    background: transparent;
+  }
+  .auth-wrap { padding: 0; align-items: flex-start; padding-top: max(48px, env(safe-area-inset-top)); }
+
+  /* ── Topbar right side cleanup ───────────────────── */
+  .topbar-right { gap: 4px; }
+  .tb-btn { width: 34px; height: 34px; }
+
+  /* ── Preview panel: full screen ─────────────────── */
+  #previewPanel {
+    position: fixed !important;
+    inset: 0 !important;
+    width: 100% !important;
+    z-index: 500;
+    border-radius: 0;
+  }
+
+  /* ── Trash section: tighten ──────────────────────── */
+  .ci-name { font-size: 12px; }
+  #trashSection { padding: 4px; }
+
+  /* ── Safe area top padding for topbar ────────────── */
+  .topbar {
+    padding-top: max(0px, env(safe-area-inset-top));
+    height: calc(52px + max(0px, env(safe-area-inset-top)));
+  }
+}
+
+/* Hide mobile-only elements on desktop */
+#mobileSidebarBtn { display: none; }
+#mobileBottomBar  { display: none; }
+
 </style>
 </head>
 <body>
@@ -597,7 +833,10 @@ body{font-family:'DM Sans',sans-serif;background:var(--bg);color:var(--text);hei
 ════════════════════════════════ -->
 <div id="app" class="screen">
   <div class="topbar">
-    <div class="logo">Aide <span style="font-family:'DM Mono',monospace;font-size:10px;font-weight:400;color:var(--text-3);font-style:normal;letter-spacing:0;margin-left:2px">v0.43</span></div>
+    <button id="mobileSidebarBtn" onclick="toggleMobileSidebar()" aria-label="Menu">
+      <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"><line x1="3" y1="6" x2="21" y2="6"/><line x1="3" y1="12" x2="21" y2="12"/><line x1="3" y1="18" x2="21" y2="18"/></svg>
+    </button>
+    <div class="logo">Aide <span style="font-family:'DM Mono',monospace;font-size:10px;font-weight:400;color:var(--text-3);font-style:normal;letter-spacing:0;margin-left:2px">v0.54</span></div>
     <div class="tb-divider"></div>
     <!-- Role picker — pill buttons like model picker -->
     <div class="role-picker-wrap" id="rolePickerWrap">
@@ -616,6 +855,7 @@ body{font-family:'DM Sans',sans-serif;background:var(--bg);color:var(--text);hei
     </div>
   </div>
 
+  <div id="sidebarOverlay" onclick="toggleMobileSidebar()"></div>
   <div class="app-body">
     <!-- Sidebar -->
     <div class="sidebar">
@@ -661,6 +901,9 @@ body{font-family:'DM Sans',sans-serif;background:var(--bg);color:var(--text);hei
       </div>
     </div>
 
+    <!-- Mobile bottom bar: role switcher -->
+    <div id="mobileBottomBar"></div>
+
     <!-- Chat -->
     <div class="chat-panel" id="chatPanel"
       ondragenter="onFileDragEnter(event)"
@@ -684,12 +927,15 @@ body{font-family:'DM Sans',sans-serif;background:var(--bg);color:var(--text);hei
             <button class="attach-btn" onclick="triggerFileUpload()" title="Attach file">
               <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M21.44 11.05l-9.19 9.19a6 6 0 01-8.49-8.49l9.19-9.19a4 4 0 015.66 5.66l-9.2 9.19a2 2 0 01-2.83-2.83l8.49-8.48"/></svg>
             </button>
+            <button class="search-toggle" id="searchToggleBtn" onclick="toggleWebSearch()" title="Toggle web search">🔍</button>
             <input type="file" id="fileInput" style="display:none" multiple accept=".pdf,.docx,.xlsx,.xls,.csv,.txt,.png,.jpg,.jpeg,.gif,.webp" onchange="handleFileSelect(event)" />
             <textarea id="userInput" placeholder="Ask anything, attach files, or say 'create an Excel tracker with…'" rows="1"
               onkeydown="handleKey(event)" oninput="autoResize(this)"></textarea>
-            <button class="search-toggle" id="searchToggleBtn" onclick="toggleWebSearch()" title="Toggle web search">🔍</button>
             <button class="send-btn" id="sendBtn" onclick="sendMsg()">
               <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><line x1="22" y1="2" x2="11" y2="13"/><polygon points="22 2 15 22 11 13 2 9 22 2"/></svg>
+            </button>
+            <button class="stop-btn" id="stopBtn" onclick="stopGeneration()" title="Stop" style="display:none">
+              <svg width="10" height="10" viewBox="0 0 24 24" fill="currentColor"><rect x="3" y="3" width="18" height="18" rx="2"/></svg>
             </button>
           </div>
           <div class="input-footer">
@@ -767,6 +1013,48 @@ body{font-family:'DM Sans',sans-serif;background:var(--bg);color:var(--text);hei
 // CHANGELOG
 // ══════════════════════════════════════════════════════════
 const CHANGELOG = [
+  { version:'v0.54', date:'2026-03-08', changes:[
+    'Mobile: full native app layout — sidebar as slide-in drawer with overlay',
+    'Mobile: bottom tab bar with role switcher (Executive/Analyst/Coder/Writer/Research)',
+    'Mobile: model picker opens as bottom sheet (full width, drag handle)',
+    'Mobile: input sticks to keyboard, safe-area-inset respected on iPhone',
+    'Mobile: 16px input font prevents iOS auto-zoom on focus',
+    'Mobile: messages full width with tighter bubbles',
+    'Mobile: auth screen full screen, no card border',
+  ]},
+  { version:'v0.53', date:'2026-03-08', changes:[
+    'File chips: user message now shows file names and chips correctly',
+    'Ollama: both model list panels now show live installed models',
+    'Ollama: models fetched eagerly on login so list is ready immediately',
+  ]},
+  { version:'v0.52', date:'2026-03-08', changes:[
+    'Stop button: red square replaces send arrow while model responds',
+    'Copy button: fades in on hover at top-right of every message bubble',
+    'File attachments: saved with message, shown as chips, viewable anytime',
+    'Supabase sync: model selection, Ollama URL, and preferences now sync across all devices',
+    'Supabase sync: API keys remain local-only (never synced)',
+  ]},
+  { version:'v0.51', date:'2026-03-08', changes:[
+    'Stop button: red square replaces send arrow while model responds — click to abort',
+    'Copy button: ⎘ fades in on hover at top-right of every message bubble',
+    'File attachments: persisted on message, shown as clickable chips, viewable anytime',
+    'Ollama: model list populated live from /api/tags when panel opens',
+  ]},
+  { version:'v0.51', date:'2026-03-08', changes:[
+    'File attachments: images and PDFs now correctly passed to API (were being dropped)',
+    'Stop button: red square replaces send arrow while model is responding',
+    'Copy button: appears on hover at top-right of every message bubble',
+  ]},
+  { version:'v0.50', date:'2026-03-07', changes:[
+    'file:// banner: explains localhost:8080 requirement for Dock + passkeys',
+    'Passkeys: gracefully disabled on file:// origin, falls back to password auth',
+    'Search toggle 🔍 moved to left side of input bar, next to attach button',
+    'Supabase sync: cfg and identity now roam across all origins (coming next)',
+  ]},
+  { version:'v0.44', date:'2026-03-07', changes:[
+    'Tighter message spacing: reduced line-height, paragraph and list margins',
+    'Markdown: single newlines collapse to space, only double-newlines create paragraph breaks',
+  ]},
   { version:'v0.43', date:'2026-03-07', changes:[
     'API keys restored — guest login no longer touches BYOK user cfg',
     'callManaged rewritten to call APIs directly via paparapupi.js keys (no Railway)',
@@ -1281,7 +1569,23 @@ function schedulePush() {
 async function pushToSupabase() {
   if (!keyHash || !encPassword) return;
   try {
-    const payload = JSON.stringify({ convs, projects, updatedAt: Date.now() });
+    // Sync cfg but strip sensitive keys — they stay local only
+    const cfgToSync = {
+      selectedModelId: cfg.selectedModelId,
+      provider:        cfg.provider,
+      ollamaUrl:       cfg.ollamaUrl,
+      ollamaModel:     cfg.ollamaModel,
+      webSearch:       cfg.webSearch,
+      claudeModel:     cfg.claudeModel,
+      openaiModel:     cfg.openaiModel,
+      geminiModel:     cfg.geminiModel,
+      mistralModel:    cfg.mistralModel,
+    };
+    const identityToSync = {
+      name: currentUser?.name,
+      id:   currentUser?.id,
+    };
+    const payload = JSON.stringify({ convs, projects, cfg: cfgToSync, identity: identityToSync, updatedAt: Date.now() });
     const encrypted = await encrypt(payload, encPassword);
     const res = await fetch(`${PRODUCT_CONFIG.SUPABASE_URL}/rest/v1/conversations`, {
       method: 'POST',
@@ -1325,7 +1629,7 @@ async function pullFromSupabase() {
     const decrypted = await decrypt(rows[0].data, encPassword);
     const remote = JSON.parse(decrypted);
 
-    // Merge: remote wins for conversations updated more recently
+    // Merge conversations — remote wins if updated more recently
     let changed = false;
     Object.entries(remote.convs || {}).forEach(([id, remoteConv]) => {
       const local = convs[id];
@@ -1338,10 +1642,25 @@ async function pullFromSupabase() {
       if (!projects[id]) { projects[id] = remoteProj; changed = true; }
     });
 
+    // Restore roaming cfg fields (never overwrite local API keys)
+    if (remote.cfg) {
+      const safe = ['selectedModelId','provider','ollamaUrl','ollamaModel',
+                    'webSearch','claudeModel','openaiModel','geminiModel','mistralModel'];
+      safe.forEach(k => {
+        if (remote.cfg[k] !== undefined && remote.cfg[k] !== null && remote.cfg[k] !== '') {
+          cfg[k] = remote.cfg[k];
+        }
+      });
+      saveCfg();
+      updateSearchToggle();
+  renderMobileBottomBar();
+      buildProvSwitch();
+      updateStatus();
+    }
+
     if (changed) {
       saveConvs(); saveProjects();
       renderConvList(); renderProjList();
-      // Reload current conv if it changed
       if (curConv && convs[curConv]) renderMessages();
     }
   } catch(e) {
@@ -1392,6 +1711,8 @@ function b64urlDecode(s) {
 
 // ── Passkey storage ───────────────────────────────────────
 function passkeySupported() {
+  // WebAuthn requires a valid RP domain — file:// has none, so passkeys are blocked
+  if (location.protocol === 'file:') return false;
   return !!(window.PublicKeyCredential && navigator.credentials);
 }
 function loadPasskeys() {
@@ -1609,6 +1930,23 @@ function launchApp() {
   buildProvSwitch();
   updateStatus();
   updateSearchToggle();
+  // Eagerly fetch Ollama models so list is ready when user opens panel
+  (function fetchOllamaModels() {
+    const url = (cfg.ollamaUrl||'http://localhost:11434').replace(/[/]+$/,'');
+    fetch(url+'/api/tags', {mode:'cors',credentials:'omit'})
+      .then(r=>r.json())
+      .then(d=>{
+        if (!d.models?.length) return;
+        window._ollamaInstalledModels = d.models.map(m=>({
+          id:m.name, name:m.name,
+          desc:(m.size/1e9).toFixed(1)+' GB',
+          size:(m.size/1e9).toFixed(1)+' GB',
+          badge: m.name===cfg.ollamaModel ? 'Active' : '',
+        }));
+        buildProvSwitch();
+      })
+      .catch(()=>{});
+  })();
   loadSettingsUI();
   renderModeBar();
   renderConvList();
@@ -1738,8 +2076,22 @@ function toggleOllamaModels(e) {
     panel.classList.remove('show');
   } else {
     panel.classList.add('show');
-    // Also select ollama as provider
     if (cfg.selectedModelId !== 'ollama') selectCardModel('ollama');
+    // Fetch live installed models
+    const url = (cfg.ollamaUrl||'http://localhost:11434').replace(/[/]+$/,'');
+    fetch(url+'/api/tags', {mode:'cors',credentials:'omit'})
+      .then(r=>r.json())
+      .then(d=>{
+        if (!d.models?.length) return;
+        window._ollamaInstalledModels = d.models.map(m=>({
+          id: m.name, name: m.name,
+          desc: (m.size/1e9).toFixed(1)+' GB',
+          size: (m.size/1e9).toFixed(1)+' GB',
+          badge: m.name===cfg.ollamaModel ? 'Active' : '',
+        }));
+        buildProvSwitch();
+      })
+      .catch(()=>{});
   }
 }
 
@@ -1848,15 +2200,13 @@ function buildProvSwitch() {
       }).join('');
     }
 
-    // Ollama model cards
-    const ollamaModels = [
-      { id:'qwen2.5:14b',   name:'Qwen 2.5 14B',   desc:'Best all-round local model. Fast reasoning, coding, and chat.',        size:'9 GB', badge:'Recommended' },
-      { id:'qwen2.5:7b',    name:'Qwen 2.5 7B',    desc:'Lighter and faster. Great for everyday tasks on any machine.',        size:'4.7 GB', badge:'' },
-      { id:'llama3.2:3b',   name:'Llama 3.2 3B',   desc:'Ultra-fast responses. Best on older or lower-memory hardware.',       size:'2 GB', badge:'Fastest' },
-      { id:'mistral:7b',    name:'Mistral 7B',      desc:'Strong reasoning and instruction following. European-built model.',   size:'4.1 GB', badge:'' },
-      { id:'deepseek-r1:8b',name:'DeepSeek R1 8B',  desc:'Specialised in step-by-step reasoning and math problems.',           size:'4.9 GB', badge:'Reasoning' },
-      { id:'custom',        name:'Custom model',    desc:'Enter any model name you have pulled with ollama pull.',             size:'', badge:'' },
-    ];
+    // Ollama model cards — live list from /api/tags if available
+    const ollamaModels = (window._ollamaInstalledModels && window._ollamaInstalledModels.length)
+      ? [...window._ollamaInstalledModels, { id:'custom', name:'Other / custom', desc:'Any model from ollama pull', size:'', badge:'' }]
+      : [
+          { id:'qwen2.5:14b', name:'Qwen 2.5 14B', desc:'Open Ollama panel to load installed models', size:'', badge:'' },
+          { id:'custom',      name:'Other / custom', desc:'Any model from ollama pull', size:'', badge:'' },
+        ];
     html += `<div class="cp-divider"></div>
       <div class="cp-item cp-ollama-header ${isOllama?'cp-active':''}" onclick="toggleOllamaModels(event)">
         <div class="cp-icon" style="background:#F0EFE9">💻</div>
@@ -1993,15 +2343,13 @@ function buildProvSwitch() {
         </div>`;
     });
 
-    // Ollama
-    const ollamaModels = [
-      { id:'qwen2.5:14b', name:'Qwen 2.5 14B', desc:'Best all-round local model.', size:'9 GB', badge:'Recommended' },
-      { id:'qwen2.5:7b',  name:'Qwen 2.5 7B',  desc:'Lighter and faster.',         size:'4.7 GB', badge:'' },
-      { id:'llama3.2:3b', name:'Llama 3.2 3B', desc:'Ultra-fast, low memory.',     size:'2 GB', badge:'Fastest' },
-      { id:'mistral:7b',  name:'Mistral 7B',   desc:'Strong reasoning, European.', size:'4.1 GB', badge:'' },
-      { id:'deepseek-r1:8b', name:'DeepSeek R1 8B', desc:'Step-by-step reasoning.', size:'4.9 GB', badge:'Reasoning' },
-      { id:'custom', name:'Custom model', desc:'Any model from ollama pull.', size:'', badge:'' },
-    ];
+    // Ollama — live list
+    const ollamaModels = (window._ollamaInstalledModels && window._ollamaInstalledModels.length)
+      ? [...window._ollamaInstalledModels, { id:'custom', name:'Other / custom', desc:'Any model from ollama pull', size:'', badge:'' }]
+      : [
+          { id:'qwen2.5:14b', name:'Qwen 2.5 14B', desc:'Open Ollama panel to load installed models', size:'', badge:'' },
+          { id:'custom',      name:'Other / custom', desc:'Any model from ollama pull', size:'', badge:'' },
+        ];
     if (!pf || pf === 'ollama') html += `<div class="cp-divider"></div>`;
     if (!pf || pf === 'ollama') html += `<div class="cp-item cp-ollama-header ${isOllama?'cp-active':''}" onclick="toggleOllamaModels(event)">
         <div class="cp-icon" style="background:#F0EFE9">💻</div>
@@ -2216,6 +2564,7 @@ function toggleRolePicker(e) {
 }
 
 function setMode(id) {
+  setTimeout(renderMobileBottomBar, 50);
   cfg.activeMode = id;
   saveCfg();
   renderRolePicker();
@@ -2782,7 +3131,9 @@ function renderMsg(m) {
   const time = new Date(m.timestamp).toLocaleTimeString('en-SG',{hour:'2-digit',minute:'2-digit'});
   let content = '';
   if (m.role==='user') {
-    content = `<p>${esc(m.content)}</p>`;
+    // Use displayContent if available (includes "📎 filename" suffix)
+    const userText = m.displayContent || m.content;
+    content = `<p>${esc(typeof userText === 'string' ? userText : m.content)}</p>`;
   } else {
     content = fmtMd(m.displayContent||m.content);
     if (m.doc) {
@@ -2795,21 +3146,29 @@ function renderMsg(m) {
       </div>`;
     }
   }
+  if (m.attachments?.length) {
+    const icons = {pdf:'📄',excel:'📊',docx:'📝',image:'🖼',text:'📎'};
+    content += '<div class="msg-files">' + m.attachments.map((a,i) =>
+      `<span class="msg-file-chip" onclick="viewMsgFile('${m.id||m.timestamp||''}',${i})">${icons[a.type]||'📎'} ${esc(a.name)}</span>`
+    ).join('') + '</div>';
+  }
   const branchBtn = m.role === 'assistant'
     ? `<button class="branch-btn" onclick="branchFromMsg('${m.id||m.timestamp||''}')" title="Branch conversation from here">⎇ Branch</button>`
     : '';
   const branchRef = m.branchedFrom
     ? `<span class="branch-ref">branched</span>`
     : '';
-  return `<div class="msg-row ${m.role}" data-id="${m.id||m.timestamp||''}">
-    <div class="msg-inner"><div class="bubble">${content}</div></div>
+  const _mid = m.id||m.timestamp||'';
+  return `<div class="msg-row ${m.role}" data-id="${_mid}">
+    <div class="msg-inner"><div class="bubble">${content}<button class="copy-msg-btn" onclick="copyMsg('${_mid}')" title="Copy">⎘</button></div></div>
     <div class="msg-meta"><span class="msg-time">${time}</span>${branchBtn}${branchRef}</div>
   </div>`;
 }
 
-function appendMsg(role, content, displayContent, doc) {
+function appendMsg(role, content, displayContent, doc, msgAttachments) {
   const conv = convs[curConv];
-  const m = {role, content, displayContent, doc, timestamp:Date.now()};
+  const m = {role, content, displayContent, doc, timestamp:Date.now(),
+             ...(msgAttachments?.length ? {attachments:msgAttachments} : {})};
   conv.messages.push(m);
   conv.updatedAt = Date.now();
   if (role==='user' && conv.messages.filter(x=>x.role==='user').length===1) {
@@ -2872,6 +3231,78 @@ function branchFromMsg(msgId) {
 }
 
 
+function stopGeneration() {
+  if (abortController) { abortController.abort(); abortController = null; }
+  hideTyping();
+  loading = false;
+  document.getElementById('sendBtn').style.display='flex';
+  document.getElementById('stopBtn').style.display='none';
+  showToast('Stopped');
+}
+
+function copyMsg(msgId) {
+  const conv = convs[curConv];
+  if (!conv) return;
+  const m = conv.messages.find(m => String(m.id||m.timestamp||'') === String(msgId));
+  if (!m) return;
+  const text = typeof m.displayContent === 'string' ? m.displayContent
+             : typeof m.content === 'string' ? m.content
+             : (m.content||[]).filter(x=>x.type==='text').map(x=>x.text).join('');
+  navigator.clipboard.writeText(text).then(() => showToast('Copied')).catch(() => {
+    const ta = document.createElement('textarea');
+    ta.value = text; ta.style.cssText='position:fixed;opacity:0';
+    document.body.appendChild(ta); ta.select(); document.execCommand('copy');
+    document.body.removeChild(ta); showToast('Copied');
+  });
+}
+
+function stopGeneration() {
+  if (typeof abortController !== 'undefined' && abortController) {
+    abortController.abort();
+    abortController = null;
+  }
+  hideTyping();
+  loading = false;
+  document.getElementById('sendBtn').style.display='flex';
+  document.getElementById('stopBtn').style.display='none';
+  showToast('Stopped');
+}
+
+function copyMsg(msgId) {
+  if (!curConv) return;
+  const m = convs[curConv]?.messages.find(m=>String(m.id||m.timestamp||'')===String(msgId));
+  if (!m) return;
+  const text = typeof m.displayContent==='string' ? m.displayContent
+             : typeof m.content==='string' ? m.content
+             : (m.content||[]).filter(x=>x.type==='text').map(x=>x.text).join('');
+  navigator.clipboard.writeText(text)
+    .then(()=>showToast('Copied ✓'))
+    .catch(()=>{
+      const ta=document.createElement('textarea');
+      ta.value=text; ta.style.cssText='position:fixed;opacity:0';
+      document.body.appendChild(ta); ta.select();
+      document.execCommand('copy'); document.body.removeChild(ta);
+      showToast('Copied ✓');
+    });
+}
+
+function viewMsgFile(msgId, idx) {
+  const m = convs[curConv]?.messages.find(m=>String(m.id||m.timestamp||'')===String(msgId));
+  const a = m?.attachments?.[idx];
+  if (!a) return;
+  const panel = document.getElementById('previewPanel');
+  const cont  = document.getElementById('previewContent');
+  if (!panel||!cont) return;
+  if (a.isImage && a.base64) {
+    cont.innerHTML = `<img src="data:${a.mimeType};base64,${a.base64}" style="max-width:100%;border-radius:6px">`;
+  } else if (a.type==='pdf' && a.base64) {
+    cont.innerHTML = `<iframe src="data:application/pdf;base64,${a.base64}" style="width:100%;height:500px;border:none;border-radius:6px"></iframe>`;
+  } else if (a.content) {
+    cont.innerHTML = `<pre style="font-size:11px;white-space:pre-wrap;word-break:break-all;margin:0;max-height:500px;overflow-y:auto">${esc(a.content.slice(0,8000))}</pre>`;
+  }
+  panel.classList.remove('hidden');
+}
+
 function toggleWebSearch() {
   cfg.webSearch = !cfg.webSearch;
   saveCfg();
@@ -2905,10 +3336,17 @@ async function sendMsg() {
   // Build display text for user bubble
   const attNames = attachments.map(a=>a.name);
   const displayText = text + (attNames.length ? `\n📎 ${attNames.join(', ')}` : '');
-  appendMsg('user', text, displayText);
+  const attSnap = attachments.map(a=>({
+    name:a.name, type:a.type,
+    ...(a.content ? {content:a.content} : {}),
+    ...(a.base64  ? {base64:a.base64, mimeType:a.mimeType, isImage:a.isImage} : {}),
+  }));
+  appendMsg('user', text, displayText, null, attSnap);
 
   loading=true;
-  document.getElementById('sendBtn').disabled=true;
+  abortController = new AbortController();
+  document.getElementById('sendBtn').style.display='none';
+  document.getElementById('stopBtn').style.display='flex';
   showTyping();
 
   try {
@@ -2984,7 +3422,9 @@ async function sendMsg() {
   }
 
   loading=false;
-  document.getElementById('sendBtn').disabled=false;
+  abortController=null;
+  document.getElementById('sendBtn').style.display='flex';
+  document.getElementById('stopBtn').style.display='none';
   document.getElementById('userInput').focus();
 }
 
@@ -3765,11 +4205,81 @@ function fmtMd(text) {
     .replace(/^#{1,3} (.+)$/gm,'<strong>$1</strong>')
     .replace(/^[-•] (.+)$/gm,'<li>$1</li>')
     .replace(/(<li>[\s\S]*?<\/li>)/g,'<ul>$1</ul>')
-    .replace(/\n\n+/g,'</p><p>')
-    .replace(/\n/g,'<br>')
+    .replace(/\n\n\n+/g,'</p><p>')
+    .replace(/\n\n/g,'</p><p>')
+    .replace(/\n/g,' ')
     .replace(/^(?!<)(.+)/,'<p>$1</p>')
     .replace(/<p><\/p>/g,'');
 }
+
+// ══════════════════════════════════════════════════════════
+// MOBILE UI
+// ══════════════════════════════════════════════════════════
+const isMobile = () => window.innerWidth <= 768;
+
+function toggleMobileSidebar(forceClose) {
+  const sidebar = document.querySelector('.sidebar');
+  const overlay = document.getElementById('sidebarOverlay');
+  if (!sidebar) return;
+  const isOpen = sidebar.classList.contains('mobile-open');
+  if (forceClose || isOpen) {
+    sidebar.classList.remove('mobile-open');
+    overlay?.classList.remove('show');
+    document.body.style.overflow = '';
+  } else {
+    sidebar.classList.add('mobile-open');
+    overlay?.classList.add('show');
+    document.body.style.overflow = 'hidden';
+  }
+}
+
+function renderMobileBottomBar() {
+  const bar = document.getElementById('mobileBottomBar');
+  if (!bar || !isMobile()) return;
+  const modes = [
+    { id:'executive', icon:'🎯', label:'Executive' },
+    { id:'analyst',   icon:'📊', label:'Analyst'   },
+    { id:'coder',     icon:'💻', label:'Coder'      },
+    { id:'writer',    icon:'✍️',  label:'Writer'     },
+    { id:'research',  icon:'🧠', label:'Research'   },
+  ];
+  bar.innerHTML = modes.map(m => `
+    <button class="mb-role-btn ${cfg.mode===m.id?'active':''}" onclick="setMobileMode('${m.id}')">
+      <span class="mb-icon">${m.icon}</span>
+      <span class="mb-label">${m.label}</span>
+    </button>
+  `).join('');
+}
+
+function setMobileMode(modeId) {
+  if (typeof setMode === 'function') setMode(modeId);
+  renderMobileBottomBar();
+}
+
+// Close sidebar when a conversation is loaded on mobile
+const _origLoadConv = typeof loadConv !== 'undefined' ? loadConv : null;
+document.addEventListener('click', e => {
+  if (isMobile() && e.target.closest('.ci, .proj-conv')) {
+    toggleMobileSidebar(true);
+  }
+});
+
+// Close card picker on mobile when tapping outside
+document.addEventListener('click', e => {
+  if (isMobile() && !e.target.closest('#modelPickerWrap') && !e.target.closest('#cardPicker')) {
+    document.getElementById('cardPicker')?.classList.remove('show');
+  }
+});
+
+// Resize handler
+window.addEventListener('resize', () => {
+  if (!isMobile()) {
+    // Restore desktop state
+    toggleMobileSidebar(true);
+    document.body.style.overflow = '';
+  }
+  renderMobileBottomBar();
+});
 
 init();
 
@@ -3778,7 +4288,7 @@ init();
 // ══════════════════════════════════════════════════════════════
 
 // ── Service Worker registration ───────────────────────────────
-const APP_VERSION = 'v0.43';
+const APP_VERSION = 'v0.54';
 if ('serviceWorker' in navigator) {
   window.addEventListener('load', async () => {
     // Unregister all old service workers and clear all caches on version change
@@ -3861,6 +4371,13 @@ window.addEventListener('online', handleOnline);
 
 // Set initial state
 if (!navigator.onLine) handleOffline();
+// Detect file:// origin — show localhost suggestion
+if (location.protocol === 'file:') {
+  const b = document.createElement('div');
+  b.style.cssText = 'position:fixed;bottom:0;left:0;right:0;background:#1C1C1A;color:#fff;font-size:11px;font-family:DM Sans,sans-serif;padding:8px 16px;text-align:center;z-index:9999;display:flex;align-items:center;justify-content:center;gap:12px';
+  b.innerHTML = '<span>📂 Running from file — <strong>Add to Dock</strong> and passkeys require localhost. Run: <code style="background:rgba(255,255,255,.15);padding:1px 5px;border-radius:3px">python3 -m http.server 8080</code> then open <a href="http://localhost:8080" style="color:#FFD43B">localhost:8080</a></span><button onclick="this.parentNode.remove()" style="background:none;border:none;color:#fff;cursor:pointer;font-size:16px;line-height:1">×</button>';
+  document.body.appendChild(b);
+}
 (function(){ const el = document.getElementById('loginVersion'); if (el) el.textContent = typeof APP_VERSION !== 'undefined' ? APP_VERSION : ''; })();
 
 // ── Sync queue — persist conversations offline, push when online ──
