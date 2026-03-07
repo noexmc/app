@@ -1,5 +1,5 @@
 <!DOCTYPE html>
-<!-- Aide v0.42 -->
+<!-- Aide v0.43 -->
 <html lang="en">
 <head>
 <meta charset="UTF-8">
@@ -280,6 +280,8 @@ body{font-family:'DM Sans',sans-serif;background:var(--bg);color:var(--text);hei
 .input-row{display:flex;align-items:flex-end;padding:10px 12px;gap:8px}
 #userInput{flex:1;border:none;outline:none;resize:none;font-family:'DM Sans',sans-serif;font-size:13.5px;color:var(--text);background:transparent;min-height:22px;max-height:140px;line-height:1.5;overflow-y:auto}
 #userInput::placeholder{color:var(--text-3)}
+.search-toggle{width:28px;height:28px;border-radius:var(--r-sm);border:1px solid var(--border);background:var(--surface2);cursor:pointer;display:flex;align-items:center;justify-content:center;flex-shrink:0;font-size:14px;opacity:.5;transition:opacity .15s,background .15s}
+.search-toggle.active{opacity:1;background:#EEF4FB;border-color:var(--accent)}
 .send-btn{width:32px;height:32px;border-radius:var(--r-sm);border:none;background:var(--accent);color:#fff;cursor:pointer;display:flex;align-items:center;justify-content:center;flex-shrink:0;transition:opacity .15s,transform .1s}
 .send-btn:hover{opacity:.85}.send-btn:active{transform:scale(.95)}.send-btn:disabled{opacity:.3;cursor:not-allowed}
 .input-footer{padding:0 12px 8px;display:flex;align-items:center;justify-content:space-between}
@@ -595,7 +597,7 @@ body{font-family:'DM Sans',sans-serif;background:var(--bg);color:var(--text);hei
 ════════════════════════════════ -->
 <div id="app" class="screen">
   <div class="topbar">
-    <div class="logo">Aide <span style="font-family:'DM Mono',monospace;font-size:10px;font-weight:400;color:var(--text-3);font-style:normal;letter-spacing:0;margin-left:2px">v0.42</span></div>
+    <div class="logo">Aide <span style="font-family:'DM Mono',monospace;font-size:10px;font-weight:400;color:var(--text-3);font-style:normal;letter-spacing:0;margin-left:2px">v0.43</span></div>
     <div class="tb-divider"></div>
     <!-- Role picker — pill buttons like model picker -->
     <div class="role-picker-wrap" id="rolePickerWrap">
@@ -685,6 +687,7 @@ body{font-family:'DM Sans',sans-serif;background:var(--bg);color:var(--text);hei
             <input type="file" id="fileInput" style="display:none" multiple accept=".pdf,.docx,.xlsx,.xls,.csv,.txt,.png,.jpg,.jpeg,.gif,.webp" onchange="handleFileSelect(event)" />
             <textarea id="userInput" placeholder="Ask anything, attach files, or say 'create an Excel tracker with…'" rows="1"
               onkeydown="handleKey(event)" oninput="autoResize(this)"></textarea>
+            <button class="search-toggle" id="searchToggleBtn" onclick="toggleWebSearch()" title="Toggle web search">🔍</button>
             <button class="send-btn" id="sendBtn" onclick="sendMsg()">
               <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><line x1="22" y1="2" x2="11" y2="13"/><polygon points="22 2 15 22 11 13 2 9 22 2"/></svg>
             </button>
@@ -734,8 +737,11 @@ body{font-family:'DM Sans',sans-serif;background:var(--bg);color:var(--text);hei
       <div class="sg"><div class="sl">Mistral API key</div><input class="si" id="sMistralKey" type="password" placeholder="..." /></div>
       <div class="sg"><div class="sl">Tavily Search key</div><input class="si" id="sBraveKey" type="password" placeholder="tvly-..." /><div style="font-size:11px;color:var(--text-3);margin-top:4px">Free at <a href="https://tavily.com" target="_blank" style="color:var(--blue)">tavily.com</a> · 1,000 searches/month free</div></div>
       <div class="sg"><div class="sl">Ollama URL</div>
-        <input class="si" id="sOllamaUrl" />
+        <input class="si" id="sOllamaUrl" placeholder="http://localhost:11434"/>
         <input class="si" id="sOllamaModel" placeholder="Model name (e.g. qwen2.5:14b)" style="margin-top:6px"/>
+        <div style="font-size:11px;color:var(--text-3);margin-top:4px;line-height:1.5">
+          For HTTPS use ngrok: <code style="background:var(--surface2);padding:1px 3px;border-radius:2px;font-size:10px">OLLAMA_HOST=0.0.0.0 ollama serve</code> then <code style="background:var(--surface2);padding:1px 3px;border-radius:2px;font-size:10px">ngrok http 11434</code>
+        </div>
         <button class="btn-ghost-sm" style="margin-top:6px" onclick="testOllama()">⚡ Test connection</button>
         <div id="ollamaTestResult" style="font-size:11px;margin-top:4px;color:var(--text-2)"></div>
       </div>
@@ -761,6 +767,13 @@ body{font-family:'DM Sans',sans-serif;background:var(--bg);color:var(--text);hei
 // CHANGELOG
 // ══════════════════════════════════════════════════════════
 const CHANGELOG = [
+  { version:'v0.43', date:'2026-03-07', changes:[
+    'API keys restored — guest login no longer touches BYOK user cfg',
+    'callManaged rewritten to call APIs directly via paparapupi.js keys (no Railway)',
+    'Web search: 🔍 toggle button added to input bar — click to enable/disable',
+    'Ollama: settings shows OLLAMA_HOST=0.0.0.0 instruction for ngrok',
+    'Guest: fresh ephemeral session, uses demo mode for message counter',
+  ]},
   { version:'v0.42', date:'2026-03-07', changes:[
     'Guest: fresh session every login, no old conversations carried over',
     'Guest: demo mode — 5-message counter works correctly',
@@ -1537,13 +1550,16 @@ function friendsSignIn() {
     err.textContent = 'Wrong password. Try again.';
     return;
   }
-  currentUser = { id: 'friends_' + Date.now(), name: 'Guest', email: 'guest' };
-  cfg.mode      = 'friends';
+  // Fresh ephemeral session — do NOT persist, wipe convs only
+  currentUser = { id: 'guest_' + Date.now(), name: 'Guest', email: 'guest' };
+  cfg.mode      = 'demo';   // use demo mode so counter + callManaged work
   cfg.activated = true;
   cfg.demoCount = 0;
-  cfg.licenseData = { plan: 'friends' };
-  convs = {};
-  msgs  = [];
+  cfg.licenseData = { plan: 'demo' };
+  convs    = {};
+  projects = {};
+  // NOTE: do NOT reset cfg.claudeKey etc — those are Alex's BYOK keys in localStorage
+  // and should not be touched by guest login
   launchApp();
 }
 
@@ -1592,6 +1608,7 @@ function launchApp() {
   document.getElementById('app').classList.add('active');
   buildProvSwitch();
   updateStatus();
+  updateSearchToggle();
   loadSettingsUI();
   renderModeBar();
   renderConvList();
@@ -2854,6 +2871,20 @@ function branchFromMsg(msgId) {
   showToast('⎇ Branched');
 }
 
+
+function toggleWebSearch() {
+  cfg.webSearch = !cfg.webSearch;
+  saveCfg();
+  const btn = document.getElementById('searchToggleBtn');
+  if (btn) btn.classList.toggle('active', cfg.webSearch);
+  showToast(cfg.webSearch ? '🔍 Web search on' : '🔍 Web search off');
+}
+
+function updateSearchToggle() {
+  const btn = document.getElementById('searchToggleBtn');
+  if (btn) btn.classList.toggle('active', !!cfg.webSearch);
+}
+
 async function sendMsg() {
   const input = document.getElementById('userInput');
   const text = input.value.trim();
@@ -2960,33 +2991,38 @@ async function sendMsg() {
 function sendQuick(t) { document.getElementById('userInput').value=t; sendMsg(); }
 
 async function callManaged(history, content, systemPrompt) {
+  // Uses keys from PRODUCT_CONFIG, overridden by paparapupi.js AIDE_KEYS at startup
   const model = getModel(cfg.selectedModelId) || getDefaultModel();
   const provider = model.provider;
-  const messages = [...history, {role:'user', content: typeof content === 'string' ? content : (content.find?.(x=>x.type==='text')?.text||'')}];
-  const secret = (typeof window !== 'undefined' && window.AIDE_SECRET) || PRODUCT_CONFIG.AIDE_SECRET || '';
-  const backendUrl = PRODUCT_CONFIG.BACKEND_URL;
-  if (!backendUrl) throw new Error('Backend not configured.');
-  if (!secret) throw new Error('Guest access not configured — AIDE_SECRET missing in paparapupi.js');
+  const textContent = typeof content === 'string' ? content : (content.find?.(x=>x.type==='text')?.text||'');
+  const messages = [...history, {role:'user', content: textContent}];
 
-  // All managed calls go through Railway backend (keys never exposed to browser)
-  if (cfg.webSearch && provider === 'anthropic') {
-    // Use backend with web_search flag
-    const r = await fetch(`${backendUrl}/chat`, {
+  if (provider === 'anthropic') {
+    const key = PRODUCT_CONFIG.ANTHROPIC_KEY;
+    if (!key) throw new Error('No Claude key configured. Add ANTHROPIC_KEY to paparapupi.js');
+    if (cfg.webSearch) return await callAnthropicWithSearch(key, model.apiModel, history, content, systemPrompt);
+    const r = await fetch('https://api.anthropic.com/v1/messages', {
       method:'POST',
-      headers:{'Content-Type':'application/json','x-aide-secret':secret},
-      body:JSON.stringify({ provider:'anthropic', model:model.apiModel, system:systemPrompt, messages, max_tokens:4096, web_search:true })
+      headers:{'Content-Type':'application/json','x-api-key':key,
+               'anthropic-version':'2023-06-01','anthropic-dangerous-direct-browser-access':'true'},
+      body:JSON.stringify({model:model.apiModel, max_tokens:4096, system:systemPrompt, messages})
     });
-    if (!r.ok) { const e=await r.json().catch(()=>{}); throw new Error(e?.detail||`Backend error ${r.status}`); }
-    const d = await r.json(); return d.text || '';
+    if (!r.ok) { const e=await r.json(); throw new Error(e.error?.message||`Claude error ${r.status}`); }
+    const d=await r.json(); return d.content?.filter(b=>b.type==='text').map(b=>b.text).join('')||'';
+  } else if (provider === 'openai') {
+    const key = PRODUCT_CONFIG.OPENAI_KEY;
+    if (!key) throw new Error('No OpenAI key in paparapupi.js');
+    return await _callOpenAI(key, model.apiModel, history, content, systemPrompt);
+  } else if (provider === 'gemini') {
+    const key = PRODUCT_CONFIG.GEMINI_KEY;
+    if (!key) throw new Error('No Gemini key in paparapupi.js');
+    return await _callGemini(key, model.apiModel, history, content, systemPrompt);
+  } else if (provider === 'mistral') {
+    const key = PRODUCT_CONFIG.MISTRAL_KEY;
+    if (!key) throw new Error('No Mistral key in paparapupi.js');
+    return await _callMistral(key, model.apiModel, history, content, systemPrompt);
   }
-
-  const r = await fetch(`${backendUrl}/chat`, {
-    method:'POST',
-    headers:{'Content-Type':'application/json','x-aide-secret':secret},
-    body:JSON.stringify({ provider, model:model.apiModel, system:systemPrompt, messages, max_tokens:4096 })
-  });
-  if (!r.ok) { const e=await r.json().catch(()=>{}); throw new Error(e?.detail||`Backend error ${r.status}`); }
-  const d = await r.json(); return d.text || '';
+  throw new Error('Unknown provider: ' + provider);
 }
 
 async function callClaude(history, content, systemPrompt) {
@@ -3742,7 +3778,7 @@ init();
 // ══════════════════════════════════════════════════════════════
 
 // ── Service Worker registration ───────────────────────────────
-const APP_VERSION = 'v0.42';
+const APP_VERSION = 'v0.43';
 if ('serviceWorker' in navigator) {
   window.addEventListener('load', async () => {
     // Unregister all old service workers and clear all caches on version change
