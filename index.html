@@ -1570,6 +1570,18 @@ const MODEL_META = {
 
 
 
+
+function toggleProvSubModels(provider, e) {
+  e.stopPropagation();
+  const panel = document.getElementById('cpSub_' + provider);
+  if (!panel) return;
+  // Close other sub-panels
+  document.querySelectorAll('[id^="cpSub_"], #cpClaudeSubModels, #cpOllamaModels').forEach(el => {
+    if (el.id !== 'cpSub_' + provider) el.classList.remove('show');
+  });
+  panel.classList.toggle('show');
+}
+
 function toggleClaudeSubModels(e) {
   e.stopPropagation();
   const panel = document.getElementById('cpClaudeSubModels');
@@ -1732,26 +1744,137 @@ function buildProvSwitch() {
     cp.innerHTML = html;
 
   } else {
-    // BYOK mode — compact provider pill buttons in trigger, picker for model selection
-    const provs = [];
-    if (cfg.claudeKey)  provs.push({ id:'claude',  label:'Claude' });
-    if (cfg.openaiKey)  provs.push({ id:'openai',  label:'GPT' });
-    if (cfg.geminiKey)  provs.push({ id:'gemini',  label:'Gemini' });
-    if (cfg.mistralKey) provs.push({ id:'mistral', label:'Mistral' });
-    provs.push({ id:'ollama', label:'💻 Local' });
+    // BYOK mode — same card picker, all models available
+    const allModels = PRODUCT_CONFIG.MODELS;
+    const cur       = getModel(cfg.selectedModelId) || allModels[0];
+    const isOllama  = cfg.selectedModelId === 'ollama';
+    const meta      = MODEL_META[cur?.id] || MODEL_META.haiku;
 
-    const btns = provs.map(p =>
-      `<button class="pb ${cfg.provider===p.id?'active':''}" onclick="setProvider('${p.id}',this)">${p.label}</button>`
-    ).join('');
-    const ollamaExtra = cfg.provider === 'ollama'
-      ? `<input id="tbOllamaModel" value="${cfg.ollamaModel||'qwen2.5:14b'}"
-          onchange="cfg.ollamaModel=this.value;saveCfg();updateStatus()"
-          style="font-family:'DM Mono',sans-serif;font-size:11px;padding:3px 7px;border:1px solid var(--border);
-          border-radius:var(--r-sm);background:var(--surface2);color:var(--text);outline:none;width:120px"/>` : '';
+    // Trigger button — same as managed
+    sw.innerHTML = `<button class="model-btn" onclick="toggleCardPicker(event)">
+      <div class="mb-dot"></div>
+      <span class="mb-name">${isOllama ? (cfg.ollamaModel||'Ollama') : (cur?.label||'Select model')}</span>
+      <span class="mb-arr">▾</span>
+    </button>`;
+    sw.className = '';
 
-    sw.className = 'prov-switch';
-    sw.innerHTML = btns + ollamaExtra;
-    cp.innerHTML = '';
+    const speedDots = arr => arr.map(on => `<span class="${on?'on':''}"></span>`).join('');
+
+    // Group Claude models
+    const claudeModels = allModels.filter(m => m.provider === 'anthropic');
+    const otherModels  = allModels.filter(m => m.provider !== 'anthropic');
+    const isClaudeActive = !isOllama && claudeModels.some(m => m.id === cur?.id);
+    const activeClaudeModel = claudeModels.find(m => m.id === cur?.id) || claudeModels[0];
+    const acm = MODEL_META[activeClaudeModel?.id] || {};
+
+    const claudeSubItems = claudeModels.map(m => {
+      const mm = MODEL_META[m.id] || {};
+      const subActive = m.id === cur?.id && !isOllama;
+      const badges = { haiku:'Fast', sonnet:'Balanced', opus:'Powerful' };
+      const badgeStyle = { haiku:'background:#E8F5E9;color:#1D6A3E', sonnet:'background:#EEF4FB;color:#1A3A5C', opus:'background:#FEF3D0;color:#92530A' };
+      return `<div class="cp-sub-item ${subActive?'active':''}" onclick="selectCardModel('${m.id}');event.stopPropagation()">
+        <div class="cp-sub-icon" style="background:${mm.iconBg||'#eee'}">${mm.icon||'·'}</div>
+        <div style="flex:1;min-width:0">
+          <div style="display:flex;align-items:center;gap:6px">
+            <span class="cp-sub-name">${m.label}</span>
+            <span class="cp-sub-badge" style="${badgeStyle[m.id]||''}">${badges[m.id]||''}</span>
+          </div>
+          <div class="cp-sub-desc">${mm.use||''}</div>
+        </div>
+      </div>`;
+    }).join('');
+
+    let html = `<div class="cp-item ${isClaudeActive?'cp-active':''}" onclick="toggleClaudeSubModels(event)">
+      <div class="cp-icon" style="background:#EEF4FB">✦</div>
+      <div><div class="cp-name">Claude${isClaudeActive&&activeClaudeModel?` <span style="font-size:10px;color:var(--text-3);font-weight:400">· ${activeClaudeModel.label}</span>`:''}</div>
+      <div class="cp-use">${isClaudeActive&&acm.use ? acm.use : 'Haiku · Sonnet · Opus'}</div></div>
+      <div class="cp-right">
+        <div class="cp-speed">${speedDots([1,1,0])}</div>
+        <div class="cp-tier" style="background:#EEF4FB;color:#1A3A5C">Claude</div>
+      </div>
+    </div>
+    <div class="cp-sub-models ${isClaudeActive?'show':''}" id="cpClaudeSubModels">
+      ${claudeSubItems}
+    </div>`;
+
+    // Other providers — only show if key is set
+    const providerMeta = {
+      openai:  { icon:'🤖', bg:'#F0F0F0', label:'GPT',     tierStyle:'background:#F0F0F0;color:#444' },
+      gemini:  { icon:'♊',  bg:'#EEF4FB', label:'Gemini',  tierStyle:'background:#EEF4FB;color:#1A3A5C' },
+      mistral: { icon:'🌀', bg:'#EDE5FF', label:'Mistral', tierStyle:'background:#EDE5FF;color:#6B3FA0' },
+    };
+
+    const providerGroups = [
+      { provider:'openai',  key: cfg.openaiKey,  models: allModels.filter(m=>m.provider==='openai')  },
+      { provider:'gemini',  key: cfg.geminiKey,  models: allModels.filter(m=>m.provider==='gemini')  },
+      { provider:'mistral', key: cfg.mistralKey, models: allModels.filter(m=>m.provider==='mistral') },
+    ];
+
+    providerGroups.forEach(({ provider, key, models }) => {
+      if (!key && !models.some(m=>m.id===cur?.id)) return; // hide if no key and not selected
+      const pm = providerMeta[provider] || {};
+      const isActive = !isOllama && models.some(m => m.id === cur?.id);
+      const activeSub = models.find(m => m.id === cur?.id);
+      html += `<div class="cp-divider"></div>
+        <div class="cp-item ${isActive?'cp-active':''}" onclick="toggleProvSubModels('${provider}', event)">
+          <div class="cp-icon" style="background:${pm.bg||'#eee'}">${pm.icon||'·'}</div>
+          <div><div class="cp-name">${pm.label}${isActive&&activeSub?` <span style="font-size:10px;color:var(--text-3);font-weight:400">· ${activeSub.label}</span>`:''}</div>
+          <div class="cp-use">${models.map(m=>m.label).join(' · ')}</div></div>
+          <div class="cp-right">
+            <div class="cp-speed">${speedDots([1,1,0])}</div>
+            <div class="cp-tier" style="${pm.tierStyle||''}">${pm.label}</div>
+          </div>
+        </div>
+        <div class="cp-sub-models ${isActive?'show':''}" id="cpSub_${provider}">
+          ${models.map(m => {
+            const mm = MODEL_META[m.id] || {};
+            const subActive = m.id === cur?.id && !isOllama;
+            return `<div class="cp-sub-item ${subActive?'active':''}" onclick="selectCardModel('${m.id}');event.stopPropagation()">
+              <div class="cp-sub-icon" style="background:${mm.iconBg||'#eee'}">${mm.icon||'·'}</div>
+              <div style="flex:1">
+                <div class="cp-sub-name">${m.label}</div>
+                <div class="cp-sub-desc">${mm.use||''}</div>
+              </div>
+            </div>`;
+          }).join('')}
+        </div>`;
+    });
+
+    // Ollama
+    const ollamaModels = [
+      { id:'qwen2.5:14b', name:'Qwen 2.5 14B', desc:'Best all-round local model.', size:'9 GB', badge:'Recommended' },
+      { id:'qwen2.5:7b',  name:'Qwen 2.5 7B',  desc:'Lighter and faster.',         size:'4.7 GB', badge:'' },
+      { id:'llama3.2:3b', name:'Llama 3.2 3B', desc:'Ultra-fast, low memory.',     size:'2 GB', badge:'Fastest' },
+      { id:'mistral:7b',  name:'Mistral 7B',   desc:'Strong reasoning, European.', size:'4.1 GB', badge:'' },
+      { id:'deepseek-r1:8b', name:'DeepSeek R1 8B', desc:'Step-by-step reasoning.', size:'4.9 GB', badge:'Reasoning' },
+      { id:'custom', name:'Custom model', desc:'Any model from ollama pull.', size:'', badge:'' },
+    ];
+    html += `<div class="cp-divider"></div>
+      <div class="cp-item cp-ollama-header ${isOllama?'cp-active':''}" onclick="toggleOllamaModels(event)">
+        <div class="cp-icon" style="background:#F0EFE9">💻</div>
+        <div><div class="cp-name">Local (Ollama)</div><div class="cp-use">${isOllama?(cfg.ollamaModel||'qwen2.5:14b'):'Offline · private · free'}</div></div>
+        <div class="cp-right">
+          <div class="cp-speed">${speedDots([1,1,0])}</div>
+          <div class="cp-tier" style="background:#F0EFE9;color:#5C5B55">Local</div>
+        </div>
+      </div>
+      <div class="cp-ollama-models ${isOllama?'show':''}" id="cpOllamaModels">
+        ${ollamaModels.map(m=>`
+          <div class="cp-ollama-model ${cfg.ollamaModel===m.id?'active':''}" onclick="selectOllamaModel('${m.id}',event)">
+            <div class="cp-om-top">
+              <span class="cp-om-name">${m.name}</span>
+              ${m.badge?`<span class="cp-om-badge">${m.badge}</span>`:''}
+              ${m.size?`<span class="cp-om-size">${m.size}</span>`:''}
+            </div>
+            <div class="cp-om-desc">${m.desc}</div>
+            ${m.id==='custom'?`<input class="cp-om-input" id="cpCustomModel" placeholder="e.g. phi3:mini"
+              value="${(!ollamaModels.slice(0,-1).find(x=>x.id===cfg.ollamaModel))?cfg.ollamaModel:''}"
+              onclick="event.stopPropagation()"
+              onchange="cfg.ollamaModel=this.value;saveCfg();updateStatus();buildProvSwitch()" />`:''}
+          </div>`).join('')}
+      </div>`;
+
+    cp.innerHTML = html;
   }
 }
 const renderSwitcher = buildProvSwitch;
