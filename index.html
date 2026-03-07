@@ -498,6 +498,11 @@ body{font-family:'DM Sans',sans-serif;background:var(--bg);color:var(--text);hei
         <button class="auth-btn auth-btn-primary" onclick="setAuthView('friends')">Guest access</button>
       </div>
 
+      <!-- Reset strip — always visible at bottom -->
+      <div style="margin-top:24px;padding-top:16px;border-top:1px solid var(--border);text-align:center">
+        <a href="#" onclick="authNuke();return false" style="font-size:11px;color:var(--text-3);text-decoration:none" onmouseover="this.style.color='var(--red)'" onmouseout="this.style.color='var(--text-3)'">⚠ Clear all data &amp; reset</a>
+      </div>
+
     </div>
   </div>
 </div>
@@ -803,6 +808,7 @@ body{font-family:'DM Sans',sans-serif;background:var(--bg);color:var(--text);hei
       </div>
       <button class="btn-save" onclick="saveSettings()">Save settings</button>
       <button class="btn-ghost-sm" onclick="resetApp()">Reset & re-activate</button>
+      <button class="btn-ghost-sm" style="color:var(--red);border-color:var(--red);margin-top:4px" onclick="nukeEverything()">⚠ Full reset — wipe all data</button>
     </div>
   </div>
 </div>
@@ -1363,6 +1369,12 @@ async function passkeySignIn() {
   } catch(e) {
     if (err) err.textContent = e.name === 'NotAllowedError' ? 'Verification cancelled.' : (e.message || 'Sign-in failed.');
   }
+}
+
+function authNuke() {
+  if (!confirm('Clear all Aide data and start fresh?\n\nThis removes passkeys, conversations, and settings.')) return;
+  Object.keys(localStorage).filter(k => k.startsWith('aide_')).forEach(k => localStorage.removeItem(k));
+  location.reload();
 }
 
 function friendsSignIn() {
@@ -3329,6 +3341,15 @@ function resetApp() {
   toggleSettings();
   document.getElementById('app').classList.remove('active');
   document.getElementById('activation').classList.add('active');
+}
+
+function nukeEverything() {
+  if (!confirm('⚠ This will delete ALL data — conversations, settings, passkeys, and sign you out. Cannot be undone.')) return;
+  if (!confirm('Are you sure? Everything will be wiped.')) return;
+  Object.keys(localStorage)
+    .filter(k => k.startsWith('aide_'))
+    .forEach(k => localStorage.removeItem(k));
+  location.reload();
 }
 
 let _ollamaRunning = false;
