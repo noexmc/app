@@ -1,14 +1,14 @@
 <!DOCTYPE html>
-<!-- Aide v0.40 -->
+<!-- Aide v0.41 -->
 <html lang="en">
 <head>
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
 <title>Aide — Private AI Assistant</title>
 <meta name="description" content="Your private AI executive assistant">
-<meta name="theme-color" content="#1C1C1A">
+<meta name="theme-color" content="#F5F4EF">
 <meta name="apple-mobile-web-app-capable" content="yes">
-<meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
+<meta name="apple-mobile-web-app-status-bar-style" content="default">
 <meta name="apple-mobile-web-app-title" content="Aide">
 <link rel="manifest" href="manifest.json">
 <link href="https://fonts.googleapis.com/css2?family=DM+Serif+Display:ital@0;1&family=DM+Sans:wght@300;400;500;600&family=DM+Mono:wght@400;500&display=swap" rel="stylesheet">
@@ -531,7 +531,7 @@ body{font-family:'DM Sans',sans-serif;background:var(--bg);color:var(--text);hei
 <div id="authScreen" class="screen active">
   <div class="auth-wrap">
     <div class="auth-card">
-      <div class="auth-logo">Aide <span>/ private AI assistant</span></div>
+      <div class="auth-logo">Aide <span>/ private AI assistant</span> <span id="loginVersion" style="font-family:'DM Mono',monospace;font-size:10px;font-weight:400;color:var(--text-3);font-style:normal;letter-spacing:0"></span></div>
       <div class="auth-tagline">Your AI. Your data. Nobody else's.</div>
 
       <!-- SETUP VIEW: first time on this device -->
@@ -595,7 +595,7 @@ body{font-family:'DM Sans',sans-serif;background:var(--bg);color:var(--text);hei
 ════════════════════════════════ -->
 <div id="app" class="screen">
   <div class="topbar">
-    <div class="logo">Aide <span style="font-family:'DM Mono',monospace;font-size:10px;font-weight:400;color:var(--text-3);font-style:normal;letter-spacing:0;margin-left:2px">v0.40</span></div>
+    <div class="logo">Aide <span style="font-family:'DM Mono',monospace;font-size:10px;font-weight:400;color:var(--text-3);font-style:normal;letter-spacing:0;margin-left:2px">v0.41</span></div>
     <div class="tb-divider"></div>
     <!-- Role picker — pill buttons like model picker -->
     <div class="role-picker-wrap" id="rolePickerWrap">
@@ -761,6 +761,12 @@ body{font-family:'DM Sans',sans-serif;background:var(--bg);color:var(--text);hei
 // CHANGELOG
 // ══════════════════════════════════════════════════════════
 const CHANGELOG = [
+  { version:'v0.41', date:'2026-03-07', changes:[
+    'Login screen: black status bar removed; version shown inline with logo',
+    'Delete toast: now shows clickable Undo link (was showing raw HTML)',
+    'paparapupi.js: AIDE_KEYS object now correctly overrides PRODUCT_CONFIG on startup',
+    'Ollama: explains HTTPS/localhost block, suggests ngrok as the real fix',
+  ]},
   { version:'v0.40', date:'2026-03-07', changes:[
     'Branch: source conv now truncated at branch point — no more duplicate messages',
     'Version shown discreetly on login screen',
@@ -897,6 +903,19 @@ const PRODUCT_CONFIG = {
 
   BACKEND_URL: 'https://ea-app-production-b9f2.up.railway.app',
 };
+
+// ── paparapupi.js key injection ─────────────────────────────
+// paparapupi.js (gitignored) sets window.AIDE_KEYS with API keys
+// This runs immediately after PRODUCT_CONFIG is defined
+(function() {
+  const k = window.AIDE_KEYS || {};
+  if (k.ANTHROPIC_KEY) PRODUCT_CONFIG.ANTHROPIC_KEY = k.ANTHROPIC_KEY;
+  if (k.OPENAI_KEY)    PRODUCT_CONFIG.OPENAI_KEY    = k.OPENAI_KEY;
+  if (k.GEMINI_KEY)    PRODUCT_CONFIG.GEMINI_KEY    = k.GEMINI_KEY;
+  if (k.MISTRAL_KEY)   PRODUCT_CONFIG.MISTRAL_KEY   = k.MISTRAL_KEY;
+  if (k.TAVILY_KEY)    PRODUCT_CONFIG.TAVILY_SEARCH_KEY = k.TAVILY_KEY;
+  if (k.AIDE_SECRET) { PRODUCT_CONFIG.AIDE_SECRET = k.AIDE_SECRET; window.AIDE_SECRET = k.AIDE_SECRET; }
+})();
 
 const DOC_INSTRUCTIONS = `
 CRITICAL EXCEL RULE: ALL numeric totals, subtotals, averages, counts, and summaries MUST use Excel formulas (=SUM(), =AVERAGE(), =SUMIF(), etc). NEVER hardcode a calculated number. This applies to every summary row, total column, and KPI cell.
@@ -3065,9 +3084,8 @@ async function testOllama() {
     }
   } catch(e) {
     const isHttps = location.protocol === 'https:';
-    const isStandalone = window.matchMedia('(display-mode: standalone)').matches || window.navigator.standalone;
-    if (isHttps && !isStandalone && url.startsWith('http://')) {
-      out.innerHTML = '✗ Open Aide from your <strong>Dock</strong> (installed PWA) — browser blocks HTTP localhost from HTTPS pages. Standalone mode bypasses this.';
+    if (isHttps && url.includes('localhost')) {
+      out.innerHTML = '<strong>✗ HTTPS blocks localhost.</strong> Fix: run <code style="background:var(--surface2);padding:1px 4px;border-radius:3px">ngrok http 11434</code> and paste the https URL above. Or open Aide from a local file (not GitHub Pages).';
     } else {
       out.textContent = `✗ Cannot reach ${url}. Check Ollama is running and OLLAMA_ORIGINS='*' is set.`;
     }
@@ -3079,6 +3097,8 @@ async function callOllama(history, content, systemPrompt) {
   const textContent = typeof content === 'string' ? content : content.find?.(p=>p.type==='text')?.text || '';
   const messages=[{role:'system',content:systemPrompt},...history,{role:'user',content:textContent}];
   const url = (cfg.ollamaUrl||'http://localhost:11434').replace(/\/+$/,'');
+  // Check if this is a custom non-localhost URL (e.g. ngrok) — those work fine
+  // For localhost on HTTPS: attempt anyway (works in some browsers/PWA configs)
   let r;
   try {
     r = await fetch(`${url}/api/chat`, {
@@ -3090,12 +3110,14 @@ async function callOllama(history, content, systemPrompt) {
     });
   } catch(e) {
     const isHttps = location.protocol === 'https:';
-    const isStandalone = window.matchMedia('(display-mode: standalone)').matches || window.navigator.standalone;
     let msg = `Cannot reach Ollama at ${url}.`;
-    if (isHttps && !isStandalone) {
-      msg += '\n\n⚠️ Mixed content block: open this app from your Dock/Home Screen (the installed PWA) — standalone mode bypasses the HTTPS→HTTP restriction.\n\nIf already in Dock, right-click the app icon → Options → Keep in Dock, then relaunch from there.';
+    if (isHttps && url.includes('localhost')) {
+      msg += '\n\n⚠️ Safari and Chrome block HTTP localhost from HTTPS pages — even as a PWA.' +
+             '\n\nFix options:' +
+             '\n1. Run: ngrok http 11434  →  paste the https://xxx.ngrok.io URL in Settings > Ollama URL' +
+             '\n2. Or run Aide locally: open index.html from your Mac (file://) instead of GitHub Pages';
     }
-    msg += '\n\nAlso confirm in Terminal:\n  launchctl setenv OLLAMA_ORIGINS \'*\'\n  (then restart Ollama from menu bar)';
+    msg += '\n\nAlso confirm: launchctl setenv OLLAMA_ORIGINS \'*\' (restart Ollama after)';
     throw new Error(msg);
   }
   if (!r.ok) throw new Error(`Ollama error ${r.status}: ${await r.text()}`);
@@ -3713,7 +3735,7 @@ init();
 // ══════════════════════════════════════════════════════════════
 
 // ── Service Worker registration ───────────────────────────────
-const APP_VERSION = 'v0.40';
+const APP_VERSION = 'v0.41';
 if ('serviceWorker' in navigator) {
   window.addEventListener('load', async () => {
     // Unregister all old service workers and clear all caches on version change
@@ -3796,6 +3818,7 @@ window.addEventListener('online', handleOnline);
 
 // Set initial state
 if (!navigator.onLine) handleOffline();
+(function(){ const el = document.getElementById('loginVersion'); if (el) el.textContent = typeof APP_VERSION !== 'undefined' ? APP_VERSION : ''; })();
 
 // ── Sync queue — persist conversations offline, push when online ──
 let syncQueue = JSON.parse(localStorage.getItem('aide_sync_queue') || '[]');
@@ -3836,10 +3859,11 @@ function showToast(msg, duration = 3000) {
     toast.style.cssText = `position:fixed;bottom:24px;left:50%;transform:translateX(-50%);
       background:#1C1C1A;color:#fff;padding:10px 18px;border-radius:20px;font-family:'DM Sans',sans-serif;
       font-size:12px;font-weight:500;z-index:9999;opacity:0;transition:opacity .2s;pointer-events:none;
-      white-space:nowrap`;
+      max-width:360px;white-space:normal;text-align:center`;
     document.body.appendChild(toast);
   }
-  toast.textContent = msg;
+  toast.style.pointerEvents = 'auto';
+  toast.innerHTML = msg;
   toast.style.opacity = '1';
   clearTimeout(toast._t);
   toast._t = setTimeout(() => toast.style.opacity = '0', duration);
