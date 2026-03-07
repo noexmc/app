@@ -3260,17 +3260,29 @@ init();
 // ══════════════════════════════════════════════════════════════
 
 // ── Service Worker registration ───────────────────────────────
+const APP_VERSION = 'v0.33';
 if ('serviceWorker' in navigator) {
-  window.addEventListener('load', () => {
+  window.addEventListener('load', async () => {
+    // Unregister all old service workers and clear all caches on version change
+    const storedVersion = localStorage.getItem('aide_sw_version');
+    if (storedVersion !== APP_VERSION) {
+      // Kill every old SW
+      const regs = await navigator.serviceWorker.getRegistrations();
+      await Promise.all(regs.map(r => r.unregister()));
+      // Wipe every cache
+      const keys = await caches.keys();
+      await Promise.all(keys.map(k => caches.delete(k)));
+      localStorage.setItem('aide_sw_version', APP_VERSION);
+      console.log('Aide: cleared old SW caches for', APP_VERSION);
+    }
+    // Re-register fresh
     navigator.serviceWorker.register('./sw.js')
       .then(reg => {
-        // Check for updates every 60 minutes
-        setInterval(() => reg.update(), 60 * 60 * 1000);
+        reg.update();
         reg.addEventListener('updatefound', () => {
           const newSW = reg.installing;
           newSW.addEventListener('statechange', () => {
             if (newSW.state === 'installed' && navigator.serviceWorker.controller) {
-              // New version available — silently activate
               newSW.postMessage('skipWaiting');
             }
           });
