@@ -246,21 +246,29 @@ body{font-family:'DM Sans',sans-serif;background:var(--bg);color:var(--text);hei
 .qc-desc{font-size:11.5px;color:var(--text-3);margin-top:2px;display:block;line-height:1.4}
 
 /* Messages */
-.msg-row{padding:3px 0;animation:msgIn .2s ease}
-@keyframes msgIn{from{opacity:0;transform:translateY(5px)}to{opacity:1;transform:translateY(0)}}
-.msg-inner{max-width:720px;margin:0 auto;padding:0 20px;display:flex}
+.msg-row{padding:5px 0;animation:msgIn .22s cubic-bezier(.16,1,.3,1)}
+@keyframes msgIn{from{opacity:0;transform:translateY(6px)}to{opacity:1;transform:translateY(0)}}
+.msg-inner{max-width:740px;margin:0 auto;padding:0 24px;display:flex;align-items:flex-end;gap:8px}
 .msg-row.user .msg-inner{justify-content:flex-end}
 .msg-row.assistant .msg-inner{justify-content:flex-start}
-.bubble{max-width:74%;padding:10px 14px;border-radius:12px;font-size:13.5px;line-height:1.65;word-break:break-word}
-.msg-row.user .bubble{background:var(--accent);color:#fff;border-bottom-right-radius:3px}
-.msg-row.assistant .bubble{background:var(--surface);color:var(--text);border:1px solid var(--border);box-shadow:0 1px 3px rgba(0,0,0,0.04);border-bottom-left-radius:3px}
-.bubble p{margin-bottom:8px}.bubble p:last-child{margin-bottom:0}
+.bubble{max-width:72%;padding:11px 15px;border-radius:18px;font-size:13.5px;line-height:1.7;word-break:break-word}
+.msg-row.user .bubble{background:var(--accent);color:#fff;border-bottom-right-radius:4px;box-shadow:0 2px 8px rgba(28,28,26,.15)}
+.msg-row.assistant .bubble{background:var(--surface);color:var(--text);border:1px solid var(--border);border-bottom-left-radius:4px;box-shadow:0 1px 4px rgba(0,0,0,.05)}
+.msg-avatar{width:26px;height:26px;border-radius:50%;background:var(--accent);display:flex;align-items:center;justify-content:center;flex-shrink:0;margin-bottom:2px;font-size:11px;color:#fff;font-weight:700;font-family:'DM Serif Display',serif;letter-spacing:-.02em;box-shadow:0 1px 3px rgba(0,0,0,.12)}
+.msg-row.user .msg-avatar{display:none}
+.bubble p{margin-bottom:9px}.bubble p:last-child{margin-bottom:0}
 .bubble strong{font-weight:600}.bubble em{font-style:italic}
-.bubble code{font-family:'DM Mono',monospace;font-size:11.5px;background:rgba(0,0,0,0.06);padding:1px 5px;border-radius:3px}
-.msg-row.user .bubble code{background:rgba(255,255,255,0.15)}
-.bubble pre{background:#1C1C1A;color:#a8e6c0;padding:12px 14px;border-radius:var(--r-sm);overflow-x:auto;margin:8px 0;font-family:'DM Mono',monospace;font-size:11.5px;line-height:1.5}
-.bubble pre code{background:none;padding:0}
-.bubble ul,.bubble ol{padding-left:18px;margin:6px 0}.bubble li{margin-bottom:3px}
+.bubble h1,.bubble h2,.bubble h3{font-family:'DM Serif Display',serif;font-weight:400;margin:14px 0 5px;line-height:1.3}
+.bubble h1{font-size:18px}.bubble h2{font-size:15px}.bubble h3{font-size:13.5px;font-family:'DM Sans',sans-serif;font-weight:600}
+.bubble code{font-family:'DM Mono',monospace;font-size:11.5px;background:rgba(0,0,0,.07);padding:2px 6px;border-radius:4px}
+.msg-row.user .bubble code{background:rgba(255,255,255,.18)}
+.bubble pre{background:#18181A;color:#b8f0cc;padding:13px 15px;border-radius:8px;overflow-x:auto;margin:10px 0;font-family:'DM Mono',monospace;font-size:11.5px;line-height:1.55;border:1px solid rgba(255,255,255,.05)}
+.bubble pre code{background:none;padding:0;font-size:11px}
+.bubble ul,.bubble ol{padding-left:20px;margin:7px 0}.bubble li{margin-bottom:4px;line-height:1.6}
+.bubble table{width:100%;border-collapse:collapse;font-size:12.5px;margin:10px 0;border-radius:6px;overflow:hidden}
+.bubble th{background:var(--surface2);padding:7px 10px;text-align:left;font-weight:600;border-bottom:2px solid var(--border);font-size:11.5px}
+.bubble td{padding:6px 10px;border-bottom:1px solid var(--border-light)}
+.bubble blockquote{border-left:3px solid var(--border);padding:6px 0 6px 12px;color:var(--text-2);margin:8px 0;font-style:italic}
 
 /* Doc card */
 .doc-card{display:flex;align-items:center;gap:10px;background:var(--bg);border:1px solid var(--border);border-radius:var(--r-sm);padding:10px 12px;margin-top:10px;cursor:pointer;transition:all .15s}
@@ -272,14 +280,15 @@ body{font-family:'DM Sans',sans-serif;background:var(--bg);color:var(--text);hei
 .doc-card-action{font-size:11px;color:var(--green);font-weight:500;white-space:nowrap}
 
 /* Typing */
-.typing-row{padding:3px 0}
-.typing-inner{max-width:720px;margin:0 auto;padding:0 20px}
-.typing-bubble{background:var(--surface);border:1px solid var(--border);border-radius:12px;border-bottom-left-radius:3px;padding:12px 14px;display:inline-flex;gap:4px;align-items:center;box-shadow:0 1px 3px rgba(0,0,0,0.04)}
+.typing-row{padding:5px 0}
+.typing-inner{max-width:740px;margin:0 auto;padding:0 24px;display:flex;align-items:flex-end;gap:8px}
+.typing-avatar{width:26px;height:26px;border-radius:50%;background:var(--accent);display:flex;align-items:center;justify-content:center;flex-shrink:0;font-size:11px;color:#fff;font-weight:700;font-family:'DM Serif Display',serif;box-shadow:0 1px 3px rgba(0,0,0,.12)}
+.typing-bubble{background:var(--surface);border:1px solid var(--border);border-radius:18px;border-bottom-left-radius:4px;padding:13px 16px;display:inline-flex;gap:5px;align-items:center;box-shadow:0 1px 4px rgba(0,0,0,.05)}
 .td{width:5px;height:5px;border-radius:50%;background:var(--text-3);animation:td 1.2s infinite}
 .td:nth-child(2){animation-delay:.2s}.td:nth-child(3){animation-delay:.4s}
 @keyframes td{0%,60%,100%{transform:translateY(0);opacity:.4}30%{transform:translateY(-4px);opacity:1}}
-.msg-meta{max-width:720px;margin:2px auto 0;padding:0 20px;display:flex}
-.msg-row.user .msg-meta{justify-content:flex-end}
+.msg-meta{max-width:740px;margin:1px auto 0;padding:0 24px 0 58px;display:flex;align-items:center;gap:4px}
+.msg-row.user .msg-meta{justify-content:flex-end;padding:1px 24px 0 24px}
 /* Branch / sub-conversation */
 .branch-btn{background:none;border:none;cursor:pointer;padding:3px 5px;border-radius:4px;font-size:10px;color:var(--text-3);opacity:0;transition:opacity .15s,background .15s;display:inline-flex;align-items:center;gap:3px;line-height:1;margin-left:4px}
 .msg-row:hover .branch-btn{opacity:1}
@@ -365,11 +374,11 @@ body{font-family:'DM Sans',sans-serif;background:var(--bg);color:var(--text);hei
 .mode-bar{padding:6px 10px;border-bottom:1px solid var(--border-light);display:flex;align-items:center;gap:6px}
 .mode-select{flex:1;padding:5px 8px;border:1px solid var(--border);border-radius:var(--r-sm);font-family:'DM Sans',sans-serif;font-size:12px;font-weight:500;color:var(--text);background:var(--surface2);outline:none;cursor:pointer;transition:border-color .15s}
 .mode-select:focus{border-color:var(--accent)}
-.mode-help{width:18px;height:18px;border-radius:50%;border:1px solid var(--border);background:var(--surface2);color:var(--text-3);font-size:10px;font-weight:600;cursor:pointer;display:flex;align-items:center;justify-content:center;flex-shrink:0;position:relative}
-.mode-help:hover{border-color:var(--accent);color:var(--accent)}
-.mode-tooltip{position:absolute;left:24px;top:50%;transform:translateY(-50%);width:240px;background:var(--surface);border:1px solid var(--border);border-radius:var(--r);padding:10px 12px;font-size:11px;color:var(--text-2);line-height:1.5;z-index:200;box-shadow:0 4px 16px rgba(0,0,0,0.12);display:none}
+.mode-help{width:18px;height:18px;border-radius:50%;border:1.5px solid var(--border);background:var(--surface);color:var(--text-2);font-size:10px;font-weight:700;cursor:pointer;display:flex;align-items:center;justify-content:center;flex-shrink:0;position:relative;transition:all .15s}
+.mode-help:hover{border-color:var(--accent);color:var(--accent);background:var(--surface2)}
+.mode-tooltip{position:fixed;width:256px;background:var(--surface);border:1px solid var(--border);border-radius:var(--r);padding:12px 14px;font-size:11.5px;color:var(--text-2);line-height:1.6;z-index:9999;box-shadow:0 8px 30px rgba(0,0,0,0.15);display:none;pointer-events:none}
 .mode-tooltip.show{display:block}
-.mode-tooltip b{color:var(--text);display:block;margin-top:6px}
+.mode-tooltip b{color:var(--text);display:block;margin-top:8px;font-size:12px}
 .mode-tooltip b:first-child{margin-top:0}
 
 /* ── PROJECTS ── */
@@ -1638,7 +1647,8 @@ async function passkeySetup() {
     currentUser = { id: userId, name: name, email: name };
     loadUserData();
     cfg.activated = true;
-    cfg.mode = cfg.mode || (PRODUCT_CONFIG.ANTHROPIC_KEY ? 'managed' : 'byok');
+    cfg.mode = 'byok';
+    cfg.licenseData = { plan:'lifetime', customer: name };
     saveCfg();
     launchApp();
 
@@ -1688,7 +1698,8 @@ async function passkeySignIn() {
     currentUser = { id: match.userId, name: match.name, email: match.name };
     loadUserData();
     cfg.activated = true;
-    cfg.mode = cfg.mode || (PRODUCT_CONFIG.ANTHROPIC_KEY ? 'managed' : 'byok');
+    cfg.mode = 'byok';
+    cfg.licenseData = cfg.licenseData || { plan:'lifetime', customer: match.name };
     saveCfg();
     launchApp();
 
@@ -1713,6 +1724,10 @@ async function checkAuthSession() {
         if (pk) {
           currentUser = { id: sc.userId, name: pk.name, email: pk.name };
           loadUserData();
+          if (!cfg.licenseData?.plan || cfg.licenseData.plan === 'demo') {
+            cfg.licenseData = { plan:'lifetime', customer: pk.name };
+            saveCfg();
+          }
           launchApp();
           return;
         }
@@ -2587,8 +2602,10 @@ function renderMsg(m) {
       </button>` : '';
   const branchRef = m.branchId && convs[m.branchId]
     ? `<span class="branch-badge" onclick="loadConv('${m.branchId}')" title="Open branch conversation">↳ ${esc((convs[m.branchId]?.title||'Branch').slice(0,22))}</span>` : '';
+  const avatar = m.role === 'assistant'
+    ? `<div class="msg-avatar">A</div>` : '';
   return `<div class="msg-row ${m.role}" data-ts="${m.timestamp||''}">
-    <div class="msg-inner"><div class="bubble">${content}</div></div>
+    <div class="msg-inner">${avatar}<div class="bubble">${content}</div></div>
     <div class="msg-meta"><span class="msg-time">${time}</span>${branchBtn}${branchRef}</div>
   </div>`;
 }
@@ -2617,7 +2634,7 @@ function showTyping() {
   const c = document.getElementById('messages');
   const el = document.createElement('div');
   el.id='typing'; el.className='typing-row';
-  el.innerHTML='<div class="typing-inner"><div class="typing-bubble"><div class="td"></div><div class="td"></div><div class="td"></div></div></div>';
+  el.innerHTML='<div class="typing-inner"><div class="typing-avatar">A</div><div class="typing-bubble"><div class="td"></div><div class="td"></div><div class="td"></div></div></div>';
   c.appendChild(el); c.scrollTop=c.scrollHeight;
 }
 
