@@ -1,5 +1,5 @@
 <!DOCTYPE html>
-<!-- Aide v0.39 -->
+<!-- Aide v0.40 -->
 <html lang="en">
 <head>
 <meta charset="UTF-8">
@@ -595,7 +595,7 @@ body{font-family:'DM Sans',sans-serif;background:var(--bg);color:var(--text);hei
 ════════════════════════════════ -->
 <div id="app" class="screen">
   <div class="topbar">
-    <div class="logo">Aide <span style="font-family:'DM Mono',monospace;font-size:10px;font-weight:400;color:var(--text-3);font-style:normal;letter-spacing:0;margin-left:2px">v0.39</span></div>
+    <div class="logo">Aide <span style="font-family:'DM Mono',monospace;font-size:10px;font-weight:400;color:var(--text-3);font-style:normal;letter-spacing:0;margin-left:2px">v0.40</span></div>
     <div class="tb-divider"></div>
     <!-- Role picker — pill buttons like model picker -->
     <div class="role-picker-wrap" id="rolePickerWrap">
@@ -642,6 +642,11 @@ body{font-family:'DM Sans',sans-serif;background:var(--bg);color:var(--text);hei
       <div class="conv-list" id="convList"
         ondragover="event.preventDefault()"
         ondrop="onDropToInbox(event)"></div>
+
+      <div id="trashSection" style="display:none;border-top:1px solid var(--border);padding:4px 6px">
+        <div style="font-size:10px;color:var(--text-3);padding:2px 4px;font-family:'DM Mono',monospace;opacity:.7">Recently deleted</div>
+        <div id="trashList"></div>
+      </div>
 
       <div class="sb-footer">
         <div class="priv-note">🔒 All data encrypted</div>
@@ -756,6 +761,15 @@ body{font-family:'DM Sans',sans-serif;background:var(--bg);color:var(--text);hei
 // CHANGELOG
 // ══════════════════════════════════════════════════════════
 const CHANGELOG = [
+  { version:'v0.40', date:'2026-03-07', changes:[
+    'Branch: source conv now truncated at branch point — no more duplicate messages',
+    'Version shown discreetly on login screen',
+    'Deleted convs appear in sidebar below the list for 5 min with Restore button',
+    'Rename: double-click any conversation name to edit inline',
+    'Ollama: detects standalone PWA mode for clearer mixed-content guidance',
+    'paparapupi.js: now supports AIDE_KEYS object with API keys directly',
+    'Settings: ollamaUrl/model always populated from defaults if saved empty',
+  ]},
   { version:'v0.39', date:'2026-03-07', changes:[
     'Guest mode: all calls now routed through Railway backend — no API keys in browser',
     'paparapupi.js loaded at startup to inject AIDE_SECRET for guest access',
@@ -1526,7 +1540,14 @@ function nukeEverything() {
 function loadUserData() {
   const k = KEYS();
   const saved = localStorage.getItem(k.cfg);
-  if (saved) cfg = { ...cfg, ...JSON.parse(saved) };
+  if (saved) {
+    cfg = { ...cfg, ...JSON.parse(saved) };
+    // Restore defaults for fields that may have been saved as empty
+    if (!cfg.ollamaUrl)   cfg.ollamaUrl   = 'http://localhost:11434';
+    if (!cfg.ollamaModel) cfg.ollamaModel = 'qwen2.5:14b';
+    if (!cfg.claudeModel) cfg.claudeModel = 'claude-sonnet-4-6';
+    if (!cfg.openaiModel) cfg.openaiModel = 'gpt-4o-mini';
+  }
   const savedC = localStorage.getItem(k.convs);
   if (savedC) convs = JSON.parse(savedC);
   const savedP = localStorage.getItem(k.projects);
@@ -2581,6 +2602,7 @@ function delConv(id, e) {
   }
   renderConvList();
   showToast(`Deleted — <a href="#" onclick="undoDelete('${id}');return false" style="color:#FFD43B;text-decoration:underline">Undo</a> (5 min)`, 8000);
+  renderTrashList();
   // Auto-purge after 5 minutes
   clearTimeout(trashTimer);
   trashTimer = setTimeout(() => { trashBin = {}; }, 5 * 60 * 1000);
@@ -2592,8 +2614,26 @@ function undoDelete(id) {
   delete trashBin[id];
   saveConvs();
   renderConvList();
+  renderTrashList();
   loadConv(id);
   showToast('✓ Restored');
+}
+
+function renderTrashList() {
+  const sec = document.getElementById('trashSection');
+  const list = document.getElementById('trashList');
+  if (!sec || !list) return;
+  const entries = Object.entries(trashBin);
+  if (!entries.length) { sec.style.display = 'none'; return; }
+  sec.style.display = 'block';
+  list.innerHTML = entries.map(([id, {conv, deletedAt}]) => {
+    const remaining = Math.max(0, 5 - Math.floor((Date.now() - deletedAt) / 60000));
+    return `<div class="ci" style="opacity:.65">
+      <span class="ci-icon">🗑</span>
+      <span class="ci-name" style="font-style:italic;font-size:11px">${esc(conv.title)}</span>
+      <button onclick="undoDelete('${id}')" style="font-size:10px;padding:1px 5px;background:var(--accent);color:#fff;border:none;border-radius:3px;cursor:pointer;flex-shrink:0;white-space:nowrap">${remaining}m ↩</button>
+    </div>`;
+  }).join('');
 }
 
 
@@ -3025,10 +3065,11 @@ async function testOllama() {
     }
   } catch(e) {
     const isHttps = location.protocol === 'https:';
-    if (isHttps && url.startsWith('http://')) {
-      out.innerHTML = `✗ Mixed content block: this page is HTTPS but Ollama is HTTP. <br>Workaround: use the installed PWA (Add to Home Screen → opens as standalone app without mixed-content block).`;
+    const isStandalone = window.matchMedia('(display-mode: standalone)').matches || window.navigator.standalone;
+    if (isHttps && !isStandalone && url.startsWith('http://')) {
+      out.innerHTML = '✗ Open Aide from your <strong>Dock</strong> (installed PWA) — browser blocks HTTP localhost from HTTPS pages. Standalone mode bypasses this.';
     } else {
-      out.textContent = `✗ Cannot reach ${url} — run: launchctl setenv OLLAMA_ORIGINS '*' then restart Ollama`;
+      out.textContent = `✗ Cannot reach ${url}. Check Ollama is running and OLLAMA_ORIGINS='*' is set.`;
     }
     out.style.color = 'var(--red)';
   }
@@ -3049,8 +3090,13 @@ async function callOllama(history, content, systemPrompt) {
     });
   } catch(e) {
     const isHttps = location.protocol === 'https:';
-    const httpsNote = isHttps ? '\n\n⚠️ HTTPS→HTTP BLOCK: This app runs on https://, but Ollama uses http://localhost. Chrome/Safari block this (mixed content). Workaround: install the app as PWA (Add to Home Screen) OR use the desktop version.' : '';
-    throw new Error(`Cannot reach Ollama at ${url}.${httpsNote}\n\nAlso run in Terminal:\n  launchctl setenv OLLAMA_ORIGINS '*'\nThen quit and restart Ollama from menu bar.`);
+    const isStandalone = window.matchMedia('(display-mode: standalone)').matches || window.navigator.standalone;
+    let msg = `Cannot reach Ollama at ${url}.`;
+    if (isHttps && !isStandalone) {
+      msg += '\n\n⚠️ Mixed content block: open this app from your Dock/Home Screen (the installed PWA) — standalone mode bypasses the HTTPS→HTTP restriction.\n\nIf already in Dock, right-click the app icon → Options → Keep in Dock, then relaunch from there.';
+    }
+    msg += '\n\nAlso confirm in Terminal:\n  launchctl setenv OLLAMA_ORIGINS \'*\'\n  (then restart Ollama from menu bar)';
+    throw new Error(msg);
   }
   if (!r.ok) throw new Error(`Ollama error ${r.status}: ${await r.text()}`);
   const d=await r.json(); return d.message?.content||'';
@@ -3667,7 +3713,7 @@ init();
 // ══════════════════════════════════════════════════════════════
 
 // ── Service Worker registration ───────────────────────────────
-const APP_VERSION = 'v0.39';
+const APP_VERSION = 'v0.40';
 if ('serviceWorker' in navigator) {
   window.addEventListener('load', async () => {
     // Unregister all old service workers and clear all caches on version change
