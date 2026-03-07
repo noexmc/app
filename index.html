@@ -164,6 +164,36 @@ body{font-family:'DM Sans',sans-serif;background:var(--bg);color:var(--text);hei
 .tb-btn{width:30px;height:30px;border:1px solid var(--border);border-radius:var(--r-sm);background:var(--surface);cursor:pointer;display:flex;align-items:center;justify-content:center;color:var(--text-2);transition:all .15s;font-size:15px}
 .tb-btn:hover{background:var(--surface2);color:var(--text)}
 
+/* Auth Screen */
+.auth-wrap{display:flex;align-items:center;justify-content:center;width:100%;height:100%;background:var(--bg);padding:24px}
+.auth-card{width:100%;max-width:380px;background:var(--surface);border:1px solid var(--border);border-radius:16px;padding:36px 32px;box-shadow:0 4px 24px rgba(0,0,0,.07)}
+.auth-logo{font-family:'DM Serif Display',serif;font-size:22px;color:var(--text);letter-spacing:-.02em}
+.auth-logo span{font-family:'DM Sans',sans-serif;font-size:13px;color:var(--text-3);font-style:italic;font-weight:400}
+.auth-tagline{font-size:12px;color:var(--text-3);margin-top:3px;margin-bottom:28px}
+.auth-view{display:none}.auth-view.active{display:block}
+.auth-title{font-size:18px;font-weight:600;color:var(--text);margin-bottom:16px}
+.auth-subtitle{font-size:13px;color:var(--text-2);line-height:1.5;margin-bottom:18px}
+.auth-field{margin-bottom:12px}
+.auth-label{display:block;font-size:11px;font-weight:600;color:var(--text-2);margin-bottom:5px;letter-spacing:.02em}
+.auth-input{width:100%;padding:9px 12px;border:1px solid var(--border);border-radius:8px;font-family:'DM Sans',sans-serif;font-size:13px;color:var(--text);background:var(--surface);outline:none;transition:border .15s;box-sizing:border-box}
+.auth-input:focus{border-color:var(--accent);box-shadow:0 0 0 3px rgba(26,58,92,.08)}
+.auth-btn{width:100%;padding:10px;border-radius:8px;font-family:'DM Sans',sans-serif;font-size:13px;font-weight:600;cursor:pointer;transition:all .15s;margin-bottom:8px;border:none}
+.auth-btn-primary{background:var(--accent);color:#fff}.auth-btn-primary:hover{opacity:.9}
+.auth-btn-ghost{background:transparent;border:1px solid var(--border)!important;color:var(--text-2)}.auth-btn-ghost:hover{border-color:var(--text-2)!important;color:var(--text)}
+.auth-divider{display:flex;align-items:center;gap:10px;margin:8px 0;color:var(--text-3);font-size:11px}
+.auth-divider::before,.auth-divider::after{content:'';flex:1;height:1px;background:var(--border)}
+.auth-switch{font-size:12px;color:var(--text-3);text-align:center;margin-top:6px}
+.auth-switch a{color:var(--accent);text-decoration:none;font-weight:500}
+.auth-demo-row{font-size:11px;color:var(--text-3);text-align:center;margin-top:14px;padding-top:14px;border-top:1px solid var(--border)}
+.auth-demo-row a{color:var(--text-3);text-decoration:none}.auth-demo-row a:hover{color:var(--text)}
+.auth-error{font-size:12px;color:var(--red);min-height:16px;margin-bottom:6px}
+.auth-icon-lg{font-size:40px;text-align:center;margin-bottom:12px}
+/* User row in sidebar footer */
+.user-row{display:flex;align-items:center;justify-content:space-between;margin-top:8px;padding-top:8px;border-top:1px solid var(--border-light)}
+.user-email{font-size:10px;color:var(--text-3);overflow:hidden;text-overflow:ellipsis;white-space:nowrap;flex:1;font-family:'DM Mono',monospace}
+.logout-btn{font-size:10px;color:var(--text-3);background:none;border:none;cursor:pointer;padding:2px 6px;border-radius:4px;flex-shrink:0;font-family:'DM Sans',sans-serif;transition:all .15s}
+.logout-btn:hover{color:var(--red);background:var(--red-bg)}
+
 /* Layout */
 .app-body{display:flex;flex:1;overflow:hidden}
 .sidebar{width:210px;flex-shrink:0;background:var(--surface);border-right:1px solid var(--border);display:flex;flex-direction:column;overflow:hidden}
@@ -395,9 +425,83 @@ body{font-family:'DM Sans',sans-serif;background:var(--bg);color:var(--text);hei
 </div>
 
 <!-- ════════════════════════════════
-     ACTIVATION SCREEN
+     AUTH SCREEN
 ════════════════════════════════ -->
-<div id="activation" class="screen active">
+<div id="authScreen" class="screen active">
+  <div class="auth-wrap">
+    <div class="auth-card">
+      <div class="auth-logo">Aide <span>/ private AI assistant</span></div>
+      <div class="auth-tagline">Your AI. Your data. Nobody else's.</div>
+
+      <!-- LOGIN VIEW -->
+      <div class="auth-view active" id="authView_login">
+        <div class="auth-title">Welcome back</div>
+        <div class="auth-field">
+          <label class="auth-label">Email</label>
+          <input class="auth-input" id="authEmail" type="email" placeholder="you@example.com" autocomplete="email" onkeydown="if(event.key==='Enter')authSignIn()" />
+        </div>
+        <div class="auth-field">
+          <label class="auth-label">Password</label>
+          <input class="auth-input" id="authPassword" type="password" placeholder="••••••••" autocomplete="current-password" onkeydown="if(event.key==='Enter')authSignIn()" />
+        </div>
+        <div class="auth-error" id="authError"></div>
+        <button class="auth-btn auth-btn-primary" onclick="authSignIn()">Sign in</button>
+        <button class="auth-btn auth-btn-ghost" onclick="setAuthView('magic')">✉ Sign in with magic link</button>
+        <div class="auth-divider"><span>or</span></div>
+        <div class="auth-switch">No account? <a href="#" onclick="setAuthView('register');return false">Create one free →</a></div>
+        <div class="auth-demo-row"><a href="#" onclick="tryDemoFromAuth();return false">Try 5 free messages without an account →</a></div>
+      </div>
+
+      <!-- REGISTER VIEW -->
+      <div class="auth-view" id="authView_register">
+        <div class="auth-title">Create account</div>
+        <div class="auth-field">
+          <label class="auth-label">Email</label>
+          <input class="auth-input" id="regEmail" type="email" placeholder="you@example.com" autocomplete="email" />
+        </div>
+        <div class="auth-field">
+          <label class="auth-label">Password</label>
+          <input class="auth-input" id="regPassword" type="password" placeholder="At least 6 characters" autocomplete="new-password" />
+        </div>
+        <div class="auth-field">
+          <label class="auth-label">Confirm password</label>
+          <input class="auth-input" id="regPassword2" type="password" placeholder="Repeat password" autocomplete="new-password" onkeydown="if(event.key==='Enter')authRegister()" />
+        </div>
+        <div class="auth-error" id="regError"></div>
+        <button class="auth-btn auth-btn-primary" onclick="authRegister()">Create account</button>
+        <div class="auth-switch">Already have one? <a href="#" onclick="setAuthView('login');return false">← Sign in</a></div>
+        <div class="auth-demo-row"><a href="#" onclick="tryDemoFromAuth();return false">Try 5 free messages without an account →</a></div>
+      </div>
+
+      <!-- MAGIC LINK VIEW -->
+      <div class="auth-view" id="authView_magic">
+        <div class="auth-title">Magic link</div>
+        <div class="auth-subtitle">We'll email you a link — click it to sign in instantly. No password needed.</div>
+        <div class="auth-field">
+          <label class="auth-label">Email</label>
+          <input class="auth-input" id="magicEmail" type="email" placeholder="you@example.com" onkeydown="if(event.key==='Enter')authMagicLink()" />
+        </div>
+        <div class="auth-error" id="magicError"></div>
+        <button class="auth-btn auth-btn-primary" onclick="authMagicLink()">Send magic link</button>
+        <div class="auth-switch"><a href="#" onclick="setAuthView('login');return false">← Back to sign in</a></div>
+      </div>
+
+      <!-- CHECK EMAIL VIEW -->
+      <div class="auth-view" id="authView_check-email">
+        <div class="auth-icon-lg">✉</div>
+        <div class="auth-title">Check your email</div>
+        <div class="auth-subtitle">We sent you a link. Click it to sign in or confirm your account. You can close this tab.</div>
+        <button class="auth-btn auth-btn-ghost" onclick="setAuthView('login')">← Back to sign in</button>
+      </div>
+
+    </div>
+  </div>
+</div>
+
+<!-- ════════════════════════════════
+     ACTIVATION SCREEN (BYOK only path)
+════════════════════════════════ -->
+<div id="activation" class="screen">
   <div class="act-card">
     <div class="act-header">
       <div class="act-logo">Aide <span>/ private AI assistant</span></div>
@@ -442,7 +546,7 @@ body{font-family:'DM Sans',sans-serif;background:var(--bg);color:var(--text);hei
 
         <div id="licenseResult" class="act-result"></div>
         <button class="act-btn" id="activateBtn" onclick="activateLicense()">Activate</button>
-        <button class="act-btn-ghost" onclick="tryDemo()">Try demo (5 free messages)</button>
+        <button class="act-btn-ghost" onclick="tryDemoFromAuth()">Try demo (5 free messages)</button>
       </div>
 
       <!-- BYOK PANE -->
@@ -608,6 +712,7 @@ body{font-family:'DM Sans',sans-serif;background:var(--bg);color:var(--text);hei
           <div id="syncLabel" style="font-size:10px;color:var(--text-3);font-family:'DM Mono',monospace"></div>
         </div>
         <div class="license-badge" id="licenseBadge"></div>
+        <div class="user-row" id="userRow"></div>
       </div>
     </div>
 
@@ -756,68 +861,187 @@ const PRODUCT_CONFIG = {
 };
 
 const DOC_INSTRUCTIONS = `
+When asked to create files, respond with JSON wrapped in <DOCUMENT> tags plus a brief explanation outside.
 
-When asked to create files, respond with JSON in <DOCUMENT> tags plus a brief explanation outside.
+━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+EXCEL — Professional Workbook with Real Formulas
+━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
 
-━━ EXCEL ━━
-{"excel":{"filename":"name.xlsx","accentColor":"1A3A5C","accent2":"C8973A","sheets":[{
-  "name":"Dashboard","title":"Q1 2026 Performance Dashboard",
-  "kpis":[
-    {"label":"Total Revenue","value":"$4.2M","sub":"+18% YoY","color":"1A3A5C"},
-    {"label":"Gross Margin","value":"64.2%","sub":"+2.1pp","color":"1D6A3E"},
-    {"label":"Net Profit","value":"$890K","sub":"-3% vs plan","color":"B02A1A"},
-    {"label":"Headcount","value":"142","sub":"+8 QoQ","color":"C8973A"}
+<DOCUMENT>{"type":"excel","filename":"name.xlsx","data":{"sheets":[{
+  "name": "Sheet name",
+  "title": "Workbook title text",
+  "subtitle": "Optional subtitle / classification line",
+  "tabColor": "C8973A",
+  "headerColor": "1A3A5C",
+  "headers": ["Col1","Col2","Revenue","Cost","GP","Margin%","YoY","Target","vs Target"],
+  "colWidths": [18,14,14,14,14,10,12,14,11],
+  "types": ["text","text","currency","currency","currency","percent","percent","currency","percent"],
+  "rows": [
+    ["APAC","Q1",4200000,1890000,null,null,null,4000000,null],
+    ["ANZ","Q1",1850000,740000,null,null,null,1900000,null]
   ],
-  "headers":["Region","Revenue","Cost","Gross Profit","Margin %","vs Last Year"],
-  "colWidths":[16,14,14,14,12,14],
-  "types":["text","currency","currency","currency","percent","percent"],
-  "rows":[["APAC",1250000,450000,800000,0.64,0.18]],
-  "formulas":{
-    "Gross Profit":{"formula":"={Revenue}-{Cost}"},
-    "Margin %":{"formula":"={Gross Profit}/{Revenue}"}
+
+  "formulas": {
+    "GP":       "={Revenue}-{Cost}",
+    "Margin%":  "={GP}/{Revenue}",
+    "YoY":      "=({Revenue}-{PrevRevenue})/{PrevRevenue}",
+    "vs Target":"=({Revenue}-{Target})/{Target}",
+    "Variance": "={Actual}-{Budget}",
+    "Utilisation":"={Billable Hours}/{Total Hours}"
   },
-  "conditionalFormats":[
-    {"col":4,"type":"colorScale","low":"FF6B6B","mid":"FFFFFF","high":"1D6A3E"},
-    {"col":5,"type":"aboveBelow","above":"C8F7DA","below":"FAD4CF","threshold":0}
+
+  "lookups": [
+    {
+      "col": "Rate",
+      "type": "index_match",
+      "lookupValue": "{Region}",
+      "lookupSheet": "Rates",
+      "lookupCol": "A",
+      "returnCol": "B",
+      "rangeRows": 100
+    },
+    {
+      "col": "Cost Lookup",
+      "type": "vlookup",
+      "lookupValue": "{SKU}",
+      "lookupSheet": "PriceList",
+      "lookupCol": "A",
+      "returnCol": "C",
+      "rangeRows": 500
+    }
   ],
-  "charts":[{
-    "type":"column","title":"Revenue by Region",
-    "dataCols":[1,2],"labelCol":0,
-    "position":{"col":7,"row":3,"width":12,"height":16}
-  }],
-  "totalsRow":true
-}]}}
 
-Rules: Always include kpis[] for financial/summary sheets. Always include formulas for derivable columns (Profit=Revenue-Cost, Margin=Profit/Revenue). Always add at least one chart. Use colorScale for % columns, aboveBelow for YoY/variance. Use plain numbers not strings for numeric columns.
+  "aggregations": [
+    {
+      "col": "Regional Total",
+      "type": "sumif",
+      "sumSheet": "Detail",
+      "lookupValue": "{Region}",
+      "criteriaCol": "A",
+      "sumCol": "D",
+      "rangeRows": 1000
+    },
+    {
+      "col": "Won ARR",
+      "type": "sumifs",
+      "sumSheet": "Deals",
+      "sumCol": "E",
+      "criteria": [
+        {"col": "C", "value": "{Region}"},
+        {"col": "D", "value": "\"Closed Won\""}
+      ],
+      "rangeRows": 1000
+    },
+    {
+      "col": "Deal Count",
+      "type": "countif",
+      "sumSheet": "Deals",
+      "lookupValue": "{Region}",
+      "criteriaCol": "C",
+      "rangeRows": 1000
+    }
+  ],
 
-━━ POWERPOINT ━━
-{"ppt":{"filename":"name.pptx","theme":{"accent":"1A3A5C","accent2":"C8973A","dark":"1C1C1A","light":"F5F4F0"},"slides":[
-  {"layout":"title","title":"Q1 2026 Business Review","subtitle":"APAC Technology · March 2026","overline":"Confidential","meta":"Prepared by Strategy Team · March 2026","bg":"1A3A5C"},
-  {"layout":"divider","section":"Section 1","title":"Financial Performance","subtitle":"Revenue, Margin & Profitability"},
-  {"layout":"metric","title":"Key Performance Indicators","metrics":[
-    {"value":"$4.2M","label":"Revenue","sub":"+18% YoY","color":"1A3A5C","context":"Ahead of $4.0M plan"},
-    {"value":"64%","label":"Gross Margin","sub":"+2pp vs PY","color":"1D6A3E"},
-    {"value":"142","label":"Headcount","sub":"+8 QoQ","color":"C8973A"}
-  ]},
-  {"layout":"content","title":"Executive Summary","headline":"Revenue growth accelerated despite macro headwinds — margin expansion confirms operating leverage","bullets":["APAC revenue reached $4.2M, +18% YoY, driven by enterprise segment (+34%)","Gross margin improved 200bps to 64.2% through pricing discipline and mix shift","Headcount grew to 142 (+8 QoQ) with R&D investment prioritised over G&A"],"note":"Internal data, March 2026"},
-  {"layout":"chart","title":"Revenue Trend — Quarterly","chartType":"line","insight":"Q4 acceleration driven by enterprise renewals; Q1 2026 run-rate implies $18M ARR","chartData":{"labels":["Q1","Q2","Q3","Q4","Q1F"],"series":[{"name":"2025","values":[3.1,3.4,3.6,4.2,null]},{"name":"2026 Forecast","values":[null,null,null,null,4.8]}]},"note":"Finance model v3.1"},
-  {"layout":"two-col","title":"Strengths vs Risks","left":{"heading":"What's Working","points":["Enterprise segment +34% — pipeline strong","Margin expansion ahead of plan","NPS improved to 71 (+6 pts)"]},"right":{"heading":"Watch Items","points":["SMB churn elevated at 8.2%","COGS pressure from FX headwinds","3 key hires still open in Engineering"]}},
-  {"layout":"table","title":"Initiative Status","tableHeaders":["Initiative","Owner","Status","Impact","ETA"],"tableRows":[["Enterprise GTM","Sales","On track","High","Q2"],["Platform v2","Eng","At risk","High","Q3"],["APAC Expansion","Strategy","On track","Medium","Q4"]],"ragCol":2}
-]}}
+  "kpis": [
+    {"label":"Total Revenue","value":"$8.4M","sub":"+14% YoY","color":"1A3A5C"},
+    {"label":"Gross Margin","value":"55%","sub":"+2pp","color":"1D6A3E"},
+    {"label":"vs Target","value":"+5%","sub":"Above plan","color":"C8973A"}
+  ],
 
-Slide rules: Always start with title slide. Use divider slides between sections. Use metric slide for KPIs (always include "sub" and "context"). Use insight field on chart slides for the "so what". Use ragCol on table slides for RAG status auto-coloring. Always 6-10 slides for a complete deck.
+  "conditionalFormats": [
+    {"col":4,"type":"colorScale","low":"FF6B6B","mid":"FFFFFF","high":"1D6A3E"},
+    {"col":5,"type":"aboveBelow","threshold":0,"above":"D4EDDA","below":"FAD4CF"},
+    {"col":6,"type":"dataBar","color":"1A3A5C"},
+    {"col":2,"type":"topN","n":3,"color":"FEF3D0"},
+    {"col":2,"type":"bottomN","n":2,"color":"FAD4CF"}
+  ],
 
-━━ WORD ━━
-{"word":{"filename":"name.docx","title":"Strategic Review — Q1 2026","meta":"Confidential · March 2026 · Alex Kotzev","accentColor":"1A3A5C",
-"executiveSummary":"Revenue grew 18% YoY to $4.2M driven by enterprise acceleration. Margin expansion of 200bps confirms operating leverage thesis. Three watch items require board attention.",
-"sections":[
-  {"heading":"Financial Performance","type":"text","content":"Revenue reached $4.2M in Q1 2026, representing 18% growth year-over-year and 5% ahead of plan."},
-  {"heading":"Key Metrics","type":"kpis","kpis":[{"label":"Revenue","value":"$4.2M","sub":"+18% YoY","context":"vs $4.0M plan"}]},
-  {"heading":"Risks & Mitigations","type":"table","headers":["Risk","Severity","Mitigation","Owner"],"rows":[["SMB churn","High","Retention programme launched","CS Team"]]},
-  {"heading":"Strategic Priorities","type":"bullets","bullets":["Accelerate enterprise pipeline","Resolve platform v2 delivery risk","Complete APAC hiring plan"]}
-],"footer":"Confidential — For internal use only"}}
+  "charts": [
+    {
+      "type": "column",
+      "title": "Revenue by Region",
+      "labelCol": 0,
+      "dataCols": [2,7],
+      "seriesNames": ["Actual","Target"],
+      "position": {"col":10,"row":2,"width":14,"height":18}
+    }
+  ],
 
-Always wrap JSON in <DOCUMENT>...</DOCUMENT> tags. Output ONLY valid JSON inside the tags.`;
+  "totalsRow": true,
+  "grandTotals": false
+}]}}</DOCUMENT>
+
+FORMULA TYPES — Use these for all formula columns (set value to null in rows):
+  Arithmetic:    "={Revenue}-{Cost}"   "={GP}/{Revenue}"   "={A}*{B}+{C}"
+  Conditional:   "=IF({Stage}=\"Closed Won\",{ARR},{ARR}*0.4)"
+  Nested IF:     "=IF({Margin%}>0.4,\"High\",IF({Margin%}>0.2,\"Mid\",\"Low\"))"
+  Date math:     "=NETWORKDAYS({StartDate},{EndDate})"   "=EDATE({Date},3)"
+  Text:          "=CONCATENATE({Region},\" - \",{Product})"   "=UPPER({Name})"
+  Lookup (same sheet): "=IFERROR(VLOOKUP({ID},A:C,2,0),\"\")"
+  Running total: "=SUM(B$2:B{RowRef})"
+  Rank:          "=RANK({Revenue},B$2:B$100,0)"
+  Percent rank:  "=PERCENTRANK(B$2:B$100,{Revenue})"
+
+TYPE OPTIONS: text | currency | currency0 | currency_k | currency_m | percent | percent2 | percent0 | number | number1 | number2 | date | date_short | month | multiple | bps
+
+CONDITIONAL FORMAT TYPES: colorScale | aboveBelow | dataBar | topN | bottomN | duplicate
+
+━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+POWERPOINT — Three Consulting-Grade Themes
+━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+
+<DOCUMENT>{"type":"ppt","filename":"deck.pptx","data":{
+  "theme": "mckinsey",
+  "slides": [
+    {"layout":"title","title":"Main Title","subtitle":"Subtitle line","overline":"CONFIDENTIAL","meta":"Author · Date"},
+    {"layout":"divider","title":"Section Name","section":"Section 01","subtitle":"What this covers"},
+    {"layout":"content","title":"Slide Title","headline":"The one-line so-what message",
+     "bullets":["First key point with supporting detail","Second point","Third point"],
+     "note":"Source reference"},
+    {"layout":"metric","title":"Key Metrics",
+     "metrics":[
+       {"label":"Revenue","value":"$8.4M","sub":"+14% YoY","color":"1A3A5C"},
+       {"label":"Margin","value":"55%","sub":"+2pp","color":"1D6A3E"},
+       {"label":"NPS","value":"72","sub":"+8pts","color":"C8973A"}
+     ]},
+    {"layout":"chart","title":"Chart Title","insight":"Key insight sentence here",
+     "chartType":"column",
+     "chartData":{"labels":["A","B","C","D"],"series":[{"name":"S1","values":[10,20,30,40]}]}},
+    {"layout":"table","title":"Table Title","ragCol":3,
+     "tableHeaders":["Col1","Col2","Col3","Status"],
+     "tableRows":[["Val","Val","Val","Green"],["Val","Val","Val","Amber"],["Val","Val","Val","Red"]]},
+    {"layout":"two-col","title":"Compare Two Things",
+     "left":{"heading":"Left Heading","points":["Point 1","Point 2","Point 3"]},
+     "right":{"heading":"Right Heading","points":["Point A","Point B","Point C"]}},
+    {"layout":"process","title":"Process Title",
+     "steps":[{"title":"Step 1","desc":"Description"},{"title":"Step 2","desc":"Description"},{"title":"Step 3","desc":"Description"}]},
+    {"layout":"agenda","title":"Agenda",
+     "items":[{"title":"Topic One","sub":"Sub-label"},{"title":"Topic Two","sub":"Sub-label"}]}
+  ]
+}}</DOCUMENT>
+
+THEMES: "mckinsey" (navy/gold) | "bcg" (green/black) | "goldman" (black/gold)
+CHART TYPES: column | bar | line | area | pie | doughnut | stacked | stacked100 | bar_stacked
+RAG VALUES for ragCol: "Green"/"On track"/"Complete" | "Amber"/"Caution"/"Delayed" | "Red"/"At risk"/"Behind"
+
+━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+WORD — Executive Memo / Report
+━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+
+<DOCUMENT>{"type":"word","filename":"report.docx","data":{
+  "title":"Document Title",
+  "meta":"Author · Date · Confidential",
+  "executiveSummary":"One paragraph executive summary shown in a callout box.",
+  "sections":[
+    {"type":"text","heading":"Section Heading","content":"Body text paragraph content here."},
+    {"type":"callout","content":"Important callout message."},
+    {"type":"bullets","heading":"Key Points","bullets":["Point one","Point two","Point three"]},
+    {"type":"table","heading":"Data Table","headers":["Col1","Col2","Col3"],"rows":[["A","B","C"],["D","E","F"]]},
+    {"type":"kpis","heading":"Metrics","kpis":[{"label":"Revenue","value":"$8.4M","sub":"+14%","context":"vs prior year"}]}
+  ],
+  "footer":"Confidential · For internal use only"
+}}</DOCUMENT>
+`
 
 
 
@@ -917,9 +1141,13 @@ let keyHash = null;
 let encPassword = null;
 
 async function initSync() {
-  if (!PRODUCT_CONFIG.SUPABASE_URL || !cfg.licenseKey) return;
-  encPassword = cfg.licenseKey;
-  keyHash = await hashKey(cfg.licenseKey);
+  if (!PRODUCT_CONFIG.SUPABASE_URL) return;
+  // Use user ID for keyHash (sync key), license key for encryption password
+  const syncId = currentUser?.id || cfg.licenseKey;
+  if (!syncId) return;
+  const encKey = cfg.licenseKey || currentUser?.id || 'aide-default';
+  encPassword = encKey;
+  keyHash = await hashKey(syncId);
   setSyncStatus('syncing');
   await pullFromSupabase();
   setSyncStatus('synced');
@@ -1021,46 +1249,79 @@ async function pullFromSupabase() {
 }
 
 // ══════════════════════════════════
-// SESSION IDENTITY — prevents cross-session data bleed
-// Each browser session (incl. private windows) gets its own ID.
-// cfg (license/keys) is shared so re-activation isn't needed,
-// but conversations are namespaced per session.
+// USER IDENTITY — scoped storage per authenticated user
 // ══════════════════════════════════
-function getSessionId() {
-  // sessionStorage is cleared when the tab/window closes — perfect for private sessions
-  let sid = sessionStorage.getItem('aide_session_id');
-  if (!sid) {
-    sid = 'sid_' + Date.now().toString(36) + '_' + Math.random().toString(36).slice(2,8);
-    sessionStorage.setItem('aide_session_id', sid);
-  }
-  return sid;
+let currentUser = null; // { id, email, name }
+
+function getUserStorageKeys(userId) {
+  const uid = userId || 'anonymous';
+  return {
+    convs:    `aide_convs_${uid}`,
+    projects: `aide_projects_${uid}`,
+    last:     `aide_last_conv_${uid}`,
+    cfg:      `aide_cfg_${uid}`,
+  };
 }
-const SESSION_ID = getSessionId();
-const CONVS_KEY    = `aide_v2_convs_${SESSION_ID}`;
-const PROJECTS_KEY = `aide_v2_projects_${SESSION_ID}`;
-const LAST_KEY     = `aide_last_conv_${SESSION_ID}`;
+
+// Dynamic keys — always use these, never hardcode
+function KEYS() { return getUserStorageKeys(currentUser?.id); }
+const CONVS_KEY    = null; // deprecated — use KEYS().convs
+const PROJECTS_KEY = null; // deprecated — use KEYS().projects
+const LAST_KEY     = null; // deprecated — use KEYS().last
 
 // ══════════════════════════════════
 // INIT
 // ══════════════════════════════════
 function init() {
-  const saved = localStorage.getItem('aide_v2_cfg');
-  if (saved) cfg = { ...cfg, ...JSON.parse(saved) };
-  const savedC = localStorage.getItem(CONVS_KEY);
-  if (savedC) convs = JSON.parse(savedC);
-  const savedP = localStorage.getItem(PROJECTS_KEY);
-  if (savedP) projects = JSON.parse(savedP);
-
-  if (cfg.activated) {
-    launchApp();
-  } else {
-    document.getElementById('activation').classList.add('active');
-  }
+  // Check for existing Supabase auth session first
+  checkAuthSession();
 }
 
-function saveCfg() { localStorage.setItem('aide_v2_cfg', JSON.stringify(cfg)); }
-function saveConvs() { localStorage.setItem(CONVS_KEY, JSON.stringify(convs)); schedulePush(); }
-function saveProjects() { localStorage.setItem(PROJECTS_KEY, JSON.stringify(projects)); schedulePush(); }
+async function checkAuthSession() {
+  // Try to restore Supabase auth session
+  const authToken = localStorage.getItem('aide_auth_token');
+  if (authToken) {
+    try {
+      const res = await fetch(`${PRODUCT_CONFIG.SUPABASE_URL}/auth/v1/user`, {
+        headers: {
+          'apikey': PRODUCT_CONFIG.SUPABASE_ANON_KEY,
+          'Authorization': 'Bearer ' + authToken
+        }
+      });
+      if (res.ok) {
+        const user = await res.json();
+        currentUser = { id: user.id, email: user.email, name: user.email.split('@')[0] };
+        loadUserData();
+        launchApp();
+        return;
+      }
+    } catch(e) {}
+    // Token invalid — clear it
+    localStorage.removeItem('aide_auth_token');
+  }
+  // No valid session — show auth screen
+  showAuthScreen();
+}
+
+function loadUserData() {
+  const k = KEYS();
+  const saved = localStorage.getItem(k.cfg);
+  if (saved) cfg = { ...cfg, ...JSON.parse(saved) };
+  const savedC = localStorage.getItem(k.convs);
+  if (savedC) convs = JSON.parse(savedC);
+  const savedP = localStorage.getItem(k.projects);
+  if (savedP) projects = JSON.parse(savedP);
+}
+
+function showAuthScreen() {
+  document.getElementById('activation').classList.remove('active');
+  document.getElementById('app').classList.remove('active');
+  document.getElementById('authScreen').classList.add('active');
+}
+
+function saveCfg() { localStorage.setItem(KEYS().cfg, JSON.stringify(cfg)); }
+function saveConvs() { localStorage.setItem(KEYS().convs, JSON.stringify(convs)); schedulePush(); }
+function saveProjects() { localStorage.setItem(KEYS().projects, JSON.stringify(projects)); schedulePush(); }
 
 // ══════════════════════════════════
 // ACTIVATION — MANAGED
@@ -1266,10 +1527,143 @@ async function activateBYOK() {
 }
 
 // ══════════════════════════════════
+// AUTH — Supabase email/password + magic link
+// ══════════════════════════════════
+let authView = 'login'; // 'login' | 'register' | 'magic' | 'check-email' | 'demo-prompt'
+
+function setAuthView(view) {
+  authView = view;
+  document.querySelectorAll('.auth-view').forEach(el => el.classList.remove('active'));
+  const el = document.getElementById('authView_' + view);
+  if (el) el.classList.add('active');
+}
+
+async function authSignIn() {
+  const email = document.getElementById('authEmail').value.trim();
+  const pass  = document.getElementById('authPassword').value;
+  const err   = document.getElementById('authError');
+  err.textContent = '';
+  if (!email || !pass) { err.textContent = 'Please enter email and password.'; return; }
+  setAuthLoading(true);
+  try {
+    const res = await fetch(`${PRODUCT_CONFIG.SUPABASE_URL}/auth/v1/token?grant_type=password`, {
+      method: 'POST',
+      headers: { 'Content-Type':'application/json', 'apikey': PRODUCT_CONFIG.SUPABASE_ANON_KEY },
+      body: JSON.stringify({ email, password: pass })
+    });
+    const data = await res.json();
+    if (!res.ok) throw new Error(data.error_description || data.msg || 'Sign in failed');
+    await onAuthSuccess(data.access_token, data.user);
+  } catch(e) { err.textContent = e.message; }
+  setAuthLoading(false);
+}
+
+async function authRegister() {
+  const email = document.getElementById('regEmail').value.trim();
+  const pass  = document.getElementById('regPassword').value;
+  const pass2 = document.getElementById('regPassword2').value;
+  const err   = document.getElementById('regError');
+  err.textContent = '';
+  if (!email || !pass) { err.textContent = 'Please enter email and password.'; return; }
+  if (pass !== pass2)  { err.textContent = 'Passwords do not match.'; return; }
+  if (pass.length < 6) { err.textContent = 'Password must be at least 6 characters.'; return; }
+  setAuthLoading(true);
+  try {
+    const res = await fetch(`${PRODUCT_CONFIG.SUPABASE_URL}/auth/v1/signup`, {
+      method: 'POST',
+      headers: { 'Content-Type':'application/json', 'apikey': PRODUCT_CONFIG.SUPABASE_ANON_KEY },
+      body: JSON.stringify({ email, password: pass })
+    });
+    const data = await res.json();
+    if (!res.ok) throw new Error(data.error_description || data.msg || 'Registration failed');
+    // If email confirmation is disabled, we get a token immediately
+    if (data.access_token) {
+      await onAuthSuccess(data.access_token, data.user);
+    } else {
+      setAuthView('check-email');
+    }
+  } catch(e) { err.textContent = e.message; }
+  setAuthLoading(false);
+}
+
+async function authMagicLink() {
+  const email = document.getElementById('magicEmail').value.trim();
+  const err   = document.getElementById('magicError');
+  err.textContent = '';
+  if (!email) { err.textContent = 'Please enter your email.'; return; }
+  setAuthLoading(true);
+  try {
+    const res = await fetch(`${PRODUCT_CONFIG.SUPABASE_URL}/auth/v1/magiclink`, {
+      method: 'POST',
+      headers: { 'Content-Type':'application/json', 'apikey': PRODUCT_CONFIG.SUPABASE_ANON_KEY },
+      body: JSON.stringify({ email })
+    });
+    if (!res.ok) { const d = await res.json(); throw new Error(d.error_description || 'Failed to send link'); }
+    setAuthView('check-email');
+  } catch(e) { err.textContent = e.message; }
+  setAuthLoading(false);
+}
+
+async function onAuthSuccess(token, user) {
+  localStorage.setItem('aide_auth_token', token);
+  currentUser = { id: user.id, email: user.email, name: user.email.split('@')[0] };
+  loadUserData();
+  // Ensure cfg has activated flag for managed users with a key
+  if (!cfg.activated) {
+    cfg.activated = true;
+    cfg.mode = cfg.mode || 'managed';
+  }
+  launchApp();
+}
+
+function confirmLogout() {
+  if (confirm('Sign out? Your conversations are saved and will be here when you return.')) {
+    logout();
+  }
+}
+
+async function logout() {
+  // Revoke token server-side
+  const token = localStorage.getItem('aide_auth_token');
+  if (token) {
+    fetch(`${PRODUCT_CONFIG.SUPABASE_URL}/auth/v1/logout`, {
+      method: 'POST',
+      headers: { 'apikey': PRODUCT_CONFIG.SUPABASE_ANON_KEY, 'Authorization': 'Bearer ' + token }
+    }).catch(()=>{});
+  }
+  // Clear local session (keep cfg for re-login convenience)
+  localStorage.removeItem('aide_auth_token');
+  currentUser = null;
+  convs = {}; projects = {}; curConv = null;
+  cfg.activated = false;
+  document.getElementById('app').classList.remove('active');
+  showAuthScreen();
+  setAuthView('login');
+}
+
+function tryDemoFromAuth() {
+  currentUser = { id: 'demo_' + Date.now(), email: 'demo', name: 'Demo' };
+  cfg.mode = 'demo';
+  cfg.activated = true;
+  cfg.demoCount = 0;
+  saveCfg();
+  launchApp();
+}
+
+function setAuthLoading(on) {
+  document.querySelectorAll('.auth-btn').forEach(b => b.disabled = on);
+  document.querySelectorAll('.auth-btn').forEach(b => {
+    if (on) b.dataset.origText = b.textContent, b.textContent = '…';
+    else if (b.dataset.origText) b.textContent = b.dataset.origText;
+  });
+}
+
+// ══════════════════════════════════
 // APP LAUNCH
 // ══════════════════════════════════
 function launchApp() {
   document.getElementById('activation').classList.remove('active');
+  document.getElementById('authScreen').classList.remove('active');
   document.getElementById('app').classList.add('active');
   buildProvSwitch();
   updateStatus();
@@ -1306,9 +1700,20 @@ function launchApp() {
     badge.textContent = `Demo · ${PRODUCT_CONFIG.DEMO_MESSAGES - cfg.demoCount} left`;
   }
 
+  // User row — email + logout
+  const userRow = document.getElementById('userRow');
+  if (currentUser && currentUser.email !== 'demo') {
+    userRow.innerHTML = `
+      <span class="user-email" title="${currentUser.email}">${currentUser.email}</span>
+      <button class="logout-btn" onclick="confirmLogout()" title="Sign out">Sign out</button>`;
+    userRow.style.display = 'flex';
+  } else {
+    userRow.style.display = 'none';
+  }
+
   const keys = Object.keys(convs);
   if (keys.length) {
-    const last = localStorage.getItem(LAST_KEY);
+    const last = localStorage.getItem(KEYS().last);
     loadConv(last && convs[last] ? last : keys[keys.length-1]);
   } else {
     newConv();
@@ -1902,14 +2307,14 @@ function newConv() {
   const id = 'c'+Date.now();
   convs[id] = {id, title:'New conversation', messages:[], createdAt:Date.now()};
   curConv = id;
-  localStorage.setItem(LAST_KEY, id);
+  localStorage.setItem(KEYS().last, id);
   saveConvs(); renderConvList(); renderMessages(); renderArtifacts();
 }
 
 function loadConv(id) {
   if (!convs[id]) return;
   curConv = id;
-  localStorage.setItem(LAST_KEY, id);
+  localStorage.setItem(KEYS().last, id);
   renderConvList(); renderProjList(); renderMessages(); renderArtifacts();
 }
 
