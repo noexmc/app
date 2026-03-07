@@ -1,5 +1,5 @@
 <!DOCTYPE html>
-<!-- Aide v0.41 -->
+<!-- Aide v0.42 -->
 <html lang="en">
 <head>
 <meta charset="UTF-8">
@@ -595,7 +595,7 @@ body{font-family:'DM Sans',sans-serif;background:var(--bg);color:var(--text);hei
 ════════════════════════════════ -->
 <div id="app" class="screen">
   <div class="topbar">
-    <div class="logo">Aide <span style="font-family:'DM Mono',monospace;font-size:10px;font-weight:400;color:var(--text-3);font-style:normal;letter-spacing:0;margin-left:2px">v0.41</span></div>
+    <div class="logo">Aide <span style="font-family:'DM Mono',monospace;font-size:10px;font-weight:400;color:var(--text-3);font-style:normal;letter-spacing:0;margin-left:2px">v0.42</span></div>
     <div class="tb-divider"></div>
     <!-- Role picker — pill buttons like model picker -->
     <div class="role-picker-wrap" id="rolePickerWrap">
@@ -697,7 +697,7 @@ body{font-family:'DM Sans',sans-serif;background:var(--bg);color:var(--text);hei
     </div>
 
     <!-- Artifacts panel -->
-    <div class="artifacts-panel" id="artifactsPanel">
+    <div class="artifacts-panel hidden" id="artifactsPanel">
       <div class="art-header">
         <span style="font-size:14px">📎</span>
         <div class="art-title">Files created</div>
@@ -761,6 +761,12 @@ body{font-family:'DM Sans',sans-serif;background:var(--bg);color:var(--text);hei
 // CHANGELOG
 // ══════════════════════════════════════════════════════════
 const CHANGELOG = [
+  { version:'v0.42', date:'2026-03-07', changes:[
+    'Guest: fresh session every login, no old conversations carried over',
+    'Guest: demo mode — 5-message counter works correctly',
+    'callManaged: uses PRODUCT_CONFIG keys from paparapupi.js directly (no Railway)',
+    'Artifacts/Files panel: closed by default',
+  ]},
   { version:'v0.41', date:'2026-03-07', changes:[
     'Login screen: black status bar removed; version shown inline with logo',
     'Delete toast: now shows clickable Undo link (was showing raw HTML)',
@@ -1156,6 +1162,7 @@ let cfg = {
   demoCount: 0,
   activated: false
 };
+window._defaultCfg = JSON.parse(JSON.stringify(cfg));
 
 let convs = {};
 let projects = {};
@@ -2853,7 +2860,7 @@ async function sendMsg() {
   if (!text||loading) return;
 
   // Demo limit check
-  if (cfg.mode==='demo' && cfg.demoCount >= PRODUCT_CONFIG.DEMO_MESSAGES) {
+  if ((cfg.mode==='demo'||cfg.mode==='friends') && cfg.demoCount >= PRODUCT_CONFIG.DEMO_MESSAGES) {
     appendMsg('assistant',
       `You've used all ${PRODUCT_CONFIG.DEMO_MESSAGES} demo messages. [Get a license key](${PRODUCT_CONFIG.CHECKOUT_URL}) to keep going — plans start at $9/month.`,
       `You've used all ${PRODUCT_CONFIG.DEMO_MESSAGES} demo messages. Get a license key to keep going — plans start at $9/month.`,
@@ -2932,7 +2939,7 @@ async function sendMsg() {
     appendMsg('assistant', raw, display||raw, doc);
     if (doc) openDoc(encodeURIComponent(JSON.stringify(doc)));
 
-    if (cfg.mode==='demo') {
+    if (cfg.mode==='demo' || cfg.mode==='friends') {
       cfg.demoCount++;
       saveCfg();
       const remaining = PRODUCT_CONFIG.DEMO_MESSAGES - cfg.demoCount;
@@ -3735,7 +3742,7 @@ init();
 // ══════════════════════════════════════════════════════════════
 
 // ── Service Worker registration ───────────────────────────────
-const APP_VERSION = 'v0.41';
+const APP_VERSION = 'v0.42';
 if ('serviceWorker' in navigator) {
   window.addEventListener('load', async () => {
     // Unregister all old service workers and clear all caches on version change
