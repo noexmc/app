@@ -1276,9 +1276,8 @@ const LAST_KEY     = null; // deprecated — use KEYS().last
 // ══════════════════════════════════
 // INIT
 // ══════════════════════════════════
-function init() {
-  // Check for existing Supabase auth session first
-  checkAuthSession();
+async function init() {
+  await checkAuthSession();
 }
 
 async 
@@ -1381,36 +1380,9 @@ function friendsSignIn() {
   launchApp();
 }
 
-function persistSession() {
-  if (currentUser && currentUser.id !== 'guest') {
-    localStorage.setItem('aide_session', JSON.stringify({
-      userId: currentUser.id,
-      name: currentUser.name,
-      savedAt: Date.now()
-    }));
-  }
-}
 
-function confirmLogout() {
-  if (!confirm('Sign out?')) return;
-  localStorage.removeItem('aide_session');
-  currentUser = null;
-  cfg.mode = null;
-  document.getElementById('app').classList.remove('active');
-  showAuthScreen();
-  setAuthView(hasPasskeys() ? 'login' : 'setup');
-}
 
-function setAuthView(view) {
-  document.querySelectorAll('.auth-view').forEach(el => el.classList.remove('active'));
-  const el = document.getElementById('authView_' + view);
-  if (el) el.classList.add('active');
-}
 
-function showAuthScreen() {
-  document.getElementById('authScreen').classList.add('active');
-  document.getElementById('app').classList.remove('active');
-}
 
 async function checkAuthSession() {
   // Passkey silent restore
@@ -1747,9 +1719,26 @@ async function onAuthSuccess(token, user) {
   launchApp();
 }
 
+function persistSession() {
+  if (currentUser && currentUser.id !== 'guest') {
+    localStorage.setItem('aide_session', JSON.stringify({
+      userId: currentUser.id,
+      name: currentUser.name || currentUser.email,
+      savedAt: Date.now()
+    }));
+  }
+}
+
 function confirmLogout() {
-  if (confirm('Sign out? Your conversations are saved and will be here when you return.')) {
-    logout();
+  if (!confirm('Sign out?')) return;
+  localStorage.removeItem('aide_session');
+  currentUser = null;
+  cfg.mode = null;
+  if (typeof logout === 'function') logout();
+  else {
+    document.getElementById('app').classList.remove('active');
+    showAuthScreen();
+    setAuthView(hasPasskeys() ? 'login' : 'setup');
   }
 }
 
