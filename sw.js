@@ -1,5 +1,5 @@
 // Aide Service Worker — offline-first caching
-const CACHE = 'aide-v0.34';
+const CACHE = 'aide-v0.35';
 const OFFLINE_FALLBACK = '/index.html';
 
 // Assets to cache on install

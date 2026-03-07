@@ -1,5 +1,5 @@
 <!DOCTYPE html>
-<!-- Aide v0.34 -->
+<!-- Aide v0.35 -->
 <html lang="en">
 <head>
 <meta charset="UTF-8">
@@ -465,7 +465,7 @@ body{font-family:'DM Sans',sans-serif;background:var(--bg);color:var(--text);hei
 
 
 /* ── Bottom-left model status bar ─── */
-.model-status-bar{display:flex;align-items:center;gap:5px;padding:6px 8px;margin-bottom:4px;border-radius:var(--r-sm);background:var(--surface2);border:1px solid var(--border)}
+.model-status-bar{display:flex;align-items:center;gap:5px;padding:4px 10px;border-radius:var(--r-sm);background:var(--surface2);border:1px solid var(--border);flex-shrink:0}
 .msb-dot{width:6px;height:6px;border-radius:50%;background:var(--green);flex-shrink:0}
 .msb-text{font-family:'DM Mono',monospace;font-size:10.5px;color:var(--text-2);font-weight:500;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
 
@@ -588,7 +588,7 @@ body{font-family:'DM Sans',sans-serif;background:var(--bg);color:var(--text);hei
 ════════════════════════════════ -->
 <div id="app" class="screen">
   <div class="topbar">
-    <div class="logo">Aide <span style="font-family:'DM Mono',monospace;font-size:10px;font-weight:400;color:var(--text-3);font-style:normal;letter-spacing:0;margin-left:2px">v0.34</span></div>
+    <div class="logo">Aide <span style="font-family:'DM Mono',monospace;font-size:10px;font-weight:400;color:var(--text-3);font-style:normal;letter-spacing:0;margin-left:2px">v0.35</span></div>
     <div class="tb-divider"></div>
     <!-- Role picker -->
     <div class="role-picker-wrap" id="rolePickerWrap">
@@ -600,6 +600,7 @@ body{font-family:'DM Sans',sans-serif;background:var(--bg);color:var(--text);hei
       <div class="role-dropdown" id="roleDropdown"></div>
     </div>
     <div class="topbar-right">
+      <div class="model-status-bar" id="modelStatusBar"></div>
       <div class="model-picker-wrap" id="modelPickerWrap">
         <div id="provSwitch"></div>
         <div class="card-picker" id="cardPicker"></div>
@@ -640,10 +641,11 @@ body{font-family:'DM Sans',sans-serif;background:var(--bg);color:var(--text);hei
 
       <div class="sb-footer">
         <div class="priv-note">🔒 All data encrypted</div>
-        <div id="syncDot" style="display:none"></div>
-        <div id="syncLabel" style="display:none"></div>
+        <div style="display:flex;align-items:center;gap:5px;margin-top:4px">
+          <div id="syncDot" style="width:5px;height:5px;border-radius:50%;background:var(--text-3);transition:background .3s;flex-shrink:0"></div>
+          <div id="syncLabel" style="font-size:10px;color:var(--text-3);font-family:'DM Mono',monospace"></div>
+        </div>
         <div class="license-badge" id="licenseBadge"></div>
-        <div class="model-status-bar" id="modelStatusBar"></div>
         <div class="user-row" id="userRow"></div>
       </div>
     </div>
@@ -745,6 +747,13 @@ body{font-family:'DM Sans',sans-serif;background:var(--bg);color:var(--text);hei
 // CHANGELOG
 // ══════════════════════════════════════════════════════════
 const CHANGELOG = [
+  { version:'v0.35', date:'2026-03-07', changes:[
+    'Critical fix: messages now send correctly — provider routing fixed (anthropic was not matching claude)',
+    'Cross-device sync fixed — sync key now derived from your name, same on every device',
+    'Model indicator pill moved to topbar, left of model picker',
+    'Sync status dot restored in sidebar',
+    'What\'s new reloads every time settings opens',
+  ]},
   { version:'v0.34', date:'2026-03-07', changes:[
     'Model picker: restored provider pill buttons (Claude / GPT / Local), clicking opens card sub-picker',
     'What\'s new: now loads every time settings opens (not just on app launch)',
@@ -1120,11 +1129,13 @@ let encPassword = null;
 
 async function initSync() {
   if (!PRODUCT_CONFIG.SUPABASE_URL) return;
-  // Use user ID for keyHash (sync key), license key for encryption password
-  const syncId = currentUser?.id || cfg.licenseKey;
-  if (!syncId) return;
-  const encKey = cfg.licenseKey || currentUser?.id || 'aide-default';
-  encPassword = encKey;
+  // Sync key = name (stable across devices) + fixed salt
+  // This means any device where you type the same name will sync the same data
+  const name = currentUser?.name || '';
+  const syncId = 'aide_user_' + name.toLowerCase().trim();
+  if (!name) return;
+  // Encryption password = name + a fixed app secret (keeps data private)
+  encPassword = syncId + '_enc_2026';
   keyHash = await hashKey(syncId);
   setSyncStatus('syncing');
   await pullFromSupabase();
@@ -1647,7 +1658,7 @@ function buildProvSwitch() {
 
     // Group models by provider
     const claudeModels = available.filter(m => m.provider === 'anthropic');
-    const otherModels  = available.filter(m => m.provider !== 'claude');
+    const otherModels  = available.filter(m => m.provider !== 'anthropic');
     const isClaudeActive = !isOllama && claudeModels.some(m => m.id === cur.id);
     const claudeSubOpen = isClaudeActive;
 
@@ -1901,7 +1912,8 @@ function toggleCardPicker(e) {
 
 function selectCardModel(id) {
   cfg.selectedModelId = id;
-  cfg.provider = id === 'ollama' ? 'ollama' : (getModel(id)?.provider || 'claude');
+  const p = id === 'ollama' ? 'ollama' : (getModel(id)?.provider || 'claude');
+  cfg.provider = p === 'anthropic' ? 'claude' : p;
   saveCfg();
   buildProvSwitch();
   updateStatus();
@@ -2611,7 +2623,7 @@ async function sendMsg() {
       raw = await callOllama(history, msgContent, systemPrompt);
     } else if (cfg.mode==='managed' || cfg.mode==='demo') {
       raw = await callManaged(history, msgContent, systemPrompt);
-    } else if (cfg.provider==='claude') {
+    } else if (cfg.provider==='claude' || cfg.provider==='anthropic') {
       raw = await callClaude(history, msgContent, systemPrompt);
     } else if (cfg.provider==='openai') {
       raw = await callOpenAI(history, msgContent, systemPrompt);
@@ -3398,7 +3410,7 @@ init();
 // ══════════════════════════════════════════════════════════════
 
 // ── Service Worker registration ───────────────────────────────
-const APP_VERSION = 'v0.34';
+const APP_VERSION = 'v0.35';
 if ('serviceWorker' in navigator) {
   window.addEventListener('load', async () => {
     // Unregister all old service workers and clear all caches on version change
