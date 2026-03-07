@@ -164,8 +164,6 @@ body{font-family:'DM Sans',sans-serif;background:var(--bg);color:var(--text);hei
 .prov-switch{display:flex;background:var(--surface2);border:1px solid var(--border);border-radius:var(--r-sm);padding:2px;gap:2px}
 .pb{font-family:'DM Mono',monospace;font-size:11px;font-weight:500;padding:4px 10px;border:none;border-radius:3px;cursor:pointer;background:transparent;color:var(--text-3);transition:all .15s}
 .pb.active{background:var(--surface);color:var(--text);box-shadow:0 1px 2px rgba(0,0,0,0.06)}
-.pb.pb-nokey{opacity:.4}
-.pb.pb-nokey:hover{opacity:.75}
 .tb-btn{width:30px;height:30px;border:1px solid var(--border);border-radius:var(--r-sm);background:var(--surface);cursor:pointer;display:flex;align-items:center;justify-content:center;color:var(--text-2);transition:all .15s;font-size:15px}
 .tb-btn:hover{background:var(--surface2);color:var(--text)}
 
@@ -614,6 +612,7 @@ body{font-family:'DM Sans',sans-serif;background:var(--bg);color:var(--text);hei
   }
 }
 </style>
+<script src="paparapupi.js"></script>
 </head>
 <body>
 
@@ -656,7 +655,7 @@ body{font-family:'DM Sans',sans-serif;background:var(--bg);color:var(--text);hei
         <div class="auth-demo-row" style="margin-top:16px">
           First time? <a href="#" onclick="setAuthView('setup');return false">Set up this device →</a>
         </div>
-        <div class="auth-demo-row"><a href="#" onclick="tryDemoFromAuth();return false">Try without an account (5 messages)</a></div>
+        <div class="auth-demo-row"><a href="#" onclick="setAuthView('friends');return false">Guest access →</a></div>
       </div>
 
       <!-- VIEW: first-time setup — just a name, then Face ID -->
@@ -678,12 +677,31 @@ body{font-family:'DM Sans',sans-serif;background:var(--bg);color:var(--text);hei
         </div>
       </div>
 
+      <!-- VIEW: friends guest access -->
+      <div class="auth-view" id="authView_friends">
+        <div class="auth-title">Guest access</div>
+        <div class="auth-subtitle">Enter the access password to try Aide. Each session is fresh — 10 messages included.</div>
+        <div class="auth-field">
+          <label class="auth-label">Password</label>
+          <input class="auth-input" id="friendsPassword" type="password" placeholder="••••••"
+            onkeydown="if(event.key==='Enter')friendsSignIn()" />
+        </div>
+        <div class="auth-error" id="friendsError"></div>
+        <button class="passkey-btn" onclick="friendsSignIn()" id="friendsBtn">
+          <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="8" r="4"/><path d="M4 20c0-4 3.6-7 8-7s8 3 8 7"/></svg>
+          Enter as Guest
+        </button>
+        <div class="auth-demo-row" style="margin-top:10px">
+          <a href="#" onclick="setAuthView('login');return false">← Back</a>
+        </div>
+      </div>
+
       <!-- VIEW: not supported fallback -->
       <div class="auth-view" id="authView_fallback">
         <div class="auth-icon-lg">🔒</div>
         <div class="auth-title">Passkeys not supported</div>
-        <div class="auth-subtitle">Your browser doesn't support passkeys. Use a modern browser (Safari on iPhone, Chrome on desktop) or continue without an account.</div>
-        <button class="auth-btn auth-btn-primary" onclick="tryDemoFromAuth()">Continue without account</button>
+        <div class="auth-subtitle">Your browser doesn't support passkeys. Use a modern browser (Safari on iPhone, Chrome on desktop) or ask for guest access.</div>
+        <button class="auth-btn auth-btn-primary" onclick="setAuthView('friends')">Guest access</button>
       </div>
 
     </div>
@@ -843,7 +861,7 @@ body{font-family:'DM Sans',sans-serif;background:var(--bg);color:var(--text);hei
     <button class="mob-menu-btn" id="mobMenuBtn" onclick="toggleMobileSidebar()" style="display:none" title="Menu">
       <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"><line x1="3" y1="6" x2="21" y2="6"/><line x1="3" y1="12" x2="21" y2="12"/><line x1="3" y1="18" x2="21" y2="18"/></svg>
     </button>
-    <div class="logo">Aide</div>
+    <div class="logo">Aide <span style="font-family:'DM Mono',monospace;font-size:9px;font-weight:400;color:var(--text-3);letter-spacing:0;vertical-align:middle;margin-left:2px" id="appVersion"></span></div>
     <div class="tb-divider"></div>
     <div class="status-pill">
       <div class="sdot on" id="appDot"></div>
@@ -1025,14 +1043,22 @@ body{font-family:'DM Sans',sans-serif;background:var(--bg);color:var(--text);hei
 // ══════════════════════════════════
 // CONFIG — SET THESE FOR YOUR PRODUCT
 // ══════════════════════════════════
+// Keys loaded from config.js (window.AIDE_CONFIG) — falls back to '' if not set
+const _K = window.AIDE_CONFIG || {};
+
+const AIDE_VERSION = 'v0.16';
+
 const PRODUCT_CONFIG = {
-  // ── YOUR API KEYS (managed mode) ──
-  ANTHROPIC_KEY: '',   // console.anthropic.com
-  OPENAI_KEY: '',      // platform.openai.com
-  GEMINI_KEY: '',      // aistudio.google.com (free tier available)
-  MISTRAL_KEY: '',     // console.mistral.ai (free tier available)
-  BRAVE_SEARCH_KEY: '', // legacy, use TAVILY below
-  TAVILY_SEARCH_KEY: '', // tavily.com — free 1000 searches/month
+  // ── Shared secret — must match AIDE_SECRET env var on Railway ──
+  AIDE_SECRET:      _K.AIDE_SECRET      || '',
+  // ── Personal keys (BYOK only — not needed when using Railway proxy) ──
+  ANTHROPIC_KEY:    _K.ANTHROPIC_KEY    || '',
+  OPENAI_KEY:       _K.OPENAI_KEY       || '',
+  GEMINI_KEY:       _K.GEMINI_KEY       || '',
+  MISTRAL_KEY:      _K.MISTRAL_KEY      || '',
+  OPENROUTER_KEY:   _K.OPENROUTER_KEY   || '',
+  TAVILY_KEY:       _K.TAVILY_KEY       || '',
+  BRAVE_SEARCH_KEY: '', // legacy
 
   // ── SUPABASE (encrypted sync) ──
   SUPABASE_URL: 'https://mranmvybghfqelyhgknh.supabase.co',
@@ -1304,7 +1330,7 @@ let cfg = {
   openrouterKey: '',
   openaiKey: '', openaiModel: 'gpt-4o',
   geminiKey: '', mistralKey: '',
-  braveKey: '',
+  braveKey: PRODUCT_CONFIG?.TAVILY_KEY || '',
   ollamaUrl: 'http://localhost:11434', ollamaModel: 'qwen2.5:14b',
   webSearch: false,
   demoCount: 0,
@@ -1524,31 +1550,7 @@ function init() {
   checkAuthSession();
 }
 
-async function checkAuthSession() {
-  // Try to restore Supabase auth session
-  const authToken = localStorage.getItem('aide_auth_token');
-  if (authToken) {
-    try {
-      const res = await fetch(`${PRODUCT_CONFIG.SUPABASE_URL}/auth/v1/user`, {
-        headers: {
-          'apikey': PRODUCT_CONFIG.SUPABASE_ANON_KEY,
-          'Authorization': 'Bearer ' + authToken
-        }
-      });
-      if (res.ok) {
-        const user = await res.json();
-        currentUser = { id: user.id, email: user.email, name: user.email.split('@')[0] };
-        loadUserData();
-        launchApp();
-        return;
-      }
-    } catch(e) {}
-    // Token invalid — clear it
-    localStorage.removeItem('aide_auth_token');
-  }
-  // No valid session — show auth screen
-  showAuthScreen();
-}
+// (checkAuthSession defined below)
 
 function loadUserData() {
   // 1. Load global settings first (API keys only — shared across all devices)
@@ -1595,6 +1597,8 @@ function saveGlobalKeys() {
 
 function showAuthScreen() {
   document.getElementById('activation').classList.remove('active');
+  const vEl = document.getElementById('appVersion');
+  if (vEl) vEl.textContent = AIDE_VERSION;
   document.getElementById('app').classList.remove('active');
   document.getElementById('authScreen').classList.add('active');
 }
@@ -1951,6 +1955,28 @@ async function passkeySignIn() {
   }
 }
 
+// ── FRIENDS: password-based guest access ────────────────────────────
+function friendsSignIn() {
+  const pw  = (document.getElementById('friendsPassword')?.value || '').trim();
+  const err = document.getElementById('friendsError');
+  err.textContent = '';
+  if (pw !== 'smokey') {
+    err.textContent = 'Wrong password. Try again.';
+    return;
+  }
+  // Guest session — ephemeral, no persistence, 10 message limit
+  currentUser = { id: 'friends_' + Date.now(), name: 'Guest', email: 'guest' };
+  cfg.mode       = 'friends';
+  cfg.activated  = true;
+  cfg.demoCount  = 0;
+  cfg.licenseData = { plan: 'friends' };
+  // Clear any stale conversations so session is fresh
+  convs = {};
+  msgs  = [];
+  // Do NOT call loadUserData() or saveCfg() — session is intentionally ephemeral
+  launchApp();
+}
+
 // ── checkAuthSession: called on app start ────────────────────────────
 async function checkAuthSession() {
   // If passkeys registered + active session in localStorage, restore silently
@@ -1958,8 +1984,8 @@ async function checkAuthSession() {
   if (savedCfg) {
     try {
       const sc = JSON.parse(savedCfg);
-      if (sc.userId && sc.activated) {
-        // Prefer passkey match but fall back to stored name (works on new/reinstalled device)
+      // Never restore a friends session — always force re-login
+      if (sc.userId && sc.activated && sc.mode !== 'friends') {
         const pk = loadPasskeys().find(p => p.userId === sc.userId);
         const name = pk?.name || sc.name || 'User';
         currentUser = { id: sc.userId, name, email: name };
@@ -2076,7 +2102,7 @@ function launchApp() {
   initSync();
 
   // Set default model for plan if not already set or if locked
-  if (cfg.mode === 'managed') {
+  if (cfg.mode === 'managed' || cfg.mode === 'friends') {
     const avail = getAvailableModels();
     const cur = getModel(cfg.selectedModelId);
     const curRank = cur ? tierRank(cur.tier) : -1;
@@ -2089,14 +2115,19 @@ function launchApp() {
 
   // License badge
   const badge = document.getElementById('licenseBadge');
-  const effMode = (!cfg.mode || cfg.mode === 'null') ? 'byok' : cfg.mode;
-  if (effMode === 'managed') {
+  if (cfg.mode === 'managed') {
     badge.className = 'license-badge managed';
     badge.textContent = '✦ ' + (cfg.licenseData?.plan||'managed').charAt(0).toUpperCase() + (cfg.licenseData?.plan||'managed').slice(1);
-  } else if (effMode === 'byok') {
+  } else if (cfg.mode === 'byok') {
     const _plan = cfg.licenseData?.plan || '';
     badge.className = 'license-badge ' + (_plan === 'lifetime' ? 'managed' : 'byok');
     badge.textContent = _plan === 'lifetime' ? '✦ Lifetime' : '🔑 BYOK';
+  } else if (cfg.mode === 'friends') {
+    badge.className = 'license-badge';
+    badge.style.background = '#fef3e2';
+    badge.style.color = '#92530a';
+    const used = cfg.demoCount || 0;
+    badge.textContent = `Guest · ${10 - used} msgs left`;
   } else {
     badge.className = 'license-badge';
     badge.style.background = '#fef3e2';
@@ -2106,11 +2137,16 @@ function launchApp() {
 
   // User row — email + logout
   const userRow = document.getElementById('userRow');
-  if (currentUser && currentUser.email !== 'demo') {
+  if (currentUser && currentUser.email !== 'demo' && cfg.mode !== 'friends') {
     const displayName = currentUser.name || currentUser.email;
     userRow.innerHTML = `
       <span class="user-email" title="${displayName}">👤 ${displayName}</span>
       <button class="logout-btn" onclick="confirmLogout()" title="Sign out">Sign out</button>`;
+    userRow.style.display = 'flex';
+  } else if (cfg.mode === 'friends') {
+    userRow.innerHTML = `
+      <span class="user-email">👥 Guest session</span>
+      <button class="logout-btn" onclick="location.reload()" title="End session">End session</button>`;
     userRow.style.display = 'flex';
   } else {
     userRow.style.display = 'none';
@@ -2198,10 +2234,7 @@ function buildProvSwitch() {
   const wrap = document.getElementById('modelPickerWrap');
   if (!sw || !cp) return; // not mounted yet
 
-  // Treat null, 'null', undefined as byok (passkey users on fresh device)
-  const effectiveMode = (!cfg.mode || cfg.mode === 'null') ? 'byok' : cfg.mode;
-
-  if (effectiveMode === 'managed' || effectiveMode === 'demo') {
+  if (cfg.mode === 'managed' || cfg.mode === 'demo' || cfg.mode === 'friends') {
     const available = getAvailableModels();
     const locked    = getLockedModels();
     const cur       = getModel(cfg.selectedModelId) || getDefaultModel();
@@ -2268,19 +2301,16 @@ function buildProvSwitch() {
     cp.innerHTML = html;
 
   } else {
-    // BYOK / null mode — always show all providers; dim ones with no key yet
-    const provs = [
-      { id:'claude',  label:'Claude',  hasKey: !!(cfg.claudeKey || PRODUCT_CONFIG.ANTHROPIC_KEY) },
-      { id:'openai',  label:'GPT',     hasKey: !!cfg.openaiKey  },
-      { id:'gemini',  label:'Gemini',  hasKey: !!cfg.geminiKey  },
-      { id:'mistral', label:'Mistral', hasKey: !!cfg.mistralKey },
-      { id:'ollama',  label:'💻 Local', hasKey: true            },
-    ];
+    // BYOK mode — compact provider pill buttons in trigger, picker for model selection
+    const provs = [];
+    if (cfg.claudeKey)  provs.push({ id:'claude',  label:'Claude' });
+    if (cfg.openaiKey)  provs.push({ id:'openai',  label:'GPT' });
+    if (cfg.geminiKey)  provs.push({ id:'gemini',  label:'Gemini' });
+    if (cfg.mistralKey) provs.push({ id:'mistral', label:'Mistral' });
+    provs.push({ id:'ollama', label:'💻 Local' });
 
     const btns = provs.map(p =>
-      `<button class="pb ${cfg.provider===p.id?'active':''} ${!p.hasKey?'pb-nokey':''}"
-        onclick="setProvider('${p.id}',this)"
-        title="${!p.hasKey && p.id!=='ollama' ? 'Add '+p.label+' key in ⚙ Settings' : ''}">${p.label}</button>`
+      `<button class="pb ${cfg.provider===p.id?'active':''}" onclick="setProvider('${p.id}',this)">${p.label}</button>`
     ).join('');
     const ollamaExtra = cfg.provider === 'ollama'
       ? `<select id="tbOllamaSelect" onchange="selectOllamaModel(this.value)"
@@ -2340,24 +2370,21 @@ function setProvider(p, el) {
 }
 
 function updateStatus() {
-  const el = document.getElementById('appStatus');
-  if (!el) return;
   const isOllama = cfg.provider === 'ollama' || cfg.selectedModelId === 'ollama';
-  const effMode  = (!cfg.mode || cfg.mode === 'null') ? 'byok' : cfg.mode;
   if (isOllama) {
-    el.textContent = `💻 ${cfg.ollamaModel||'Ollama'}`;
-  } else if (effMode === 'managed' || effMode === 'demo') {
+    document.getElementById('appStatus').textContent = `💻 ${cfg.ollamaModel||'Ollama'}`;
+  } else if (cfg.mode === 'managed' || cfg.mode === 'demo' || cfg.mode === 'friends') {
     const m = getModel(cfg.selectedModelId) || getDefaultModel();
-    el.textContent = m.label;
+    document.getElementById('appStatus').textContent = m.label;
   } else {
     const labels = {
-      claude:  `Claude · ${(cfg.claudeModel||'sonnet').split('-').slice(0,2).join('-')}`,
-      openai:  `GPT · ${cfg.openaiModel||'gpt-4o'}`,
-      gemini:  'Gemini',
-      mistral: 'Mistral',
-      ollama:  `Local · ${cfg.ollamaModel}`
+      claude: `Claude · ${cfg.claudeModel.split('-').slice(0,2).join('-')}`,
+      openai: `GPT · ${cfg.openaiModel}`,
+      gemini: `Gemini`,
+      mistral: `Mistral`,
+      ollama: `Local · ${cfg.ollamaModel}`
     };
-    el.textContent = labels[cfg.provider] || 'Claude';
+    document.getElementById('appStatus').textContent = labels[cfg.provider] || 'Ready';
   }
 }
 
@@ -2951,11 +2978,19 @@ async function sendMsg() {
   const text = input.value.trim();
   if (!text||loading) return;
 
-  // Demo limit check
+  // Demo / friends limit check
   if (cfg.mode==='demo' && cfg.demoCount >= PRODUCT_CONFIG.DEMO_MESSAGES) {
     appendMsg('assistant',
       `You've used all ${PRODUCT_CONFIG.DEMO_MESSAGES} demo messages. [Get a license key](${PRODUCT_CONFIG.CHECKOUT_URL}) to keep going — plans start at $9/month.`,
       `You've used all ${PRODUCT_CONFIG.DEMO_MESSAGES} demo messages. Get a license key to keep going — plans start at $9/month.`,
+      null
+    );
+    return;
+  }
+  if (cfg.mode==='friends' && (cfg.demoCount||0) >= 10) {
+    appendMsg('assistant',
+      `You've used all 10 guest messages for this session. Refresh the page to start a new session.`,
+      `You've used all 10 guest messages for this session. Refresh the page to start a new session.`,
       null
     );
     return;
@@ -3036,6 +3071,12 @@ async function sendMsg() {
       const remaining = PRODUCT_CONFIG.DEMO_MESSAGES - cfg.demoCount;
       const badge = document.getElementById('licenseBadge');
       badge.textContent = `Demo · ${remaining} left`;
+    }
+    if (cfg.mode==='friends') {
+      cfg.demoCount = (cfg.demoCount||0) + 1;
+      // No saveCfg — ephemeral session
+      const badge = document.getElementById('licenseBadge');
+      badge.textContent = `Guest · ${10 - cfg.demoCount} msgs left`;
     }
 
   } catch(e) {
@@ -3118,119 +3159,79 @@ async function _callOpenRouter(key, model, history, content, systemPrompt) {
   return d.choices?.[0]?.message?.content || '';
 }
 
-async function callClaude(history, content, systemPrompt) {
-  const key = PRODUCT_CONFIG.ANTHROPIC_KEY || cfg.claudeKey;
-  if (!key) throw new Error('No Anthropic key. Open ⚙ Settings → Claude API key.');
-  if (cfg.webSearch) {
-    return await callAnthropicWithSearch(key, cfg.claudeModel, history, content, systemPrompt);
-  }
-  const messages=[...history,{role:'user',content}];
-  const r=await fetch('https://api.anthropic.com/v1/messages',{
-    method:'POST',
-    headers:{'Content-Type':'application/json','x-api-key':key,'anthropic-version':'2023-06-01','anthropic-dangerous-direct-browser-access':'true'},
-    body:JSON.stringify({model:cfg.claudeModel,max_tokens:4096,system:systemPrompt,messages})
+// ══════════════════════════════════════════════════════════════
+// AI PROXY — all calls route through Railway; keys never in browser
+// ══════════════════════════════════════════════════════════════
+
+async function _proxyChat(provider, model, history, content, systemPrompt, extra = {}) {
+  const secret = PRODUCT_CONFIG.AIDE_SECRET;
+  if (!secret) throw new Error('AIDE_SECRET not set in config.js');
+  const backendUrl = PRODUCT_CONFIG.BACKEND_URL || 'https://ea-app-production-b9f2.up.railway.app';
+  const messages = [...history, { role: 'user', content }];
+  const r = await fetch(`${backendUrl}/ai/chat`, {
+    method: 'POST',
+    headers: { 'Content-Type': 'application/json', 'X-Aide-Secret': secret },
+    body: JSON.stringify({ provider, model, messages, system: systemPrompt, max_tokens: 4096, ...extra }),
   });
-  if (!r.ok){const e=await r.json();throw new Error(e.error?.message||`Claude error ${r.status}`);}
-  const d=await r.json(); return d.content?.filter(b=>b.type==='text').map(b=>b.text).join('')||'';
+  if (!r.ok) {
+    const err = await r.json().catch(() => ({ detail: r.statusText }));
+    throw new Error(err.detail || `Server error ${r.status}`);
+  }
+  const data = await r.json();
+  return data.text || '';
+}
+
+async function callClaude(history, content, systemPrompt) {
+  if (PRODUCT_CONFIG.AIDE_SECRET) {
+    return await _proxyChat('anthropic', cfg.claudeModel || 'claude-sonnet-4-6',
+      history, content, systemPrompt, { web_search: cfg.webSearch });
+  }
+  // BYOK fallback — direct browser call when no proxy secret configured
+  const key = cfg.claudeKey;
+  if (!key) throw new Error('No Anthropic key. Open ⚙ Settings → Claude API key.');
+  if (cfg.webSearch) return await callAnthropicWithSearch(key, cfg.claudeModel, history, content, systemPrompt);
+  const messages = [...history, { role: 'user', content }];
+  const r = await fetch('https://api.anthropic.com/v1/messages', {
+    method: 'POST',
+    headers: { 'Content-Type': 'application/json', 'x-api-key': key,
+               'anthropic-version': '2023-06-01', 'anthropic-dangerous-direct-browser-access': 'true' },
+    body: JSON.stringify({ model: cfg.claudeModel, max_tokens: 4096, system: systemPrompt, messages }),
+  });
+  if (!r.ok) { const e = await r.json(); throw new Error(e.error?.message || `Claude error ${r.status}`); }
+  const d = await r.json(); return d.content?.filter(b => b.type === 'text').map(b => b.text).join('') || '';
 }
 
 async function callOpenAI(history, content, systemPrompt) {
-  if (!cfg.openaiKey) throw new Error('No OpenAI API key. Open Settings to add one.');
+  if (PRODUCT_CONFIG.AIDE_SECRET) return await _proxyChat('openai', cfg.openaiModel || 'gpt-4o-mini', history, content, systemPrompt);
+  if (!cfg.openaiKey) throw new Error('No OpenAI key. Open ⚙ Settings.');
   return await _callOpenAI(cfg.openaiKey, cfg.openaiModel, history, content, systemPrompt);
 }
 
-async function _callOpenAI(key, model, history, content, systemPrompt) {
-  const messages=[{role:'system',content:systemPrompt},...history,{role:'user',content}];
-  const r=await fetch('https://api.openai.com/v1/chat/completions',{
-    method:'POST',
-    headers:{'Content-Type':'application/json','Authorization':'Bearer '+key},
-    body:JSON.stringify({model,max_tokens:4096,messages})
-  });
-  if (!r.ok){const e=await r.json();throw new Error(e.error?.message||`OpenAI error ${r.status}`);}
-  const d=await r.json(); return d.choices?.[0]?.message?.content||'';
-}
-
 async function callGemini(history, content, systemPrompt) {
-  if (!cfg.geminiKey) throw new Error('No Gemini API key. Open Settings to add one.');
-  return await _callGemini(cfg.geminiKey, 'gemini-2.0-flash', history, content, systemPrompt);
-}
-
-async function _callGemini(key, model, history, content, systemPrompt) {
-  const textContent = typeof content === 'string' ? content : content.find?.(p=>p.type==='text')?.text || '';
-  const contents = [
-    ...history.map(m => ({ role: m.role==='assistant'?'model':'user', parts:[{text:typeof m.content==='string'?m.content:JSON.stringify(m.content)}] })),
-    { role:'user', parts:[{text:textContent}] }
-  ];
-  const r = await fetch(`https://generativelanguage.googleapis.com/v1beta/models/${model}:generateContent?key=${key}`, {
-    method:'POST',
-    headers:{'Content-Type':'application/json'},
-    body:JSON.stringify({ systemInstruction:{parts:[{text:systemPrompt}]}, contents, generationConfig:{maxOutputTokens:4096} })
-  });
-  if (!r.ok){const e=await r.json();throw new Error(e.error?.message||`Gemini error ${r.status}`);}
-  const d=await r.json();
-  return d.candidates?.[0]?.content?.parts?.[0]?.text || '';
+  if (PRODUCT_CONFIG.AIDE_SECRET) return await _proxyChat('gemini', 'gemini-1.5-flash', history, content, systemPrompt);
+  if (!cfg.geminiKey) throw new Error('No Gemini key. Open ⚙ Settings.');
+  return await _callGemini(cfg.geminiKey, history, content, systemPrompt);
 }
 
 async function callMistral(history, content, systemPrompt) {
-  if (!cfg.mistralKey) throw new Error('No Mistral API key. Open Settings to add one.');
-  return await _callMistral(cfg.mistralKey, 'mistral-small-latest', history, content, systemPrompt);
+  if (PRODUCT_CONFIG.AIDE_SECRET) return await _proxyChat('mistral', 'mistral-small-latest', history, content, systemPrompt);
+  if (!cfg.mistralKey) throw new Error('No Mistral key. Open ⚙ Settings.');
+  return await _callMistral(cfg.mistralKey, history, content, systemPrompt);
 }
 
-async function _callMistral(key, model, history, content, systemPrompt) {
-  const textContent = typeof content === 'string' ? content : content.find?.(p=>p.type==='text')?.text || '';
-  const messages=[{role:'system',content:systemPrompt},...history,{role:'user',content:textContent}];
-  const r=await fetch('https://api.mistral.ai/v1/chat/completions',{
-    method:'POST',
-    headers:{'Content-Type':'application/json','Authorization':'Bearer '+key},
-    body:JSON.stringify({model,max_tokens:4096,messages})
+async function _callOpenRouter(key, model, history, content, systemPrompt) {
+  if (PRODUCT_CONFIG.AIDE_SECRET) return await _proxyChat('openrouter', model, history, content, systemPrompt, { openrouter_model: model });
+  if (!key) throw new Error('No OpenRouter key. Open ⚙ Settings.');
+  const messages = [{ role: 'system', content: systemPrompt }, ...history, { role: 'user', content }];
+  const r = await fetch('https://openrouter.ai/api/v1/chat/completions', {
+    method: 'POST',
+    headers: { 'Authorization': `Bearer ${key}`, 'HTTP-Referer': 'https://noexmc.github.io', 'Content-Type': 'application/json' },
+    body: JSON.stringify({ model, messages }),
   });
-  if (!r.ok){const e=await r.json();throw new Error(e.error?.message||`Mistral error ${r.status}`);}
-  const d=await r.json(); return d.choices?.[0]?.message?.content||'';
+  if (!r.ok) { const e = await r.json(); throw new Error(e.error?.message || `OpenRouter error ${r.status}`); }
+  const d = await r.json(); return d.choices?.[0]?.message?.content || '';
 }
 
-async function callOllama(history, content, systemPrompt) {
-  const ollamaUrl   = (cfg.ollamaUrl  || 'http://localhost:11434').replace(/\/$/,'');
-  const ollamaModel = (cfg.ollamaModel || 'qwen2.5:14b').trim();
-
-  // GitHub Pages is HTTPS — direct calls to http://localhost are blocked by mixed-content policy.
-  // Solution: use the Ollama origin header trick and ensure OLLAMA_ORIGINS is set.
-  // We catch the TypeError (network fail) and give a clear message.
-  const textContent = typeof content === 'string' ? content
-    : content.find?.(p=>p.type==='text')?.text || JSON.stringify(content);
-
-  const messages = [
-    { role: 'system', content: systemPrompt },
-    ...history.map(m => ({ role: m.role, content: typeof m.content === 'string' ? m.content : (m.content?.find?.(p=>p.type==='text')?.text||'') })),
-    { role: 'user', content: textContent }
-  ];
-
-  let r;
-  try {
-    r = await fetch(`${ollamaUrl}/api/chat`, {
-      method: 'POST',
-      headers: { 'Content-Type': 'application/json' },
-      body: JSON.stringify({ model: ollamaModel, messages, stream: false })
-    });
-  } catch(netErr) {
-    // Mixed-content or network error — give actionable guidance
-    throw new Error(
-      '⚠ Cannot reach Ollama.\n\n' +
-      'One-time fix — paste in Terminal, then quit & reopen Ollama:\n\n' +
-      'launchctl setenv OLLAMA_ORIGINS \'https://noexmc.github.io/app\'\n\n' +
-      '(Survives reboots — you only need to do this once.)'
-    );
-  }
-
-  if (!r.ok) {
-    const body = await r.text().catch(()=>'');
-    throw new Error(`Ollama error ${r.status}: ${body || 'Is the model pulled?'}`);
-  }
-
-  const d = await r.json();
-  return d.message?.content || '';
-}
-
-// ══════════════════════════════════
 // DOCUMENT PREVIEW & DOWNLOAD
 // ══════════════════════════════════
 function openDoc(encoded) {
@@ -3973,7 +3974,7 @@ function loadSettingsUI() {
   document.getElementById('sOpenAIKey').value=cfg.openaiKey;
   document.getElementById('sGeminiKey').value=cfg.geminiKey||'';
   document.getElementById('sMistralKey').value=cfg.mistralKey||'';
-  document.getElementById('sBraveKey').value=cfg.braveKey||'';
+  document.getElementById('sBraveKey').value=cfg.braveKey||PRODUCT_CONFIG.TAVILY_KEY||'';
   document.getElementById('sOllamaUrl').value=cfg.ollamaUrl;
   document.getElementById('sOllamaModel').value=cfg.ollamaModel;
   document.getElementById('sLicenseKey').value=cfg.licenseKey||'';
