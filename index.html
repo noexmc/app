@@ -341,11 +341,11 @@ body{font-family:'DM Sans',sans-serif;background:var(--bg);color:var(--text);hei
 .mode-bar{padding:6px 10px;border-bottom:1px solid var(--border-light);display:flex;align-items:center;gap:6px}
 .mode-select{flex:1;padding:5px 8px;border:1px solid var(--border);border-radius:var(--r-sm);font-family:'DM Sans',sans-serif;font-size:12px;font-weight:500;color:var(--text);background:var(--surface2);outline:none;cursor:pointer;transition:border-color .15s}
 .mode-select:focus{border-color:var(--accent)}
-.mode-help{width:18px;height:18px;border-radius:50%;border:1px solid var(--border);background:var(--surface2);color:var(--text-3);font-size:10px;font-weight:600;cursor:pointer;display:flex;align-items:center;justify-content:center;flex-shrink:0;position:relative}
-.mode-help:hover{border-color:var(--accent);color:var(--accent)}
-.mode-tooltip{position:absolute;left:24px;top:50%;transform:translateY(-50%);width:240px;background:var(--surface);border:1px solid var(--border);border-radius:var(--r);padding:10px 12px;font-size:11px;color:var(--text-2);line-height:1.5;z-index:200;box-shadow:0 4px 16px rgba(0,0,0,0.12);display:none}
+.mode-help{width:20px;height:20px;border-radius:50%;border:1.5px solid var(--border);background:var(--surface);color:var(--text-2);font-size:11px;font-weight:700;cursor:pointer;display:flex;align-items:center;justify-content:center;flex-shrink:0;transition:all .15s}
+.mode-help:hover{border-color:var(--accent);color:var(--accent);background:var(--surface2)}
+.mode-tooltip{position:fixed;width:260px;background:var(--surface);border:1px solid var(--border);border-radius:var(--r);padding:12px 14px;font-size:12px;color:var(--text-2);line-height:1.6;z-index:9999;box-shadow:0 8px 30px rgba(0,0,0,0.15);display:none;pointer-events:none}
 .mode-tooltip.show{display:block}
-.mode-tooltip b{color:var(--text);display:block;margin-top:6px}
+.mode-tooltip b{color:var(--text);display:block;margin-top:8px;font-size:12px}
 .mode-tooltip b:first-child{margin-top:0}
 
 /* ── PROJECTS ── */
@@ -432,6 +432,20 @@ body{font-family:'DM Sans',sans-serif;background:var(--bg);color:var(--text);hei
 .auth-switch{text-align:center;font-size:12.5px;color:var(--text-3);margin-top:8px}
 .auth-switch a{color:var(--text-2);text-decoration:none;font-weight:500}
 .auth-switch a:hover{color:var(--accent)}
+
+/* ── Ollama model picker ─── */
+.cp-ollama-models{display:none;border-left:2px solid var(--border);margin:0 0 4px 12px;padding:0}
+.cp-ollama-models.show{display:block}
+.cp-ollama-model{padding:8px 10px;cursor:pointer;border-radius:var(--r-sm);transition:background .12s;margin:2px 0}
+.cp-ollama-model:hover{background:var(--surface2)}
+.cp-ollama-model.active{background:var(--surface2);border-left:2px solid var(--accent);margin-left:-2px}
+.cp-om-top{display:flex;align-items:center;gap:6px;margin-bottom:2px}
+.cp-om-name{font-size:12.5px;font-weight:600;color:var(--text)}
+.cp-om-badge{font-size:10px;background:var(--accent);color:#fff;padding:1px 6px;border-radius:10px;font-weight:500}
+.cp-om-size{font-size:10px;color:var(--text-3);font-family:'DM Mono',monospace;margin-left:auto}
+.cp-om-desc{font-size:11.5px;color:var(--text-2);line-height:1.4}
+.cp-om-input{width:100%;margin-top:6px;padding:5px 8px;border:1px solid var(--border);border-radius:5px;font-family:'DM Mono',monospace;font-size:11.5px;background:var(--bg);color:var(--text);outline:none}
+.cp-om-input:focus{border-color:var(--accent)}
 </style>
 </head>
 <body>
@@ -1470,6 +1484,35 @@ const MODEL_META = {
   ollama:   { icon:'💻', iconBg:'#F0EFE9', use:'Offline · private · free',    speed:[1,1,0], tierStyle:'background:#F0EFE9;color:#5C5B55' },
 };
 
+
+function toggleOllamaModels(e) {
+  e.stopPropagation();
+  const panel = document.getElementById('cpOllamaModels');
+  if (!panel) return;
+  const isShowing = panel.classList.contains('show');
+  if (isShowing) {
+    panel.classList.remove('show');
+  } else {
+    panel.classList.add('show');
+    // Also select ollama as provider
+    if (cfg.selectedModelId !== 'ollama') selectCardModel('ollama');
+  }
+}
+
+function selectOllamaModel(modelId, e) {
+  e.stopPropagation();
+  if (modelId === 'custom') {
+    const inp = document.getElementById('cpCustomModel');
+    if (inp && inp.value) { cfg.ollamaModel = inp.value; saveCfg(); }
+    return;
+  }
+  cfg.ollamaModel = modelId;
+  saveCfg();
+  selectCardModel('ollama');
+  // Refresh to show updated model name
+  setTimeout(() => buildProvSwitch(), 50);
+}
+
 function buildProvSwitch() {
   const sw   = document.getElementById('provSwitch');
   const cp   = document.getElementById('cardPicker');
@@ -1521,20 +1564,37 @@ function buildProvSwitch() {
       }).join('');
     }
 
+    // Ollama model cards
+    const ollamaModels = [
+      { id:'qwen2.5:14b',   name:'Qwen 2.5 14B',   desc:'Best all-round local model. Fast reasoning, coding, and chat.',        size:'9 GB', badge:'Recommended' },
+      { id:'qwen2.5:7b',    name:'Qwen 2.5 7B',    desc:'Lighter and faster. Great for everyday tasks on any machine.',        size:'4.7 GB', badge:'' },
+      { id:'llama3.2:3b',   name:'Llama 3.2 3B',   desc:'Ultra-fast responses. Best on older or lower-memory hardware.',       size:'2 GB', badge:'Fastest' },
+      { id:'mistral:7b',    name:'Mistral 7B',      desc:'Strong reasoning and instruction following. European-built model.',   size:'4.1 GB', badge:'' },
+      { id:'deepseek-r1:8b',name:'DeepSeek R1 8B',  desc:'Specialised in step-by-step reasoning and math problems.',           size:'4.9 GB', badge:'Reasoning' },
+      { id:'custom',        name:'Custom model',    desc:'Enter any model name you have pulled with ollama pull.',             size:'', badge:'' },
+    ];
     html += `<div class="cp-divider"></div>
-      <div class="cp-item ${isOllama?'cp-active':''}" onclick="selectCardModel('ollama')">
+      <div class="cp-item cp-ollama-header ${isOllama?'cp-active':''}" onclick="toggleOllamaModels(event)">
         <div class="cp-icon" style="background:#F0EFE9">💻</div>
-        <div><div class="cp-name">Local (Ollama)</div><div class="cp-use">Offline · private · free</div></div>
+        <div><div class="cp-name">Local (Ollama)</div><div class="cp-use">${isOllama ? (cfg.ollamaModel||'qwen2.5:14b') : 'Offline · private · free'}</div></div>
         <div class="cp-right">
           <div class="cp-speed"><span class="on g"></span><span class="on g"></span><span></span></div>
           <div class="cp-tier" style="background:#F0EFE9;color:#5C5B55">Local</div>
         </div>
       </div>
-      <div class="cp-ollama-row ${isOllama?'show':''}" id="cpOllamaRow">
-        <input id="cpOllamaInput" value="${cfg.ollamaModel||'qwen2.5:14b'}"
-          placeholder="model name e.g. qwen2.5:14b"
-          onchange="cfg.ollamaModel=this.value;saveCfg();updateStatus();buildProvSwitch()"
-          onclick="event.stopPropagation()" />
+      <div class="cp-ollama-models ${isOllama?'show':''}" id="cpOllamaModels">
+        ${ollamaModels.map(m => `
+          <div class="cp-ollama-model ${cfg.ollamaModel===m.id?'active':''}" onclick="selectOllamaModel('${m.id}',event)">
+            <div class="cp-om-top">
+              <span class="cp-om-name">${m.name}</span>
+              ${m.badge ? `<span class="cp-om-badge">${m.badge}</span>` : ''}
+              ${m.size ? `<span class="cp-om-size">${m.size}</span>` : ''}
+            </div>
+            <div class="cp-om-desc">${m.desc}</div>
+            ${m.id==='custom' ? `<input class="cp-om-input" id="cpCustomModel" placeholder="e.g. phi3:mini" value="${(!ollamaModels.slice(0,-1).find(x=>x.id===cfg.ollamaModel)) ? cfg.ollamaModel : ''}"
+              onclick="event.stopPropagation()"
+              onchange="cfg.ollamaModel=this.value;saveCfg();updateStatus();buildProvSwitch()" />` : ''}
+          </div>`).join('')}
       </div>`;
 
     cp.innerHTML = html;
@@ -2101,9 +2161,15 @@ function renderMsg(m) {
       </div>`;
     }
   }
-  return `<div class="msg-row ${m.role}">
+  const branchBtn = m.role === 'assistant'
+    ? `<button class="branch-btn" onclick="branchFromMsg('${m.id||m.timestamp||''}')" title="Branch conversation from here">⎇ Branch</button>`
+    : '';
+  const branchRef = m.branchedFrom
+    ? `<span class="branch-ref">branched</span>`
+    : '';
+  return `<div class="msg-row ${m.role}" data-id="${m.id||m.timestamp||''}">
     <div class="msg-inner"><div class="bubble">${content}</div></div>
-    <div class="msg-meta"><span class="msg-time">${time}</span></div>
+    <div class="msg-meta"><span class="msg-time">${time}</span>${branchBtn}${branchRef}</div>
   </div>`;
 }
 
@@ -2140,6 +2206,32 @@ function hideTyping() { document.getElementById('typing')?.remove(); }
 // ══════════════════════════════════
 // SEND
 // ══════════════════════════════════
+
+// ── Branch conversation ─────────────────────────────────────
+function branchFromMsg(msgId) {
+  if (!currentConvId) return;
+  const srcConv = convs[currentConvId];
+  if (!srcConv) return;
+
+  // Find the message index
+  const idx = srcConv.messages.findIndex(m => (m.id||m.timestamp||'') == msgId);
+  if (idx < 0) return;
+
+  const branchMsgs = srcConv.messages.slice(0, idx + 1).map(m => ({...m}));
+  const branchId = 'conv_' + Date.now();
+  convs[branchId] = {
+    id: branchId,
+    title: (srcConv.title || 'Chat') + ' (branch)',
+    messages: branchMsgs,
+    createdAt: Date.now(),
+    branchedFrom: currentConvId,
+    projectId: srcConv.projectId || null,
+  };
+  saveConvs();
+  selectConv(branchId);
+  showToast('Branched ✓');
+}
+
 async function sendMsg() {
   const input = document.getElementById('userInput');
   const text = input.value.trim();
@@ -2346,12 +2438,18 @@ async function _callMistral(key, model, history, content, systemPrompt) {
 async function callOllama(history, content, systemPrompt) {
   const textContent = typeof content === 'string' ? content : content.find?.(p=>p.type==='text')?.text || '';
   const messages=[{role:'system',content:systemPrompt},...history,{role:'user',content:textContent}];
-  const r=await fetch(`${cfg.ollamaUrl}/api/chat`,{
-    method:'POST',
-    headers:{'Content-Type':'application/json'},
-    body:JSON.stringify({model:cfg.ollamaModel,messages,stream:false})
-  });
-  if (!r.ok) throw new Error(`Ollama error ${r.status}. Is Ollama running?`);
+  const url = (cfg.ollamaUrl||'http://localhost:11434').replace(/\/+$/,'');
+  let r;
+  try {
+    r = await fetch(`${url}/api/chat`, {
+      method:'POST',
+      headers:{'Content-Type':'application/json','Origin':location.origin},
+      body:JSON.stringify({model:cfg.ollamaModel||'qwen2.5:14b',messages,stream:false})
+    });
+  } catch(e) {
+    throw new Error('Cannot reach Ollama. Make sure Ollama is running and OLLAMA_ORIGINS is set. Run in Terminal: launchctl setenv OLLAMA_ORIGINS \'*\' then restart Ollama.');
+  }
+  if (!r.ok) throw new Error(`Ollama error ${r.status}: ${await r.text()}`);
   const d=await r.json(); return d.message?.content||'';
 }
 
@@ -2531,7 +2629,23 @@ async function downloadDoc() {
       const types = s.types || [];
       const colWidths = s.colWidths || headers.map(()=>16);
       const formulas = s.formulas || {};
-      const numFmt = { currency:'"$"#,##0.00', percent:'0.0%', number:'#,##0', date:'yyyy-mm-dd' };
+      const numFmt = {
+        currency:    '"$"#,##0.00',
+        currency0:   '"$"#,##0',
+        currency_k:  '"$"#,##0,"K"',
+        currency_m:  '"$"#,##0.0,,"M"',
+        percent:     '0.0%',
+        percent2:    '0.00%',
+        percent0:    '0%',
+        number:      '#,##0',
+        number1:     '#,##0.0',
+        number2:     '#,##0.00',
+        date:        'yyyy-mm-dd',
+        date_short:  'dd-mmm',
+        month:       'mmm-yy',
+        multiple:    '#,##0.0"x"',
+        bps:         '#,##0" bps"',
+      };
 
       const ws = wb.addWorksheet(s.name || 'Sheet1');
       ws.columns = headers.map((h,i) => ({ header:'', key:'c'+i, width:colWidths[i]||16 }));
@@ -2544,7 +2658,9 @@ async function downloadDoc() {
       Object.entries(formulas).forEach(([colName, def]) => {
         const ci = headers.indexOf(colName);
         if (ci < 0) return;
-        formulaMap[ci] = { template: def.formula };
+        // def can be a string formula directly or an object with .formula
+        const template = typeof def === 'string' ? def : (def.formula || def.template || String(def));
+        formulaMap[ci] = { template };
       });
 
       // Header row
@@ -2576,7 +2692,8 @@ async function downloadDoc() {
             return { formula: f };
           }
           const t = types[ci];
-          if ((t==='number'||t==='currency'||t==='percent') && v !== '' && !isNaN(parseFloat(String(v).replace(/[^0-9.-]/g,'')))) {
+          const numericTypes = new Set(['currency','currency0','currency_k','currency_m','percent','percent2','percent0','number','number1','number2','multiple','bps']);
+          if (numericTypes.has(t) && v !== null && v !== '' && !isNaN(parseFloat(String(v).replace(/[^0-9.-]/g,'')))) {
             return parseFloat(String(v).replace(/[^0-9.-]/g,''));
           }
           return v;
@@ -2589,7 +2706,7 @@ async function downloadDoc() {
           const t = types[ci];
           cell.fill = { type:'pattern', pattern:'solid', fgColor:{ argb:rowBg } };
           cell.font = { size:10, name:'Calibri' };
-          cell.alignment = { vertical:'middle', horizontal:(t==='number'||t==='currency'||t==='percent')?'right':'left' };
+          cell.alignment = { vertical:'middle', horizontal:(['number','number1','number2','currency','currency0','currency_k','currency_m','percent','percent2','percent0','multiple','bps'].includes(t))?'right':'left' };
           cell.border = { bottom:{ style:'hair', color:{ argb:'FFE8E7E3' } } };
           if (numFmt[t]) cell.numFmt = numFmt[t];
         });
@@ -2610,7 +2727,7 @@ async function downloadDoc() {
           const ci = colNum-1; const t = types[ci];
           cell.fill = { type:'pattern', pattern:'solid', fgColor:{ argb:'FFE8E7E3' } };
           cell.font = { bold:true, size:10, name:'Calibri' };
-          cell.alignment = { vertical:'middle', horizontal:(t==='number'||t==='currency'||t==='percent')?'right':'left' };
+          cell.alignment = { vertical:'middle', horizontal:(['number','number1','number2','currency','currency0','currency_k','currency_m','percent','percent2','percent0','multiple','bps'].includes(t))?'right':'left' };
           cell.border = { top:{ style:'medium', color:{ argb:'FF999999' } } };
           if (numFmt[t]) cell.numFmt = numFmt[t];
         });
@@ -2828,7 +2945,17 @@ async function downloadDoc() {
 
 function toggleModeTooltip(e) {
   e.stopPropagation();
-  document.getElementById('modeTooltip').classList.toggle('show');
+  const tt = document.getElementById('modeTooltip');
+  const rect = e.currentTarget.getBoundingClientRect();
+  tt.style.left = (rect.right + 10) + 'px';
+  tt.style.top  = Math.max(8, rect.top - 10) + 'px';
+  tt.classList.toggle('show');
+  // Clamp to viewport
+  setTimeout(() => {
+    const r2 = tt.getBoundingClientRect();
+    if (r2.right > window.innerWidth - 8) tt.style.left = (rect.left - r2.width - 10) + 'px';
+    if (r2.bottom > window.innerHeight - 8) tt.style.top = (window.innerHeight - r2.height - 8) + 'px';
+  }, 0);
 }
 document.addEventListener('click', () => {
   document.getElementById('modeTooltip')?.classList.remove('show');
@@ -2897,11 +3024,15 @@ function saveSettings() {
   toggleSettings();
 }
 
-function resetApp() {
+function confirmLogout() {
   if (!confirm('Sign out? You can sign back in with Face ID.')) return;
   localStorage.removeItem('aide_session');
-  toggleSettings();
+  document.getElementById('app').classList.remove('active');
   showAuthScreen();
+}
+
+function resetApp() {
+  confirmLogout();
 }
 
 // ══════════════════════════════════
