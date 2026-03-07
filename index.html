@@ -164,6 +164,8 @@ body{font-family:'DM Sans',sans-serif;background:var(--bg);color:var(--text);hei
 .prov-switch{display:flex;background:var(--surface2);border:1px solid var(--border);border-radius:var(--r-sm);padding:2px;gap:2px}
 .pb{font-family:'DM Mono',monospace;font-size:11px;font-weight:500;padding:4px 10px;border:none;border-radius:3px;cursor:pointer;background:transparent;color:var(--text-3);transition:all .15s}
 .pb.active{background:var(--surface);color:var(--text);box-shadow:0 1px 2px rgba(0,0,0,0.06)}
+.pb.pb-nokey{opacity:.4}
+.pb.pb-nokey:hover{opacity:.75}
 .tb-btn{width:30px;height:30px;border:1px solid var(--border);border-radius:var(--r-sm);background:var(--surface);cursor:pointer;display:flex;align-items:center;justify-content:center;color:var(--text-2);transition:all .15s;font-size:15px}
 .tb-btn:hover{background:var(--surface2);color:var(--text)}
 
@@ -2193,8 +2195,12 @@ function buildProvSwitch() {
   const sw   = document.getElementById('provSwitch');
   const cp   = document.getElementById('cardPicker');
   const wrap = document.getElementById('modelPickerWrap');
+  if (!sw || !cp) return; // not mounted yet
 
-  if (cfg.mode === 'managed' || cfg.mode === 'demo') {
+  // null mode means byok (passkey users before first saveCfg)
+  const effectiveMode = cfg.mode || 'byok';
+
+  if (effectiveMode === 'managed' || effectiveMode === 'demo') {
     const available = getAvailableModels();
     const locked    = getLockedModels();
     const cur       = getModel(cfg.selectedModelId) || getDefaultModel();
@@ -2261,16 +2267,19 @@ function buildProvSwitch() {
     cp.innerHTML = html;
 
   } else {
-    // BYOK mode — compact provider pill buttons in trigger, picker for model selection
-    const provs = [];
-    if (cfg.claudeKey)  provs.push({ id:'claude',  label:'Claude' });
-    if (cfg.openaiKey)  provs.push({ id:'openai',  label:'GPT' });
-    if (cfg.geminiKey)  provs.push({ id:'gemini',  label:'Gemini' });
-    if (cfg.mistralKey) provs.push({ id:'mistral', label:'Mistral' });
-    provs.push({ id:'ollama', label:'💻 Local' });
+    // BYOK / null mode — always show all providers; dim ones with no key yet
+    const provs = [
+      { id:'claude',  label:'Claude',  hasKey: !!(cfg.claudeKey || PRODUCT_CONFIG.ANTHROPIC_KEY) },
+      { id:'openai',  label:'GPT',     hasKey: !!cfg.openaiKey  },
+      { id:'gemini',  label:'Gemini',  hasKey: !!cfg.geminiKey  },
+      { id:'mistral', label:'Mistral', hasKey: !!cfg.mistralKey },
+      { id:'ollama',  label:'💻 Local', hasKey: true            },
+    ];
 
     const btns = provs.map(p =>
-      `<button class="pb ${cfg.provider===p.id?'active':''}" onclick="setProvider('${p.id}',this)">${p.label}</button>`
+      `<button class="pb ${cfg.provider===p.id?'active':''} ${!p.hasKey?'pb-nokey':''}"
+        onclick="setProvider('${p.id}',this)"
+        title="${!p.hasKey && p.id!=='ollama' ? 'Add '+p.label+' key in ⚙ Settings' : ''}">${p.label}</button>`
     ).join('');
     const ollamaExtra = cfg.provider === 'ollama'
       ? `<select id="tbOllamaSelect" onchange="selectOllamaModel(this.value)"
