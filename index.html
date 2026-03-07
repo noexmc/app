@@ -1,4 +1,5 @@
 <!DOCTYPE html>
+<!-- Aide v0.31 -->
 <html lang="en">
 <head>
 <meta charset="UTF-8">
@@ -449,7 +450,7 @@ body{font-family:'DM Sans',sans-serif;background:var(--bg);color:var(--text);hei
 
 /* ── Role picker in topbar ─────────────────────────────── */
 .role-picker-wrap{position:relative;display:flex;align-items:center}
-.role-btn{display:flex;align-items:center;gap:5px;padding:4px 10px 4px 8px;border:1px solid var(--border);border-radius:20px;background:var(--surface);cursor:pointer;font-family:'DM Sans',sans-serif;font-size:12.5px;font-weight:500;color:var(--text);transition:all .15s;white-space:nowrap}
+.role-btn{display:flex;align-items:center;gap:5px;padding:4px 10px 4px 8px;border:1px solid var(--accent);border-radius:20px;background:var(--surface);cursor:pointer;font-family:'DM Sans',sans-serif;font-size:12.5px;font-weight:500;color:var(--text);transition:all .15s;white-space:nowrap;flex-shrink:0;min-width:100px}
 .role-btn:hover{border-color:var(--accent);background:var(--surface2)}
 .role-btn .rb-icon{font-size:14px;line-height:1}
 .role-btn .rb-arr{font-size:9px;color:var(--text-3);margin-left:1px}
@@ -552,7 +553,7 @@ body{font-family:'DM Sans',sans-serif;background:var(--bg);color:var(--text);hei
 ════════════════════════════════ -->
 <div id="app" class="screen">
   <div class="topbar">
-    <div class="logo">Aide</div>
+    <div class="logo">Aide <span style="font-family:'DM Mono',monospace;font-size:10px;font-weight:400;color:var(--text-3);font-style:normal;letter-spacing:0;margin-left:2px">v0.31</span></div>
     <div class="tb-divider"></div>
     <!-- Role picker -->
     <div class="role-picker-wrap" id="rolePickerWrap">
