@@ -2089,10 +2089,11 @@ function launchApp() {
 
   // License badge
   const badge = document.getElementById('licenseBadge');
-  if (cfg.mode === 'managed') {
+  const effMode = (!cfg.mode || cfg.mode === 'null') ? 'byok' : cfg.mode;
+  if (effMode === 'managed') {
     badge.className = 'license-badge managed';
     badge.textContent = '✦ ' + (cfg.licenseData?.plan||'managed').charAt(0).toUpperCase() + (cfg.licenseData?.plan||'managed').slice(1);
-  } else if (cfg.mode === 'byok') {
+  } else if (effMode === 'byok') {
     const _plan = cfg.licenseData?.plan || '';
     badge.className = 'license-badge ' + (_plan === 'lifetime' ? 'managed' : 'byok');
     badge.textContent = _plan === 'lifetime' ? '✦ Lifetime' : '🔑 BYOK';
@@ -2197,8 +2198,8 @@ function buildProvSwitch() {
   const wrap = document.getElementById('modelPickerWrap');
   if (!sw || !cp) return; // not mounted yet
 
-  // null mode means byok (passkey users before first saveCfg)
-  const effectiveMode = cfg.mode || 'byok';
+  // Treat null, 'null', undefined as byok (passkey users on fresh device)
+  const effectiveMode = (!cfg.mode || cfg.mode === 'null') ? 'byok' : cfg.mode;
 
   if (effectiveMode === 'managed' || effectiveMode === 'demo') {
     const available = getAvailableModels();
@@ -2339,21 +2340,24 @@ function setProvider(p, el) {
 }
 
 function updateStatus() {
+  const el = document.getElementById('appStatus');
+  if (!el) return;
   const isOllama = cfg.provider === 'ollama' || cfg.selectedModelId === 'ollama';
+  const effMode  = (!cfg.mode || cfg.mode === 'null') ? 'byok' : cfg.mode;
   if (isOllama) {
-    document.getElementById('appStatus').textContent = `💻 ${cfg.ollamaModel||'Ollama'}`;
-  } else if (cfg.mode === 'managed' || cfg.mode === 'demo') {
+    el.textContent = `💻 ${cfg.ollamaModel||'Ollama'}`;
+  } else if (effMode === 'managed' || effMode === 'demo') {
     const m = getModel(cfg.selectedModelId) || getDefaultModel();
-    document.getElementById('appStatus').textContent = m.label;
+    el.textContent = m.label;
   } else {
     const labels = {
-      claude: `Claude · ${cfg.claudeModel.split('-').slice(0,2).join('-')}`,
-      openai: `GPT · ${cfg.openaiModel}`,
-      gemini: `Gemini`,
-      mistral: `Mistral`,
-      ollama: `Local · ${cfg.ollamaModel}`
+      claude:  `Claude · ${(cfg.claudeModel||'sonnet').split('-').slice(0,2).join('-')}`,
+      openai:  `GPT · ${cfg.openaiModel||'gpt-4o'}`,
+      gemini:  'Gemini',
+      mistral: 'Mistral',
+      ollama:  `Local · ${cfg.ollamaModel}`
     };
-    document.getElementById('appStatus').textContent = labels[cfg.provider] || 'Ready';
+    el.textContent = labels[cfg.provider] || 'Claude';
   }
 }
 
