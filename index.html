@@ -157,6 +157,9 @@ body{font-family:'DM Sans',sans-serif;background:var(--bg);color:var(--text);hei
 .cp-ollama-row.show{display:block}
 .cp-ollama-row input{width:100%;font-family:'DM Mono',monospace;font-size:11px;padding:5px 8px;border:1px solid var(--border);border-radius:6px;background:var(--surface2);color:var(--text);outline:none;box-sizing:border-box}
 .cp-ollama-row input:focus{border-color:var(--accent)}
+.cp-ollama-row select{width:100%;font-family:'DM Mono',monospace;font-size:11px;padding:5px 8px;border:1px solid var(--border);border-radius:6px;background:var(--surface2);color:var(--text);outline:none;cursor:pointer;box-sizing:border-box}
+.cp-ollama-row select:focus{border-color:var(--accent)}
+.cp-ollama-row .ollama-fetch-hint{font-size:10px;color:var(--text-3);margin-top:3px;text-align:center}
 /* BYOK provider buttons (legacy) */
 .prov-switch{display:flex;background:var(--surface2);border:1px solid var(--border);border-radius:var(--r-sm);padding:2px;gap:2px}
 .pb{font-family:'DM Mono',monospace;font-size:11px;font-weight:500;padding:4px 10px;border:none;border-radius:3px;cursor:pointer;background:transparent;color:var(--text-3);transition:all .15s}
@@ -993,9 +996,9 @@ body{font-family:'DM Sans',sans-serif;background:var(--bg);color:var(--text);hei
         <div class="sl">Ollama (local AI)</div>
         <input class="si" id="sOllamaUrl" placeholder="http://localhost:11434" />
         <input class="si" id="sOllamaModel" placeholder="Model e.g. qwen2.5:14b" style="margin-top:6px"/>
-        <div style="font-size:10.5px;color:var(--text-3);margin-top:6px;line-height:1.5">
-          To allow browser access, run Ollama with:<br>
-          <code style="font-size:10px;background:var(--surface2);padding:2px 5px;border-radius:3px;display:inline-block;margin-top:3px">OLLAMA_ORIGINS=https://noexmc.github.io ollama serve</code>
+        <div style="font-size:10.5px;color:var(--text-3);margin-top:6px;line-height:1.6">
+          <b style="color:var(--text-2)">One-time setup</b> — paste in Terminal, then quit &amp; reopen Ollama:<br>
+          <code style="font-size:10px;background:var(--surface2);padding:3px 6px;border-radius:3px;display:block;margin-top:4px;user-select:all;cursor:text">launchctl setenv OLLAMA_ORIGINS 'https://noexmc.github.io'</code>
         </div>
       </div>
       <div class="sg"><div class="sl">License key</div><input class="si" id="sLicenseKey" type="text" /></div>
@@ -1454,6 +1457,9 @@ async function pullFromSupabase() {
         if (remote.cfgKeys[k]) cfg[k] = remote.cfgKeys[k];
       });
       saveCfg();
+      saveGlobalKeys();
+      if (typeof buildProvSwitch === 'function') buildProvSwitch();
+      if (typeof loadSettingsUI === 'function') loadSettingsUI();
     }
     // Always re-apply lifetime for passkey users after pull
     if (typeof loadPasskeys === 'function' && loadPasskeys().length > 0) {
@@ -1951,17 +1957,17 @@ async function checkAuthSession() {
     try {
       const sc = JSON.parse(savedCfg);
       if (sc.userId && sc.activated) {
+        // Prefer passkey match but fall back to stored name (works on new/reinstalled device)
         const pk = loadPasskeys().find(p => p.userId === sc.userId);
-        if (pk) {
-          currentUser = { id: sc.userId, name: pk.name, email: pk.name };
-          loadUserData();
-          if (!cfg.licenseData?.plan || cfg.licenseData.plan === 'demo') {
-            cfg.licenseData = { plan:'lifetime', customer: pk.name };
-            saveCfg();
-          }
-          launchApp();
-          return;
-        }
+        const name = pk?.name || sc.name || 'User';
+        currentUser = { id: sc.userId, name, email: name };
+        loadUserData();
+        cfg.activated = true;
+        cfg.mode = 'byok';
+        cfg.licenseData = { plan: 'lifetime', customer: name };
+        saveCfg();
+        launchApp();
+        return;
       }
     } catch(e) {}
   }
@@ -2000,7 +2006,10 @@ async function authMagicLink() {}// stub
 function persistSession() {
   if (currentUser && currentUser.email !== 'demo') {
     localStorage.setItem('aide_cfg_restore', JSON.stringify({
-      userId: currentUser.id, activated: true
+      userId: currentUser.id,
+      name:   currentUser.name,
+      activated: true,
+      savedAt: Date.now()
     }));
   }
 }
@@ -2241,11 +2250,13 @@ function buildProvSwitch() {
         </div>
       </div>
       <div class="cp-ollama-row ${isOllama?'show':''}" id="cpOllamaRow">
-        <input id="cpOllamaInput" value="${cfg.ollamaModel||'qwen2.5:14b'}"
-          placeholder="model name e.g. qwen2.5:14b"
-          onchange="cfg.ollamaModel=this.value;saveCfg();updateStatus();buildProvSwitch()"
-          onclick="event.stopPropagation()" />
+        <select id="cpOllamaSelect" onchange="selectOllamaModel(this.value)" onclick="event.stopPropagation()">
+          <option value="${cfg.ollamaModel||'qwen2.5:14b'}">${cfg.ollamaModel||'qwen2.5:14b'}</option>
+        </select>
+        <div class="ollama-fetch-hint" id="ollamaFetchHint">↻ detecting models…</div>
       </div>`;
+    // Fetch models after render
+    if (isOllama) setTimeout(fetchOllamaModels, 80);
 
     cp.innerHTML = html;
 
@@ -2262,10 +2273,12 @@ function buildProvSwitch() {
       `<button class="pb ${cfg.provider===p.id?'active':''}" onclick="setProvider('${p.id}',this)">${p.label}</button>`
     ).join('');
     const ollamaExtra = cfg.provider === 'ollama'
-      ? `<input id="tbOllamaModel" value="${cfg.ollamaModel||'qwen2.5:14b'}"
-          onchange="cfg.ollamaModel=this.value;saveCfg();updateStatus()"
-          style="font-family:'DM Mono',sans-serif;font-size:11px;padding:3px 7px;border:1px solid var(--border);
-          border-radius:var(--r-sm);background:var(--surface2);color:var(--text);outline:none;width:120px"/>` : '';
+      ? `<select id="tbOllamaSelect" onchange="selectOllamaModel(this.value)"
+          style="font-family:'DM Mono',monospace;font-size:11px;padding:3px 7px;border:1px solid var(--border);
+          border-radius:var(--r-sm);background:var(--surface2);color:var(--text);outline:none;cursor:pointer;max-width:130px">
+          <option value="${cfg.ollamaModel||'qwen2.5:14b'}">${cfg.ollamaModel||'qwen2.5:14b'}</option>
+         </select>` : '';
+    if (cfg.provider === 'ollama') setTimeout(fetchOllamaModels, 80);
 
     sw.className = 'prov-switch';
     sw.innerHTML = btns + ollamaExtra;
