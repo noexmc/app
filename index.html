@@ -1,5 +1,5 @@
 <!DOCTYPE html>
-<!-- Aide v0.33 -->
+<!-- Aide v0.34 -->
 <html lang="en">
 <head>
 <meta charset="UTF-8">
@@ -323,7 +323,7 @@ body{font-family:'DM Sans',sans-serif;background:var(--bg);color:var(--text);hei
 /* Settings drawer */
 .settings-overlay{display:none;position:fixed;inset:0;background:rgba(0,0,0,0.12);z-index:200;backdrop-filter:blur(2px)}
 .settings-overlay.open{display:flex;align-items:flex-start;justify-content:flex-end}
-.settings-drawer{background:var(--surface);width:300px;height:100vh;border-left:1px solid var(--border);display:flex;flex-direction:column;box-shadow:var(--sh-lg);animation:drawerIn .2s ease;overflow:hidden}
+.settings-drawer{background:var(--surface);width:300px;height:100vh;border-left:1px solid var(--border);display:flex;flex-direction:column;box-shadow:var(--sh-lg);animation:drawerIn .2s ease}
 @keyframes drawerIn{from{transform:translateX(18px);opacity:0}to{transform:translateX(0);opacity:1}}
 .drawer-header{padding:16px 18px;border-bottom:1px solid var(--border);display:flex;align-items:center;justify-content:space-between}
 .drawer-title{font-size:13.5px;font-weight:600}
@@ -588,7 +588,7 @@ body{font-family:'DM Sans',sans-serif;background:var(--bg);color:var(--text);hei
 ════════════════════════════════ -->
 <div id="app" class="screen">
   <div class="topbar">
-    <div class="logo">Aide <span style="font-family:'DM Mono',monospace;font-size:10px;font-weight:400;color:var(--text-3);font-style:normal;letter-spacing:0;margin-left:2px">v0.33</span></div>
+    <div class="logo">Aide <span style="font-family:'DM Mono',monospace;font-size:10px;font-weight:400;color:var(--text-3);font-style:normal;letter-spacing:0;margin-left:2px">v0.34</span></div>
     <div class="tb-divider"></div>
     <!-- Role picker -->
     <div class="role-picker-wrap" id="rolePickerWrap">
@@ -745,6 +745,11 @@ body{font-family:'DM Sans',sans-serif;background:var(--bg);color:var(--text);hei
 // CHANGELOG
 // ══════════════════════════════════════════════════════════
 const CHANGELOG = [
+  { version:'v0.34', date:'2026-03-07', changes:[
+    'Model picker: restored provider pill buttons (Claude / GPT / Local), clicking opens card sub-picker',
+    'What\'s new: now loads every time settings opens (not just on app launch)',
+    'SW cache auto-nukes on version change so updates always show',
+  ]},
   { version:'v0.33', date:'2026-03-07', changes:[
     'Role picker now uses identical card format as model picker (icon tile, name, description, speed dots, tier badge)',
     'Claude sub-picker fixed — provider filter corrected to anthropic',
@@ -1750,13 +1755,19 @@ function buildProvSwitch() {
     const isOllama  = cfg.selectedModelId === 'ollama';
     const meta      = MODEL_META[cur?.id] || MODEL_META.haiku;
 
-    // Trigger button — same as managed
-    sw.innerHTML = `<button class="model-btn" onclick="toggleCardPicker(event)">
-      <div class="mb-dot"></div>
-      <span class="mb-name">${isOllama ? (cfg.ollamaModel||'Ollama') : (cur?.label||'Select model')}</span>
-      <span class="mb-arr">▾</span>
-    </button>`;
-    sw.className = '';
+    // Provider pill buttons — clicking opens the card picker filtered to that provider
+    const activeProvider = isOllama ? 'ollama' : (cur?.provider || 'anthropic');
+    const provPills = [
+      { id:'anthropic', label:'Claude' },
+      ...(cfg.openaiKey  ? [{ id:'openai',  label:'GPT'     }] : []),
+      ...(cfg.geminiKey  ? [{ id:'gemini',  label:'Gemini'  }] : []),
+      ...(cfg.mistralKey ? [{ id:'mistral', label:'Mistral' }] : []),
+      { id:'ollama', label:'💻 Local' },
+    ];
+    sw.innerHTML = provPills.map(p =>
+      `<button class="pb ${activeProvider===p.id?'active':''}" onclick="toggleCardPicker(event)">${p.label}</button>`
+    ).join('');
+    sw.className = 'prov-switch';
 
     const speedDots = arr => arr.map(on => `<span class="${on?'on':''}"></span>`).join('');
 
@@ -3305,7 +3316,11 @@ function renderArtifacts() {
 // ══════════════════════════════════
 // SETTINGS
 // ══════════════════════════════════
-function toggleSettings() { document.getElementById('settingsOverlay').classList.toggle('open'); }
+function toggleSettings() {
+  const overlay = document.getElementById('settingsOverlay');
+  overlay.classList.toggle('open');
+  if (overlay.classList.contains('open')) loadSettingsUI();
+}
 function handleSettingsClick(e) { if(e.target===document.getElementById('settingsOverlay')) toggleSettings(); }
 
 function loadSettingsUI() {
@@ -3383,7 +3398,7 @@ init();
 // ══════════════════════════════════════════════════════════════
 
 // ── Service Worker registration ───────────────────────────────
-const APP_VERSION = 'v0.33';
+const APP_VERSION = 'v0.34';
 if ('serviceWorker' in navigator) {
   window.addEventListener('load', async () => {
     // Unregister all old service workers and clear all caches on version change
