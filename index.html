@@ -624,6 +624,12 @@ body{font-family:'DM Sans',sans-serif;background:var(--bg);color:var(--text);hei
      MAIN APP
 ════════════════════════════════ -->
 <div id="app" class="screen">
+  <!-- Hidden utility elements referenced by JS -->
+  <div id="aideToast" style="display:none;position:fixed;bottom:80px;left:50%;transform:translateX(-50%);background:var(--text);color:#fff;padding:8px 16px;border-radius:20px;font-size:12px;font-weight:500;z-index:9999;pointer-events:none"></div>
+  <div id="branchBar" style="display:none"></div>
+  <span id="branchBarLabel"></span>
+  <div id="searchIndicator" style="display:none"></div>
+  <div id="typing" style="display:none"></div>
   <div class="topbar">
     <button class="mob-menu-btn" id="mobMenuBtn" onclick="toggleMobileSidebar()" style="display:none" title="Menu">
       <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"><line x1="3" y1="6" x2="21" y2="6"/><line x1="3" y1="12" x2="21" y2="12"/><line x1="3" y1="18" x2="21" y2="18"/></svg>
@@ -774,20 +780,36 @@ body{font-family:'DM Sans',sans-serif;background:var(--bg);color:var(--text);hei
         <b>🔒 Secure proxy active</b><br>
         <span style="color:var(--text-2)">All AI calls route through your private Railway server. No keys needed here.</span>
       </div>
-      <!-- Key fields — shown only when no proxy is configured -->
+      <!-- Key fields — hidden when proxy is active -->
       <div id="keyFieldsSection">
+        <div class="sg"><div class="sl">Claude API key</div><input class="si" id="sClaudeKey" type="password" placeholder="sk-ant-..." /></div>
+        <div class="sg"><div class="sl">OpenAI API key</div><input class="si" id="sOpenAIKey" type="password" placeholder="sk-..." /></div>
+        <div class="sg"><div class="sl">Gemini API key</div><input class="si" id="sGeminiKey" type="password" placeholder="AIza..." /></div>
+        <div class="sg"><div class="sl">Mistral API key</div><input class="si" id="sMistralKey" type="password" placeholder="..." /></div>
         <div class="sg">
+          <div class="sl" style="display:flex;align-items:center;gap:6px">OpenRouter key <span style="font-size:9px;background:#E8F0FF;color:#1A4D8F;padding:1px 5px;border-radius:8px;font-weight:600">300+ models</span></div>
+          <input class="si" id="sOpenRouterKey" type="password" placeholder="sk-or-v1-..." />
+        </div>
+        <div class="sg"><div class="sl">Tavily Search key</div><input class="si" id="sBraveKey" type="password" placeholder="tvly-..." /><div style="font-size:11px;color:var(--text-3);margin-top:4px">Free at <a href="https://tavily.com" target="_blank" style="color:var(--blue)">tavily.com</a> · 1,000/month free</div></div>
+      </div>
+      <div class="sg">
+        <div class="sl">Ollama (local AI)</div>
+        <input class="si" id="sOllamaUrl" placeholder="http://localhost:11434" />
+        <input class="si" id="sOllamaModel" placeholder="Model e.g. qwen2.5:14b" style="margin-top:6px"/>
+      </div>
+      <div class="sg">
         <div class="sl">Conversations</div>
-        <button class="btn-ghost-sm" onclick="exportConversations();toggleSettings()">↓ Export all conversations</button>
-        <button class="btn-ghost-sm" style="margin-top:4px" onclick="importConversations()">↑ Import conversations</button>
+        <button class="btn-ghost-sm" onclick="exportConversations();toggleSettings()">↓ Export all</button>
+        <button class="btn-ghost-sm" style="margin-top:4px" onclick="importConversations()">↑ Import</button>
       </div>
       <div class="sg">
         <div class="sl">API Usage</div>
         <button class="btn-ghost-sm" id="fetchUsageBtn" onclick="fetchApiUsage()">↻ Fetch usage</button>
         <div id="usageResult" style="font-size:11.5px;color:var(--text-2);margin-top:8px;line-height:1.7"></div>
       </div>
+      <div id="passkeySettingsRow"></div>
       <button class="btn-save" onclick="saveSettings()">Save settings</button>
-      <button class="btn-ghost-sm" onclick="resetApp()">Reset & re-activate</button>
+      <button class="btn-ghost-sm" onclick="resetApp()">Reset app</button>
     </div>
   </div>
 </div>
@@ -2257,7 +2279,7 @@ async function sendMsg() {
 
   // Friends session limit
   if (cfg.mode === 'friends' && (cfg.demoCount||0) >= 10) {
-    showMsg('system', '⚠️ Guest session limit reached (10 messages). Refresh the page to start a new session.');
+    appendMsg('system', '⚠️ Guest session limit reached (10 messages). Refresh the page to start a new session.', '⚠️ Guest session limit reached (10 messages). Refresh the page to start a new session.', null);
     return;
   }
   input.value=''; autoResize(input);
@@ -2386,35 +2408,6 @@ async function callManaged(history, content, systemPrompt) {
   throw new Error('Unknown provider: ' + provider);
 }
 
-async function _callOpenRouter(key, model, history, content, systemPrompt) {
-  // OpenRouter uses OpenAI-compatible API
-  const messages = [
-    ...(systemPrompt ? [{role:'system', content: systemPrompt}] : []),
-    ...history,
-    {role:'user', content}
-  ];
-  const r = await fetch('https://openrouter.ai/api/v1/chat/completions', {
-    method: 'POST',
-    headers: {
-      'Content-Type': 'application/json',
-      'Authorization': 'Bearer ' + key,
-      'HTTP-Referer': window.location.origin,
-      'X-Title': 'Aide',
-    },
-    body: JSON.stringify({
-      model,
-      messages,
-      max_tokens: 4096,
-      stream: false,
-    })
-  });
-  if (!r.ok) {
-    const e = await r.json().catch(() => ({}));
-    throw new Error(e.error?.message || `OpenRouter error ${r.status}`);
-  }
-  const d = await r.json();
-  return d.choices?.[0]?.message?.content || '';
-}
 
 // ══════════════════════════════════════════════════════════════
 // AI PROXY — all calls route through Railway; keys never in browser
@@ -2436,6 +2429,89 @@ async function _proxyChat(provider, model, history, content, systemPrompt, extra
   }
   const data = await r.json();
   return data.text || '';
+}
+
+async function _callOpenAI(key, model, history, content, systemPrompt) {
+  const messages=[{role:'system',content:systemPrompt},...history,{role:'user',content}];
+  const r=await fetch('https://api.openai.com/v1/chat/completions',{
+    method:'POST',
+    headers:{'Content-Type':'application/json','Authorization':'Bearer '+key},
+    body:JSON.stringify({model,max_tokens:4096,messages})
+  });
+  if (!r.ok){const e=await r.json();throw new Error(e.error?.message||`OpenAI error ${r.status}`);}
+  const d=await r.json(); return d.choices?.[0]?.message?.content||'';
+}
+
+async function _callGemini(key, model, history, content, systemPrompt) {
+  const textContent = typeof content === 'string' ? content : content.find?.(p=>p.type==='text')?.text || '';
+  const contents = [
+    ...history.map(m => ({ role: m.role==='assistant'?'model':'user', parts:[{text:typeof m.content==='string'?m.content:JSON.stringify(m.content)}] })),
+    { role:'user', parts:[{text:textContent}] }
+  ];
+  const r = await fetch(`https://generativelanguage.googleapis.com/v1beta/models/${model}:generateContent?key=${key}`, {
+    method:'POST', headers:{'Content-Type':'application/json'},
+    body:JSON.stringify({ systemInstruction:{parts:[{text:systemPrompt}]}, contents, generationConfig:{maxOutputTokens:4096} })
+  });
+  if (!r.ok){const e=await r.json();throw new Error(e.error?.message||`Gemini error ${r.status}`);}
+  const d=await r.json();
+  return d.candidates?.[0]?.content?.parts?.[0]?.text || '';
+}
+
+async function _callMistral(key, model, history, content, systemPrompt) {
+  const textContent = typeof content === 'string' ? content : content.find?.(p=>p.type==='text')?.text || '';
+  const messages=[{role:'system',content:systemPrompt},...history,{role:'user',content:textContent}];
+  const r=await fetch('https://api.mistral.ai/v1/chat/completions',{
+    method:'POST',
+    headers:{'Content-Type':'application/json','Authorization':'Bearer '+key},
+    body:JSON.stringify({model,max_tokens:4096,messages})
+  });
+  if (!r.ok){const e=await r.json();throw new Error(e.error?.message||`Mistral error ${r.status}`);}
+  const d=await r.json(); return d.choices?.[0]?.message?.content||'';
+}
+
+async function callOllama(history, content, systemPrompt) {
+  const ollamaUrl   = (cfg.ollamaUrl  || 'http://localhost:11434').replace(/\/$/,'');
+  const ollamaModel = (cfg.ollamaModel || 'qwen2.5:14b').trim();
+  const textContent = typeof content === 'string' ? content
+    : content.find?.(p=>p.type==='text')?.text || JSON.stringify(content);
+  const messages = [
+    { role: 'system', content: systemPrompt },
+    ...history.map(m => ({ role: m.role, content: typeof m.content === 'string' ? m.content : (m.content?.find?.(p=>p.type==='text')?.text||'') })),
+    { role: 'user', content: textContent }
+  ];
+  let r;
+  try {
+    r = await fetch(`${ollamaUrl}/api/chat`, {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ model: ollamaModel, messages, stream: false })
+    });
+  } catch(netErr) {
+    throw new Error('Cannot reach Ollama. Make sure it is running and OLLAMA_ORIGINS is set to https://noexmc.github.io');
+  }
+  if (!r.ok) { const body = await r.text().catch(()=>''); throw new Error(`Ollama error ${r.status}: ${body}`); }
+  const d = await r.json();
+  return d.message?.content || '';
+}
+
+async function fetchOllamaModels() {
+  const url = (cfg.ollamaUrl || 'http://localhost:11434').replace(/\/$/,'');
+  const sel = document.getElementById('tbOllamaSelect');
+  if (!sel) return;
+  try {
+    const r = await fetch(`${url}/api/tags`, { signal: AbortSignal.timeout(2000) });
+    if (!r.ok) return;
+    const d = await r.json();
+    const models = (d.models || []).map(m => m.name);
+    if (!models.length) return;
+    sel.innerHTML = models.map(m => `<option value="${m}" ${m===cfg.ollamaModel?'selected':''}>${m}</option>`).join('');
+  } catch(e) {}
+}
+
+function selectOllamaModel(val) {
+  cfg.ollamaModel = val;
+  saveCfg();
+  updateStatus();
 }
 
 async function callClaude(history, content, systemPrompt) {
@@ -2465,15 +2541,17 @@ async function callOpenAI(history, content, systemPrompt) {
 }
 
 async function callGemini(history, content, systemPrompt) {
-  if (PRODUCT_CONFIG.AIDE_SECRET) return await _proxyChat('gemini', 'gemini-1.5-flash', history, content, systemPrompt);
+  const model = 'gemini-2.0-flash';
+  if (PRODUCT_CONFIG.AIDE_SECRET) return await _proxyChat('gemini', model, history, content, systemPrompt);
   if (!cfg.geminiKey) throw new Error('No Gemini key. Open ⚙ Settings.');
-  return await _callGemini(cfg.geminiKey, history, content, systemPrompt);
+  return await _callGemini(cfg.geminiKey, model, history, content, systemPrompt);
 }
 
 async function callMistral(history, content, systemPrompt) {
-  if (PRODUCT_CONFIG.AIDE_SECRET) return await _proxyChat('mistral', 'mistral-small-latest', history, content, systemPrompt);
+  const model = 'mistral-small-latest';
+  if (PRODUCT_CONFIG.AIDE_SECRET) return await _proxyChat('mistral', model, history, content, systemPrompt);
   if (!cfg.mistralKey) throw new Error('No Mistral key. Open ⚙ Settings.');
-  return await _callMistral(cfg.mistralKey, history, content, systemPrompt);
+  return await _callMistral(cfg.mistralKey, model, history, content, systemPrompt);
 }
 
 async function _callOpenRouter(key, model, history, content, systemPrompt) {
@@ -3189,7 +3267,6 @@ async function fetchApiUsage() {
 
 
 function loadSettingsUI() {
-  const pkRow = document.getElementById('passkeySettingsRow');
   // Show proxy banner or key fields depending on whether proxy is configured
   const hasProxy = !!PRODUCT_CONFIG.AIDE_SECRET;
   const proxyBanner = document.getElementById('proxyBanner');
@@ -3224,10 +3301,11 @@ function saveSettings() {
 
 function resetApp() {
   if (!confirm('Reset Aide? This clears your settings but keeps conversations.')) return;
-
+  cfg.claudeKey=''; cfg.openaiKey=''; cfg.geminiKey=''; cfg.mistralKey='';
+  cfg.openrouterKey=''; cfg.braveKey=''; cfg.provider='claude';
   saveCfg();
   toggleSettings();
-  document.getElementById('app').classList.remove('active');
+  buildProvSwitch();
 }
 
 // ══════════════════════════════════
