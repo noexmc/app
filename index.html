@@ -459,70 +459,45 @@ body{font-family:'DM Sans',sans-serif;background:var(--bg);color:var(--text);hei
       <div class="auth-logo">Aide <span>/ private AI assistant</span></div>
       <div class="auth-tagline">Your AI. Your data. Nobody else's.</div>
 
-      <!-- LOGIN VIEW — passkey first -->
+      <!-- VIEW: returning user with passkey registered -->
       <div class="auth-view active" id="authView_login">
         <div class="auth-title">Welcome back</div>
-        <button class="passkey-btn" id="passkeySignInBtn" onclick="passkeySignIn()">
-          <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M12 22s8-4 8-10V5l-8-3-8 3v7c0 6 8 10 8 10z"/><circle cx="12" cy="10" r="2"/><path d="M12 12v3"/></svg>
-          Sign in with passkey
+        <button class="passkey-btn" onclick="passkeySignIn()">
+          <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><rect x="3" y="11" width="18" height="11" rx="2" ry="2"/><path d="M7 11V7a5 5 0 0 1 10 0v4"/></svg>
+          Sign in with Face ID / Touch ID
         </button>
-        <div class="passkey-divider"><span>or use email</span></div>
-        <div class="auth-field">
-          <label class="auth-label">Email</label>
-          <input class="auth-input" id="authEmail" type="email" placeholder="you@example.com" autocomplete="email" onkeydown="if(event.key==='Enter')authSignIn()" />
-        </div>
-        <div class="auth-field">
-          <label class="auth-label">Password</label>
-          <input class="auth-input" id="authPassword" type="password" placeholder="••••••••" autocomplete="current-password" onkeydown="if(event.key==='Enter')authSignIn()" />
-        </div>
         <div class="auth-error" id="authError"></div>
-        <button class="auth-btn auth-btn-primary" onclick="authSignIn()">Sign in</button>
-        <button class="auth-btn auth-btn-ghost" onclick="setAuthView('magic')">✉ Magic link</button>
-        <div class="auth-switch">No account? <a href="#" onclick="setAuthView('register');return false">Create one free →</a></div>
-        <div class="auth-demo-row"><a href="#" onclick="tryDemoFromAuth();return false">Try 5 free messages without an account →</a></div>
+        <div class="auth-demo-row" style="margin-top:16px">
+          First time? <a href="#" onclick="setAuthView('setup');return false">Set up this device →</a>
+        </div>
+        <div class="auth-demo-row"><a href="#" onclick="tryDemoFromAuth();return false">Try without an account (5 messages)</a></div>
       </div>
 
-      <!-- REGISTER VIEW -->
-      <div class="auth-view" id="authView_register">
-        <div class="auth-title">Create account</div>
+      <!-- VIEW: first-time setup — just a name, then Face ID -->
+      <div class="auth-view" id="authView_setup">
+        <div class="auth-title">Set up Aide</div>
+        <div class="auth-subtitle">No email needed. Just choose a name and register your device with Face ID or Touch ID.</div>
         <div class="auth-field">
-          <label class="auth-label">Email</label>
-          <input class="auth-input" id="regEmail" type="email" placeholder="you@example.com" autocomplete="email" />
+          <label class="auth-label">Your name</label>
+          <input class="auth-input" id="setupName" type="text" placeholder="Alex" autocomplete="name"
+            onkeydown="if(event.key==='Enter')passkeySetup()" />
         </div>
-        <div class="auth-field">
-          <label class="auth-label">Password</label>
-          <input class="auth-input" id="regPassword" type="password" placeholder="At least 6 characters" autocomplete="new-password" />
+        <div class="auth-error" id="setupError"></div>
+        <button class="passkey-btn" onclick="passkeySetup()" id="setupBtn">
+          <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><rect x="3" y="11" width="18" height="11" rx="2" ry="2"/><path d="M7 11V7a5 5 0 0 1 10 0v4"/></svg>
+          Register with Face ID / Touch ID
+        </button>
+        <div class="auth-demo-row" style="margin-top:10px">
+          <a href="#" onclick="setAuthView('login');return false">← Back</a>
         </div>
-        <div class="auth-field">
-          <label class="auth-label">Confirm password</label>
-          <input class="auth-input" id="regPassword2" type="password" placeholder="Repeat password" autocomplete="new-password" onkeydown="if(event.key==='Enter')authRegister()" />
-        </div>
-        <div class="auth-error" id="regError"></div>
-        <button class="auth-btn auth-btn-primary" onclick="authRegister()">Create account</button>
-        <div style="font-size:11px;color:var(--text-3);text-align:center;margin-top:4px">After creating your account, you can set up Face ID / Touch ID sign-in.</div>
-        <div class="auth-switch">Already have one? <a href="#" onclick="setAuthView('login');return false">← Sign in</a></div>
-        <div class="auth-demo-row"><a href="#" onclick="tryDemoFromAuth();return false">Try 5 free messages without an account →</a></div>
       </div>
 
-      <!-- MAGIC LINK VIEW -->
-      <div class="auth-view" id="authView_magic">
-        <div class="auth-title">Magic link</div>
-        <div class="auth-subtitle">We'll email you a link — click it to sign in instantly. No password needed.</div>
-        <div class="auth-field">
-          <label class="auth-label">Email</label>
-          <input class="auth-input" id="magicEmail" type="email" placeholder="you@example.com" onkeydown="if(event.key==='Enter')authMagicLink()" />
-        </div>
-        <div class="auth-error" id="magicError"></div>
-        <button class="auth-btn auth-btn-primary" onclick="authMagicLink()">Send magic link</button>
-        <div class="auth-switch"><a href="#" onclick="setAuthView('login');return false">← Back to sign in</a></div>
-      </div>
-
-      <!-- CHECK EMAIL VIEW -->
-      <div class="auth-view" id="authView_check-email">
-        <div class="auth-icon-lg">✉</div>
-        <div class="auth-title">Check your email</div>
-        <div class="auth-subtitle">We sent you a link. Click it to sign in or confirm your account. You can close this tab.</div>
-        <button class="auth-btn auth-btn-ghost" onclick="setAuthView('login')">← Back to sign in</button>
+      <!-- VIEW: not supported fallback -->
+      <div class="auth-view" id="authView_fallback">
+        <div class="auth-icon-lg">🔒</div>
+        <div class="auth-title">Passkeys not supported</div>
+        <div class="auth-subtitle">Your browser doesn't support passkeys. Use a modern browser (Safari on iPhone, Chrome on desktop) or continue without an account.</div>
+        <button class="auth-btn auth-btn-primary" onclick="tryDemoFromAuth()">Continue without account</button>
       </div>
 
     </div>
@@ -1560,268 +1535,203 @@ async function activateBYOK() {
 
 
 // ══════════════════════════════════════════════════════════════════════
-// PASSKEY (WebAuthn) — Face ID / Touch ID / Windows Hello
+// PASSKEY-ONLY AUTH — no email, no password
+// Works on: iPhone (Face ID), Mac (Touch ID), Windows Hello
 // ══════════════════════════════════════════════════════════════════════
-const PASSKEY_RP_ID = window.location.hostname || 'localhost';
-const PASSKEY_ORIGIN = window.location.origin;
 
+const PASSKEY_RP_NAME = 'Aide';
+
+function b64url(buf) {
+  return btoa(String.fromCharCode(...new Uint8Array(buf)))
+    .replace(/\+/g,'-').replace(/\//g,'_').replace(/=+$/,'');
+}
+function b64urlDecode(s) {
+  s = (s||'').replace(/-/g,'+').replace(/_/g,'/');
+  while (s.length%4) s+='=';
+  return Uint8Array.from(atob(s), ch=>ch.charCodeAt(0));
+}
 function passkeySupported() {
   return !!(window.PublicKeyCredential && navigator.credentials?.create);
 }
-
-function b64url(arrayBuffer) {
-  return btoa(String.fromCharCode(...new Uint8Array(arrayBuffer)))
-    .replace(/\+/g,'-').replace(/\//g,'_').replace(/=/g,'');
+function getRpId() {
+  // localhost or real domain
+  return window.location.hostname || 'localhost';
 }
 
-function b64urlDecode(str) {
-  str = str.replace(/-/g,'+').replace(/_/g,'/');
-  while (str.length % 4) str += '=';
-  return Uint8Array.from(atob(str), c => c.charCodeAt(0));
+// ── Load / save passkey store (localStorage) ─────────────────────────
+function loadPasskeys() {
+  try { return JSON.parse(localStorage.getItem('aide_passkeys')||'[]'); } catch(e) { return []; }
 }
-
-// ── Register a passkey for current user ──────────────────────────────
-async function passkeyRegister() {
-  if (!passkeySupported()) { alert('Passkeys not supported on this device.'); return; }
-  if (!currentUser) { alert('Sign in first, then register a passkey from Settings.'); return; }
-  try {
-    // Step 1: get challenge from Supabase passkey endpoint
-    const challengeRes = await fetch(
-      `${PRODUCT_CONFIG.SUPABASE_URL}/auth/v1/factors`,
-      {
-        method: 'POST',
-        headers: {
-          'Content-Type': 'application/json',
-          'apikey': PRODUCT_CONFIG.SUPABASE_ANON_KEY,
-          'Authorization': 'Bearer ' + localStorage.getItem('aide_auth_token'),
-        },
-        body: JSON.stringify({ factor_type: 'webauthn' })
-      }
-    );
-
-    if (!challengeRes.ok) {
-      // Supabase may not support WebAuthn factors yet — fall back to stored local passkey
-      await passkeyRegisterLocal();
-      return;
-    }
-
-    const { id: factorId, totp } = await challengeRes.json();
-    // (full Supabase WebAuthn flow would go here)
-    await passkeyRegisterLocal();
-  } catch(e) {
-    await passkeyRegisterLocal();
-  }
+function savePasskeys(list) {
+  localStorage.setItem('aide_passkeys', JSON.stringify(list));
 }
+function hasPasskeys() { return loadPasskeys().length > 0; }
 
-// Local WebAuthn registration (device-only, no server roundtrip needed for storage)
-async function passkeyRegisterLocal() {
-  if (!currentUser) return;
+// ── SETUP: first-time registration ───────────────────────────────────
+async function passkeySetup() {
+  if (!passkeySupported()) { setAuthView('fallback'); return; }
+  const name = (document.getElementById('setupName')?.value||'').trim() || 'User';
+  const err  = document.getElementById('setupError');
+  err.textContent = '';
+
+  // Generate a stable local user ID
+  const userId = 'aide_' + Date.now().toString(36) + '_' + Math.random().toString(36).slice(2,8);
   const challenge = crypto.getRandomValues(new Uint8Array(32));
-  const userId = new TextEncoder().encode(currentUser.id.slice(0,32).padEnd(32,'0'));
 
-  const cred = await navigator.credentials.create({
-    publicKey: {
+  try {
+    document.getElementById('setupBtn').textContent = 'Waiting for Face ID…';
+    const cred = await navigator.credentials.create({ publicKey: {
       challenge,
-      rp: { name: 'Aide', id: PASSKEY_RP_ID },
-      user: { id: userId, name: currentUser.email, displayName: currentUser.name || currentUser.email },
+      rp: { name: PASSKEY_RP_NAME, id: getRpId() },
+      user: {
+        id: new TextEncoder().encode(userId),
+        name: name,
+        displayName: name,
+      },
       pubKeyCredParams: [
-        { type: 'public-key', alg: -7  },  // ES256
-        { type: 'public-key', alg: -257 },  // RS256
+        { type:'public-key', alg:-7   },  // ES256  (preferred)
+        { type:'public-key', alg:-257 },  // RS256  (fallback)
       ],
       authenticatorSelection: {
-        authenticatorAttachment: 'platform',  // device biometric only
+        authenticatorAttachment: 'platform',
         userVerification: 'required',
         residentKey: 'required',
       },
       timeout: 60000,
-    }
-  });
+    }});
 
-  // Store credential ID and user email for future sign-in
-  const stored = JSON.parse(localStorage.getItem('aide_passkeys') || '[]');
-  stored.push({
-    credId: b64url(cred.rawId),
-    email:  currentUser.email,
-    userId: currentUser.id,
-    created: Date.now(),
-  });
-  localStorage.setItem('aide_passkeys', JSON.stringify(stored));
-  alert('✅ Passkey registered! Next time, tap "Sign in with passkey" to use Face ID / Touch ID.');
+    // Store credential
+    const stored = loadPasskeys();
+    stored.push({
+      credId:  b64url(cred.rawId),
+      userId:  userId,
+      name:    name,
+      created: Date.now(),
+    });
+    savePasskeys(stored);
+
+    // Log in immediately after registration
+    currentUser = { id: userId, name: name, email: name };
+    loadUserData();
+    cfg.activated = true;
+    cfg.mode = cfg.mode || 'byok';
+    saveCfg();
+    launchApp();
+
+  } catch(e) {
+    document.getElementById('setupBtn').textContent = 'Register with Face ID / Touch ID';
+    if (e.name === 'NotAllowedError') {
+      err.textContent = 'Registration cancelled. Try again.';
+    } else if (e.name === 'InvalidStateError') {
+      err.textContent = 'A passkey for this device already exists.';
+    } else {
+      err.textContent = e.message || 'Registration failed.';
+    }
+  }
 }
 
-// ── Sign in with passkey ─────────────────────────────────────────────
+// ── SIGN IN: authenticate with existing passkey ───────────────────────
 async function passkeySignIn() {
-  if (!passkeySupported()) {
-    document.getElementById('authError').textContent = 'Passkeys not supported on this device.';
-    return;
-  }
-  const stored = JSON.parse(localStorage.getItem('aide_passkeys') || '[]');
+  if (!passkeySupported()) { setAuthView('fallback'); return; }
+  const stored = loadPasskeys();
+  const err = document.getElementById('authError');
+  err.textContent = '';
+
   if (!stored.length) {
-    document.getElementById('authError').textContent = 'No passkeys registered yet. Sign in with email first, then add a passkey from Settings.';
+    err.textContent = 'No passkey on this device yet.';
+    setTimeout(() => setAuthView('setup'), 1200);
     return;
   }
-  document.getElementById('authError').textContent = '';
+
+  const challenge = crypto.getRandomValues(new Uint8Array(32));
   try {
-    const challenge = crypto.getRandomValues(new Uint8Array(32));
-    const allowCredentials = stored.map(s => ({
-      type: 'public-key',
-      id: b64urlDecode(s.credId),
-      transports: ['internal'],
-    }));
+    const assertion = await navigator.credentials.get({ publicKey: {
+      challenge,
+      allowCredentials: stored.map(s => ({
+        type: 'public-key',
+        id: b64urlDecode(s.credId),
+        transports: ['internal'],
+      })),
+      userVerification: 'required',
+      timeout: 60000,
+    }});
 
-    const assertion = await navigator.credentials.get({
-      publicKey: {
-        challenge,
-        allowCredentials,
-        userVerification: 'required',
-        timeout: 60000,
-      }
-    });
-
-    // Match returned credential ID to stored entry
     const credId = b64url(assertion.rawId);
-    const match = stored.find(s => s.credId === credId);
-    if (!match) throw new Error('Passkey not recognized.');
+    const match  = stored.find(s => s.credId === credId);
+    if (!match) throw new Error('Passkey not recognised.');
 
-    // Sign in: fetch a token using the matched email
-    // We use the stored email to do a silent password-less sign-in via magic link flow
-    // For a fully offline-capable fallback, restore session from local storage if token still valid
-    const existingToken = localStorage.getItem('aide_auth_token');
-    if (existingToken) {
-      // Try to validate the existing token
-      const userRes = await fetch(`${PRODUCT_CONFIG.SUPABASE_URL}/auth/v1/user`, {
-        headers: { 'apikey': PRODUCT_CONFIG.SUPABASE_ANON_KEY, 'Authorization': 'Bearer ' + existingToken }
-      });
-      if (userRes.ok) {
-        const user = await userRes.json();
-        currentUser = { id: user.id, email: user.email, name: user.email.split('@')[0] };
-        loadUserData();
-        launchApp();
-        return;
-      }
-    }
-
-    // Token expired — prompt magic link for this email
-    const err = document.getElementById('authError');
-    err.style.color = 'var(--green)';
-    err.textContent = `Passkey verified ✓ — sending a sign-in link to ${match.email}…`;
-    document.getElementById('magicEmail').value = match.email;
-    await authMagicLink();
+    // Restore or create user session
+    currentUser = { id: match.userId, name: match.name, email: match.name };
+    loadUserData();
+    cfg.activated = true;
+    saveCfg();
+    launchApp();
 
   } catch(e) {
     if (e.name === 'NotAllowedError') {
-      document.getElementById('authError').textContent = 'Passkey verification cancelled.';
+      err.textContent = 'Verification cancelled.';
     } else {
-      document.getElementById('authError').textContent = e.message;
+      err.textContent = e.message || 'Sign in failed.';
     }
   }
 }
 
-// ── Settings: register passkey button ───────────────────────────────
-function showPasskeySettingsRow() {
-  const supported = passkeySupported();
-  const stored = JSON.parse(localStorage.getItem('aide_passkeys') || '[]');
-  const mine = stored.filter(s => s.email === currentUser?.email);
-  return supported
-    ? `<div style="margin-top:10px;padding-top:10px;border-top:1px solid var(--border-light)">
-        <div style="font-size:11px;font-weight:600;color:var(--text-3);text-transform:uppercase;letter-spacing:.05em;margin-bottom:7px">Passkey (Face ID / Touch ID)</div>
-        ${mine.length
-          ? `<div style="font-size:12px;color:var(--green);margin-bottom:6px">✓ ${mine.length} passkey${mine.length>1?'s':''} registered on this device</div>`
-          : `<div style="font-size:12px;color:var(--text-3);margin-bottom:6px">No passkeys on this device yet</div>`}
-        <button onclick="passkeyRegister()" style="padding:7px 14px;background:var(--accent);color:#fff;border:none;border-radius:6px;font-family:'DM Sans',sans-serif;font-size:12px;font-weight:500;cursor:pointer">
-          ${mine.length ? '+ Add another passkey' : 'Register this device'}
-        </button>
-      </div>` : '';
+// ── checkAuthSession: called on app start ────────────────────────────
+async function checkAuthSession() {
+  // If passkeys registered + active session in localStorage, restore silently
+  const savedCfg = localStorage.getItem('aide_cfg_restore');
+  if (savedCfg) {
+    try {
+      const sc = JSON.parse(savedCfg);
+      if (sc.userId && sc.activated) {
+        const pk = loadPasskeys().find(p => p.userId === sc.userId);
+        if (pk) {
+          currentUser = { id: sc.userId, name: pk.name, email: pk.name };
+          loadUserData();
+          launchApp();
+          return;
+        }
+      }
+    } catch(e) {}
+  }
+  // Show auth screen — detect if passkeys exist to choose right view
+  showAuthScreen();
+  if (hasPasskeys()) {
+    setAuthView('login');
+  } else if (!passkeySupported()) {
+    setAuthView('fallback');
+  } else {
+    setAuthView('setup');
+  }
 }
 
-// ══════════════════════════════════
-// AUTH — Supabase email/password + magic link
-// ══════════════════════════════════
-let authView = 'login'; // 'login' | 'register' | 'magic' | 'check-email' | 'demo-prompt'
-
+// ── Auth helpers ──────────────────────────────────────────────────────
 function setAuthView(view) {
-  authView = view;
   document.querySelectorAll('.auth-view').forEach(el => el.classList.remove('active'));
   const el = document.getElementById('authView_' + view);
   if (el) el.classList.add('active');
 }
-
-async function authSignIn() {
-  const email = document.getElementById('authEmail').value.trim();
-  const pass  = document.getElementById('authPassword').value;
-  const err   = document.getElementById('authError');
-  err.textContent = '';
-  if (!email || !pass) { err.textContent = 'Please enter email and password.'; return; }
-  setAuthLoading(true);
-  try {
-    const res = await fetch(`${PRODUCT_CONFIG.SUPABASE_URL}/auth/v1/token?grant_type=password`, {
-      method: 'POST',
-      headers: { 'Content-Type':'application/json', 'apikey': PRODUCT_CONFIG.SUPABASE_ANON_KEY },
-      body: JSON.stringify({ email, password: pass })
-    });
-    const data = await res.json();
-    if (!res.ok) throw new Error(data.error_description || data.msg || 'Sign in failed');
-    await onAuthSuccess(data.access_token, data.user);
-  } catch(e) { err.textContent = e.message; }
-  setAuthLoading(false);
+function showAuthScreen() {
+  document.getElementById('activation').classList.remove('active');
+  document.getElementById('app').classList.remove('active');
+  document.getElementById('authScreen').classList.add('active');
 }
-
-async function authRegister() {
-  const email = document.getElementById('regEmail').value.trim();
-  const pass  = document.getElementById('regPassword').value;
-  const pass2 = document.getElementById('regPassword2').value;
-  const err   = document.getElementById('regError');
-  err.textContent = '';
-  if (!email || !pass) { err.textContent = 'Please enter email and password.'; return; }
-  if (pass !== pass2)  { err.textContent = 'Passwords do not match.'; return; }
-  if (pass.length < 6) { err.textContent = 'Password must be at least 6 characters.'; return; }
-  setAuthLoading(true);
-  try {
-    const res = await fetch(`${PRODUCT_CONFIG.SUPABASE_URL}/auth/v1/signup`, {
-      method: 'POST',
-      headers: { 'Content-Type':'application/json', 'apikey': PRODUCT_CONFIG.SUPABASE_ANON_KEY },
-      body: JSON.stringify({ email, password: pass })
-    });
-    const data = await res.json();
-    if (!res.ok) throw new Error(data.error_description || data.msg || 'Registration failed');
-    // If email confirmation is disabled, we get a token immediately
-    if (data.access_token) {
-      await onAuthSuccess(data.access_token, data.user);
-    } else {
-      setAuthView('check-email');
-    }
-  } catch(e) { err.textContent = e.message; }
-  setAuthLoading(false);
+function tryDemoFromAuth() {
+  currentUser = { id: 'demo_' + Date.now(), name: 'Demo', email: 'demo' };
+  cfg.mode = 'demo'; cfg.activated = true; cfg.demoCount = 0;
+  saveCfg(); launchApp();
 }
+async function authSignIn() {}   // stub — no longer used
+async function authRegister() {} // stub
+async function authMagicLink() {}// stub
 
-async function authMagicLink() {
-  const email = document.getElementById('magicEmail').value.trim();
-  const err   = document.getElementById('magicError');
-  err.textContent = '';
-  if (!email) { err.textContent = 'Please enter your email.'; return; }
-  setAuthLoading(true);
-  try {
-    const res = await fetch(`${PRODUCT_CONFIG.SUPABASE_URL}/auth/v1/magiclink`, {
-      method: 'POST',
-      headers: { 'Content-Type':'application/json', 'apikey': PRODUCT_CONFIG.SUPABASE_ANON_KEY },
-      body: JSON.stringify({ email })
-    });
-    if (!res.ok) { const d = await res.json(); throw new Error(d.error_description || 'Failed to send link'); }
-    setAuthView('check-email');
-  } catch(e) { err.textContent = e.message; }
-  setAuthLoading(false);
-}
-
-async function onAuthSuccess(token, user) {
-  localStorage.setItem('aide_auth_token', token);
-  currentUser = { id: user.id, email: user.email, name: user.email.split('@')[0] };
-  loadUserData();
-  // Ensure cfg has activated flag for managed users with a key
-  if (!cfg.activated) {
-    cfg.activated = true;
-    cfg.mode = cfg.mode || 'managed';
+// Persist session for silent restore
+function persistSession() {
+  if (currentUser && currentUser.email !== 'demo') {
+    localStorage.setItem('aide_cfg_restore', JSON.stringify({
+      userId: currentUser.id, activated: true
+    }));
   }
-  launchApp();
 }
 
 function confirmLogout() {
@@ -1841,12 +1751,14 @@ async function logout() {
   }
   // Clear local session (keep cfg for re-login convenience)
   localStorage.removeItem('aide_auth_token');
+  localStorage.removeItem('aide_cfg_restore');
   currentUser = null;
   convs = {}; projects = {}; curConv = null;
   cfg.activated = false;
   document.getElementById('app').classList.remove('active');
   showAuthScreen();
-  setAuthView('login');
+  if (hasPasskeys()) setAuthView('login');
+  else setAuthView('setup');
 }
 
 function tryDemoFromAuth() {
@@ -1911,8 +1823,9 @@ function launchApp() {
   // User row — email + logout
   const userRow = document.getElementById('userRow');
   if (currentUser && currentUser.email !== 'demo') {
+    const displayName = currentUser.name || currentUser.email;
     userRow.innerHTML = `
-      <span class="user-email" title="${currentUser.email}">${currentUser.email}</span>
+      <span class="user-email" title="${displayName}">👤 ${displayName}</span>
       <button class="logout-btn" onclick="confirmLogout()" title="Sign out">Sign out</button>`;
     userRow.style.display = 'flex';
   } else {
@@ -1926,6 +1839,8 @@ function launchApp() {
   } else {
     newConv();
   }
+  // Persist session for silent restore on next open
+  if (typeof persistSession === 'function') persistSession();
 }
 
 // ── MODEL HELPERS ──
@@ -3399,6 +3314,43 @@ function renderArtifacts() {
 // ══════════════════════════════════
 function toggleSettings() { document.getElementById('settingsOverlay').classList.toggle('open'); }
 function handleSettingsClick(e) { if(e.target===document.getElementById('settingsOverlay')) toggleSettings(); }
+
+function showPasskeySettingsRow() {
+  if (!passkeySupported()) return '<div style="font-size:12px;color:var(--text-3);margin-top:8px">Passkeys not supported on this browser.</div>';
+  const stored = loadPasskeys();
+  const mine = stored.filter(s => s.userId === currentUser?.id);
+  return `<div style="margin-top:10px;padding-top:10px;border-top:1px solid var(--border-light)">
+    <div style="font-size:11px;font-weight:600;color:var(--text-3);text-transform:uppercase;letter-spacing:.05em;margin-bottom:7px">Passkey · Face ID / Touch ID</div>
+    <div style="font-size:12px;color:${mine.length?'var(--green)':'var(--text-3)'};margin-bottom:8px">${mine.length ? '✓ '+mine.length+' passkey'+(mine.length>1?'s':'')+' on this device' : 'No passkey on this device yet'}</div>
+    <button onclick="passkeyAddAnother()" style="padding:7px 14px;background:var(--accent);color:#fff;border:none;border-radius:6px;font-family:'DM Sans',sans-serif;font-size:12px;font-weight:500;cursor:pointer">${mine.length?'+ Add another passkey':'Register this device'}</button>
+  </div>`;
+}
+
+async function passkeyAddAnother() {
+  if (!currentUser) return;
+  const challenge = crypto.getRandomValues(new Uint8Array(32));
+  try {
+    const cred = await navigator.credentials.create({ publicKey: {
+      challenge,
+      rp: { name: PASSKEY_RP_NAME, id: getRpId() },
+      user: {
+        id: new TextEncoder().encode((currentUser.id||'user').slice(0,32).padEnd(32,'0')),
+        name: currentUser.name||'User', displayName: currentUser.name||'User',
+      },
+      pubKeyCredParams: [{type:'public-key',alg:-7},{type:'public-key',alg:-257}],
+      authenticatorSelection: { authenticatorAttachment:'platform', userVerification:'required', residentKey:'required' },
+      timeout: 60000,
+    }});
+    const stored = loadPasskeys();
+    stored.push({ credId:b64url(cred.rawId), userId:currentUser.id, name:currentUser.name, created:Date.now() });
+    savePasskeys(stored);
+    const row = document.getElementById('passkeySettingsRow');
+    if (row) row.innerHTML = showPasskeySettingsRow();
+    alert('Passkey registered on this device.');
+  } catch(e) {
+    alert('Failed: '+(e.message||e.name));
+  }
+}
 
 function loadSettingsUI() {
   const pkRow = document.getElementById('passkeySettingsRow');
