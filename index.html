@@ -1601,30 +1601,53 @@ function buildProvSwitch() {
   const cp = document.getElementById('cardPicker');
   if (!sw || !cp) return;
 
-  const provs = [
-    { id:'claude',  label:'Claude'   },
-    { id:'openai',  label:'GPT'      },
-    { id:'gemini',  label:'Gemini'   },
-    { id:'mistral', label:'Mistral'  },
-    { id:'ollama',  label:'💻 Local' },
-  ];
+  const available = getAvailableModels();
+  const cur       = getModel(cfg.selectedModelId) || getDefaultModel();
+  const isOllama  = cfg.selectedModelId === 'ollama' || cfg.provider === 'ollama';
 
-  const btns = provs.map(p =>
-    `<button class="pb ${cfg.provider===p.id?'active':''}" onclick="setProvider('${p.id}',this)">${p.label}</button>`
-  ).join('');
+  // Trigger button showing current model
+  sw.className = '';
+  sw.innerHTML = `<button class="model-btn" onclick="toggleCardPicker(event)">
+    <div class="mb-dot"></div>
+    <span class="mb-name">${isOllama ? (cfg.ollamaModel||'Ollama') : cur.label}</span>
+    ${cur.badge ? `<span class="mb-tier">${cur.badge}</span>` : ''}
+    <span class="mb-arr">▾</span>
+  </button>`;
 
-  const ollamaExtra = cfg.provider === 'ollama'
-    ? `<select id="tbOllamaSelect" onchange="selectOllamaModel(this.value)"
-        style="font-family:'DM Mono',monospace;font-size:11px;padding:3px 7px;border:1px solid var(--border);
-        border-radius:var(--r-sm);background:var(--surface2);color:var(--text);outline:none;cursor:pointer;max-width:130px">
-        <option value="${cfg.ollamaModel||'qwen2.5:14b'}">${cfg.ollamaModel||'qwen2.5:14b'}</option>
-       </select>` : '';
-  if (cfg.provider === 'ollama') setTimeout(fetchOllamaModels, 80);
+  // Speed dots helper
+  const speedDots = (arr) => arr.map(on => `<span class="${on?'on':''}${on&&arr[0]&&arr[1]&&arr[2]?' g':''}"></span>`).join('');
 
-  sw.className = 'prov-switch';
-  sw.innerHTML = btns + ollamaExtra;
-  cp.innerHTML = '';
+  // Card picker — all models
+  let html = available.map(m => {
+    const mm = MODEL_META[m.id] || {};
+    const active = m.id === cur.id && !isOllama;
+    return `<div class="cp-item ${active?'cp-active':''}" onclick="selectCardModel('${m.id}')">
+      <div class="cp-icon" style="background:${mm.iconBg||'#eee'}">${mm.icon||'·'}</div>
+      <div><div class="cp-name">${m.label}${m.badge?` <span style="font-size:9px;color:var(--gold)">${m.badge}</span>`:''}</div><div class="cp-use">${mm.use||''}</div></div>
+      <div class="cp-right">
+        <div class="cp-speed">${speedDots(mm.speed||[1,0,0])}</div>
+        <div class="cp-tier" style="${mm.tierStyle||''}">${m.provider.charAt(0).toUpperCase()+m.provider.slice(1)}</div>
+      </div>
+    </div>`;
+  }).join('');
 
+  html += `<div class="cp-divider"></div>
+    <div class="cp-item ${isOllama?'cp-active':''}" onclick="selectCardModel('ollama')">
+      <div class="cp-icon" style="background:#F0EFE9">💻</div>
+      <div><div class="cp-name" style="display:flex;align-items:center;gap:5px">Local (Ollama)<div class="ollama-dot ${_ollamaRunning?'running':'stopped'}"></div></div><div class="cp-use">Offline · private · free</div></div>
+      <div class="cp-right">
+        <div class="cp-speed">${speedDots([1,1,0])}</div>
+        <div class="cp-tier" style="background:#F0EFE9;color:#5C5B55">Local</div>
+      </div>
+    </div>
+    <div class="cp-ollama-row ${isOllama?'show':''}" id="cpOllamaRow">
+      <input id="cpOllamaInput" value="${cfg.ollamaModel||'qwen2.5:14b'}"
+        placeholder="model name e.g. qwen2.5:14b"
+        onchange="cfg.ollamaModel=this.value;saveCfg();updateStatus();buildProvSwitch()"
+        onclick="event.stopPropagation()" />
+    </div>`;
+
+  cp.innerHTML = html;
 }
 const renderSwitcher = buildProvSwitch;
 
@@ -1639,7 +1662,8 @@ function toggleCardPicker(e) {
 
 function selectCardModel(id) {
   cfg.selectedModelId = id;
-  cfg.provider = id === 'ollama' ? 'ollama' : (getModel(id)?.provider || 'claude');
+  const rawProv = id === 'ollama' ? 'ollama' : (getModel(id)?.provider || 'anthropic');
+  cfg.provider = rawProv === 'anthropic' ? 'claude' : rawProv;
   saveCfg();
   buildProvSwitch();
   updateStatus();
@@ -1675,14 +1699,9 @@ function updateStatus() {
   if (isOllama) {
     document.getElementById('appStatus').textContent = `💻 ${cfg.ollamaModel||'Ollama'}`;
   } else {
-    const labels = {
-      claude: `Claude · ${cfg.claudeModel.split('-').slice(0,2).join('-')}`,
-      openai: `GPT · ${cfg.openaiModel}`,
-      gemini: `Gemini`,
-      mistral: `Mistral`,
-      ollama: `Local · ${cfg.ollamaModel}`
-    };
-    document.getElementById('appStatus').textContent = labels[cfg.provider] || 'Ready';
+    const cur = getModel(cfg.selectedModelId);
+    const label = cur ? cur.label : (cfg.provider.charAt(0).toUpperCase()+cfg.provider.slice(1));
+    document.getElementById('appStatus').textContent = label;
   }
 }
 
@@ -2514,7 +2533,9 @@ function selectOllamaModel(val) {
 
 async function callClaude(history, content, systemPrompt) {
   if (PRODUCT_CONFIG.AIDE_SECRET) {
-    return await _proxyChat('anthropic', cfg.claudeModel || 'claude-sonnet-4-6',
+    const m = getModel(cfg.selectedModelId);
+    const apiModel = (m && m.provider === 'anthropic') ? m.apiModel : (cfg.claudeModel || 'claude-sonnet-4-6');
+    return await _proxyChat('anthropic', apiModel,
       history, content, systemPrompt, { web_search: cfg.webSearch });
   }
   // BYOK fallback — direct browser call when no proxy secret configured
@@ -2533,20 +2554,26 @@ async function callClaude(history, content, systemPrompt) {
 }
 
 async function callOpenAI(history, content, systemPrompt) {
-  if (PRODUCT_CONFIG.AIDE_SECRET) return await _proxyChat('openai', cfg.openaiModel || 'gpt-4o-mini', history, content, systemPrompt);
+  if (PRODUCT_CONFIG.AIDE_SECRET) {
+    const m = getModel(cfg.selectedModelId);
+    const apiModel = (m && m.provider === 'openai') ? m.apiModel : (cfg.openaiModel || 'gpt-4o-mini');
+    return await _proxyChat('openai', apiModel, history, content, systemPrompt);
+  }
   if (!cfg.openaiKey) throw new Error('No OpenAI key. Open ⚙ Settings.');
   return await _callOpenAI(cfg.openaiKey, cfg.openaiModel, history, content, systemPrompt);
 }
 
 async function callGemini(history, content, systemPrompt) {
-  const model = 'gemini-2.0-flash';
+  const m = getModel(cfg.selectedModelId);
+  const model = (m && m.provider === 'gemini') ? m.apiModel : 'gemini-2.0-flash';
   if (PRODUCT_CONFIG.AIDE_SECRET) return await _proxyChat('gemini', model, history, content, systemPrompt);
   if (!cfg.geminiKey) throw new Error('No Gemini key. Open ⚙ Settings.');
   return await _callGemini(cfg.geminiKey, model, history, content, systemPrompt);
 }
 
 async function callMistral(history, content, systemPrompt) {
-  const model = 'mistral-small-latest';
+  const m2 = getModel(cfg.selectedModelId);
+  const model = (m2 && m2.provider === 'mistral') ? m2.apiModel : 'mistral-small-latest';
   if (PRODUCT_CONFIG.AIDE_SECRET) return await _proxyChat('mistral', model, history, content, systemPrompt);
   if (!cfg.mistralKey) throw new Error('No Mistral key. Open ⚙ Settings.');
   return await _callMistral(cfg.mistralKey, model, history, content, systemPrompt);
