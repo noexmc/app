@@ -1,5 +1,5 @@
 // Aide Service Worker — offline-first caching
-const CACHE = 'aide-v1';
+const CACHE = 'aide-v0.32';
 const OFFLINE_FALLBACK = '/index.html';
 
 // Assets to cache on install
@@ -33,40 +33,46 @@ self.addEventListener('activate', e => {
   );
 });
 
-// ── Fetch: serve from cache, fall back to network ─────────────
+// ── Fetch: network-first for HTML, cache-first for assets ─────
 self.addEventListener('fetch', e => {
   const url = new URL(e.request.url);
 
-  // Never intercept API calls — always go to network
+  // Never intercept API calls
   const isAPI = [
-    'api.anthropic.com',
-    'api.openai.com',
-    'generativelanguage.googleapis.com',
-    'api.mistral.ai',
-    'supabase.co',
-    'railway.app',
-    'localhost:11434',
-    '127.0.0.1:11434',
+    'api.anthropic.com', 'api.openai.com',
+    'generativelanguage.googleapis.com', 'api.mistral.ai',
+    'supabase.co', 'railway.app',
+    'localhost:11434', '127.0.0.1:11434',
   ].some(host => url.hostname.includes(host) || url.host.includes(host));
 
   if (isAPI || e.request.method !== 'GET') return;
 
+  // Network-first for HTML (always get latest version)
+  if (e.request.mode === 'navigate' || url.pathname.endsWith('.html') || url.pathname === '/') {
+    e.respondWith(
+      fetch(e.request).then(response => {
+        if (response.ok) {
+          const clone = response.clone();
+          caches.open(CACHE).then(cache => cache.put(e.request, clone));
+        }
+        return response;
+      }).catch(() => caches.match(OFFLINE_FALLBACK))
+    );
+    return;
+  }
+
+  // Cache-first for everything else (fonts, JS libs)
   e.respondWith(
     caches.match(e.request).then(cached => {
       if (cached) return cached;
-
       return fetch(e.request).then(response => {
-        // Cache successful GET responses for static assets
         if (response.ok && response.type !== 'opaque') {
           const clone = response.clone();
           caches.open(CACHE).then(cache => cache.put(e.request, clone));
         }
         return response;
       }).catch(() => {
-        // Offline fallback for navigation requests
-        if (e.request.mode === 'navigate') {
-          return caches.match(OFFLINE_FALLBACK);
-        }
+        if (e.request.mode === 'navigate') return caches.match(OFFLINE_FALLBACK);
       });
     })
   );
