@@ -1,5 +1,5 @@
 <!DOCTYPE html>
-<!-- Aide v0.35 -->
+<!-- Aide v0.36 -->
 <html lang="en">
 <head>
 <meta charset="UTF-8">
@@ -588,7 +588,7 @@ body{font-family:'DM Sans',sans-serif;background:var(--bg);color:var(--text);hei
 ════════════════════════════════ -->
 <div id="app" class="screen">
   <div class="topbar">
-    <div class="logo">Aide <span style="font-family:'DM Mono',monospace;font-size:10px;font-weight:400;color:var(--text-3);font-style:normal;letter-spacing:0;margin-left:2px">v0.35</span></div>
+    <div class="logo">Aide <span style="font-family:'DM Mono',monospace;font-size:10px;font-weight:400;color:var(--text-3);font-style:normal;letter-spacing:0;margin-left:2px">v0.36</span></div>
     <div class="tb-divider"></div>
     <!-- Role picker -->
     <div class="role-picker-wrap" id="rolePickerWrap">
@@ -747,6 +747,12 @@ body{font-family:'DM Sans',sans-serif;background:var(--bg);color:var(--text);hei
 // CHANGELOG
 // ══════════════════════════════════════════════════════════
 const CHANGELOG = [
+  { version:'v0.36', date:'2026-03-07', changes:[
+    'Login crash fixed — appStatus element null-guarded throughout',
+    'Branch fixed — was using wrong variable (currentConvId vs curConv)',
+    'Role dropdown fixed — populates on open, z-index over topbar',
+    'Model picker split by provider — Claude pill shows only Claude models, Local shows only Ollama',
+  ]},
   { version:'v0.35', date:'2026-03-07', changes:[
     'Critical fix: messages now send correctly — provider routing fixed (anthropic was not matching claude)',
     'Cross-device sync fixed — sync key now derived from your name, same on every device',
@@ -1776,7 +1782,7 @@ function buildProvSwitch() {
       { id:'ollama', label:'💻 Local' },
     ];
     sw.innerHTML = provPills.map(p =>
-      `<button class="pb ${activeProvider===p.id?'active':''}" onclick="toggleCardPicker(event)">${p.label}</button>`
+      `<button class="pb ${activeProvider===p.id?'active':''}" onclick="toggleCardPicker(event,'${p.id}')">${p.label}</button>`
     ).join('');
     sw.className = 'prov-switch';
 
@@ -1806,18 +1812,24 @@ function buildProvSwitch() {
       </div>`;
     }).join('');
 
-    let html = `<div class="cp-item ${isClaudeActive?'cp-active':''}" onclick="toggleClaudeSubModels(event)">
-      <div class="cp-icon" style="background:#EEF4FB">✦</div>
-      <div><div class="cp-name">Claude${isClaudeActive&&activeClaudeModel?` <span style="font-size:10px;color:var(--text-3);font-weight:400">· ${activeClaudeModel.label}</span>`:''}</div>
-      <div class="cp-use">${isClaudeActive&&acm.use ? acm.use : 'Haiku · Sonnet · Opus'}</div></div>
-      <div class="cp-right">
-        <div class="cp-speed">${speedDots([1,1,0])}</div>
-        <div class="cp-tier" style="background:#EEF4FB;color:#1A3A5C">Claude</div>
+    // Filter by active provider pill (null = show all)
+    const pf = typeof activeProviderFilter !== 'undefined' ? activeProviderFilter : null;
+
+    let html = '';
+    if (!pf || pf === 'anthropic') {
+      html += `<div class="cp-item ${isClaudeActive?'cp-active':''}" onclick="toggleClaudeSubModels(event)">
+        <div class="cp-icon" style="background:#EEF4FB">✦</div>
+        <div><div class="cp-name">Claude${isClaudeActive&&activeClaudeModel?` <span style="font-size:10px;color:var(--text-3);font-weight:400">· ${activeClaudeModel.label}</span>`:''}</div>
+        <div class="cp-use">${isClaudeActive&&acm.use ? acm.use : 'Haiku · Sonnet · Opus'}</div></div>
+        <div class="cp-right">
+          <div class="cp-speed">${speedDots([1,1,0])}</div>
+          <div class="cp-tier" style="background:#EEF4FB;color:#1A3A5C">Claude</div>
+        </div>
       </div>
-    </div>
-    <div class="cp-sub-models ${isClaudeActive?'show':''}" id="cpClaudeSubModels">
-      ${claudeSubItems}
-    </div>`;
+      <div class="cp-sub-models ${isClaudeActive||pf==='anthropic'?'show':''}" id="cpClaudeSubModels">
+        ${claudeSubItems}
+      </div>`;
+    }
 
     // Other providers — only show if key is set
     const providerMeta = {
@@ -1833,7 +1845,8 @@ function buildProvSwitch() {
     ];
 
     providerGroups.forEach(({ provider, key, models }) => {
-      if (!key && !models.some(m=>m.id===cur?.id)) return; // hide if no key and not selected
+      if (pf && pf !== provider) return; // filter by active pill
+      if (!key && !models.some(m=>m.id===cur?.id)) return; // hide if no key
       const pm = providerMeta[provider] || {};
       const isActive = !isOllama && models.some(m => m.id === cur?.id);
       const activeSub = models.find(m => m.id === cur?.id);
@@ -1871,8 +1884,8 @@ function buildProvSwitch() {
       { id:'deepseek-r1:8b', name:'DeepSeek R1 8B', desc:'Step-by-step reasoning.', size:'4.9 GB', badge:'Reasoning' },
       { id:'custom', name:'Custom model', desc:'Any model from ollama pull.', size:'', badge:'' },
     ];
-    html += `<div class="cp-divider"></div>
-      <div class="cp-item cp-ollama-header ${isOllama?'cp-active':''}" onclick="toggleOllamaModels(event)">
+    if (!pf || pf === 'ollama') html += `<div class="cp-divider"></div>`;
+    if (!pf || pf === 'ollama') html += `<div class="cp-item cp-ollama-header ${isOllama?'cp-active':''}" onclick="toggleOllamaModels(event)">
         <div class="cp-icon" style="background:#F0EFE9">💻</div>
         <div><div class="cp-name">Local (Ollama)</div><div class="cp-use">${isOllama?(cfg.ollamaModel||'qwen2.5:14b'):'Offline · private · free'}</div></div>
         <div class="cp-right">
@@ -1901,13 +1914,22 @@ function buildProvSwitch() {
 }
 const renderSwitcher = buildProvSwitch;
 
-function toggleCardPicker(e) {
+let activeProviderFilter = null;
+
+function toggleCardPicker(e, providerFilter) {
   e.stopPropagation();
   const cp   = document.getElementById('cardPicker');
   const wrap = document.getElementById('modelPickerWrap');
-  const open = cp.classList.contains('show');
+  // Close role dropdown
+  document.getElementById('roleDropdown')?.classList.remove('show');
+  document.getElementById('rolePickerWrap')?.classList.remove('open');
+  const open = cp.classList.contains('show') && activeProviderFilter === providerFilter;
   cp.classList.toggle('show', !open);
   wrap.classList.toggle('open', !open);
+  if (!open && providerFilter !== undefined) {
+    activeProviderFilter = providerFilter;
+    buildProvSwitch(); // rebuild with filter applied
+  }
 }
 
 function selectCardModel(id) {
@@ -1956,10 +1978,10 @@ function updateStatus() {
   }
   const isOllama = cfg.provider === 'ollama' || cfg.selectedModelId === 'ollama';
   if (isOllama) {
-    document.getElementById('appStatus').textContent = `💻 ${cfg.ollamaModel||'Ollama'}`;
+    (document.getElementById('appStatus')||{}).textContent = `💻 ${cfg.ollamaModel||'Ollama'}`;
   } else if (cfg.mode === 'managed' || cfg.mode === 'demo') {
     const m = getModel(cfg.selectedModelId) || getDefaultModel();
-    document.getElementById('appStatus').textContent = m.label;
+    (document.getElementById('appStatus')||{}).textContent = m.label;
   } else {
     const labels = {
       claude: `Claude · ${cfg.claudeModel.split('-').slice(0,2).join('-')}`,
@@ -1968,7 +1990,7 @@ function updateStatus() {
       mistral: `Mistral`,
       ollama: `Local · ${cfg.ollamaModel}`
     };
-    document.getElementById('appStatus').textContent = labels[cfg.provider] || 'Ready';
+    (document.getElementById('appStatus')||{}).textContent = labels[cfg.provider] || 'Ready';
   }
 }
 
@@ -2032,16 +2054,15 @@ function renderRolePicker() {
 function toggleRolePicker(e) {
   e.stopPropagation();
   const dd = document.getElementById('roleDropdown');
+  const wrap = document.getElementById('rolePickerWrap');
   if (!dd) return;
   const isOpen = dd.classList.contains('show');
-  // Close all pickers first
   document.querySelectorAll('.role-dropdown,.card-picker').forEach(el => el.classList.remove('show'));
+  document.querySelectorAll('.role-picker-wrap,.model-picker-wrap').forEach(el => el.classList.remove('open'));
   if (!isOpen) {
-    const btn = document.getElementById('roleBtn');
-    const rect = btn.getBoundingClientRect();
-    dd.style.left = rect.left + 'px';
-    dd.style.top  = (rect.bottom + 6) + 'px';
+    if (!dd.children.length) renderRolePicker();
     dd.classList.add('show');
+    if (wrap) wrap.classList.add('open');
   }
 }
 
@@ -2051,7 +2072,7 @@ function setMode(id) {
   renderRolePicker();
   document.getElementById('roleDropdown').classList.remove('show');
   const m = MODES.find(x=>x.id===id);
-  document.getElementById('appStatus').textContent = m ? m.icon+' '+m.label : 'Ready';
+  (document.getElementById('appStatus')||{}).textContent = m ? m.icon+' '+m.label : 'Ready';
 }
 
 function getActivePrompt() {
@@ -2555,27 +2576,27 @@ function hideTyping() { document.getElementById('typing')?.remove(); }
 
 // ── Branch conversation ─────────────────────────────────────
 function branchFromMsg(msgId) {
-  if (!currentConvId) return;
-  const srcConv = convs[currentConvId];
+  if (!curConv) return;
+  const srcConv = convs[curConv];
   if (!srcConv) return;
 
-  // Find the message index
-  const idx = srcConv.messages.findIndex(m => (m.id||m.timestamp||'') == msgId);
-  if (idx < 0) return;
+  // Find the message index — match by id, timestamp, or string coercion
+  const idx = srcConv.messages.findIndex(m => String(m.id||m.timestamp||'') === String(msgId));
+  if (idx < 0) { showToast('Could not find message to branch from'); return; }
 
   const branchMsgs = srcConv.messages.slice(0, idx + 1).map(m => ({...m}));
-  const branchId = 'conv_' + Date.now();
+  const branchId = 'c' + Date.now();
   convs[branchId] = {
     id: branchId,
-    title: (srcConv.title || 'Chat') + ' (branch)',
+    title: (srcConv.title || 'Chat') + ' ⎇',
     messages: branchMsgs,
     createdAt: Date.now(),
-    branchedFrom: currentConvId,
+    branchedFrom: curConv,
     projectId: srcConv.projectId || null,
   };
   saveConvs();
-  selectConv(branchId);
-  showToast('Branched ✓');
+  loadConv(branchId);
+  showToast('⎇ Branched');
 }
 
 async function sendMsg() {
@@ -3410,7 +3431,7 @@ init();
 // ══════════════════════════════════════════════════════════════
 
 // ── Service Worker registration ───────────────────────────────
-const APP_VERSION = 'v0.35';
+const APP_VERSION = 'v0.36';
 if ('serviceWorker' in navigator) {
   window.addEventListener('load', async () => {
     // Unregister all old service workers and clear all caches on version change
