@@ -157,9 +157,6 @@ body{font-family:'DM Sans',sans-serif;background:var(--bg);color:var(--text);hei
 .cp-ollama-row.show{display:block}
 .cp-ollama-row input{width:100%;font-family:'DM Mono',monospace;font-size:11px;padding:5px 8px;border:1px solid var(--border);border-radius:6px;background:var(--surface2);color:var(--text);outline:none;box-sizing:border-box}
 .cp-ollama-row input:focus{border-color:var(--accent)}
-.cp-ollama-row select{width:100%;font-family:'DM Mono',monospace;font-size:11px;padding:5px 8px;border:1px solid var(--border);border-radius:6px;background:var(--surface2);color:var(--text);outline:none;cursor:pointer;box-sizing:border-box}
-.cp-ollama-row select:focus{border-color:var(--accent)}
-.cp-ollama-row .ollama-fetch-hint{font-size:10px;color:var(--text-3);margin-top:3px;text-align:center}
 /* BYOK provider buttons (legacy) */
 .prov-switch{display:flex;background:var(--surface2);border:1px solid var(--border);border-radius:var(--r-sm);padding:2px;gap:2px}
 .pb{font-family:'DM Mono',monospace;font-size:11px;font-weight:500;padding:4px 10px;border:none;border-radius:3px;cursor:pointer;background:transparent;color:var(--text-3);transition:all .15s}
@@ -167,14 +164,10 @@ body{font-family:'DM Sans',sans-serif;background:var(--bg);color:var(--text);hei
 .tb-btn{width:30px;height:30px;border:1px solid var(--border);border-radius:var(--r-sm);background:var(--surface);cursor:pointer;display:flex;align-items:center;justify-content:center;color:var(--text-2);transition:all .15s;font-size:15px}
 .tb-btn:hover{background:var(--surface2);color:var(--text)}
 
-/* Passkey button */
+/* Auth Screen */
 .passkey-btn{width:100%;padding:11px;background:var(--text);color:#fff;border:none;border-radius:8px;font-family:'DM Sans',sans-serif;font-size:13px;font-weight:600;cursor:pointer;display:flex;align-items:center;justify-content:center;gap:8px;margin-bottom:8px;transition:opacity .15s}
 .passkey-btn:hover{opacity:.88}
 .passkey-btn svg{flex-shrink:0}
-.passkey-divider{display:flex;align-items:center;gap:10px;margin:10px 0;color:var(--text-3);font-size:11px}
-.passkey-divider::before,.passkey-divider::after{content:'';flex:1;height:1px;background:var(--border)}
-
-/* Auth Screen */
 .auth-wrap{display:flex;align-items:center;justify-content:center;width:100%;height:100%;background:var(--bg);padding:24px}
 .auth-card{width:100%;max-width:380px;background:var(--surface);border:1px solid var(--border);border-radius:16px;padding:36px 32px;box-shadow:0 4px 24px rgba(0,0,0,.07)}
 .auth-logo{font-family:'DM Serif Display',serif;font-size:22px;color:var(--text);letter-spacing:-.02em}
@@ -203,24 +196,6 @@ body{font-family:'DM Sans',sans-serif;background:var(--bg);color:var(--text);hei
 .user-email{font-size:10px;color:var(--text-3);overflow:hidden;text-overflow:ellipsis;white-space:nowrap;flex:1;font-family:'DM Mono',monospace}
 .logout-btn{font-size:10px;color:var(--text-3);background:none;border:none;cursor:pointer;padding:2px 6px;border-radius:4px;flex-shrink:0;font-family:'DM Sans',sans-serif;transition:all .15s}
 .logout-btn:hover{color:var(--red);background:var(--red-bg)}
-
-/* Connectivity pill */
-.conn-pill{display:flex;align-items:center;gap:5px;padding:4px 9px;border-radius:20px;font-size:11px;font-weight:500;border:1px solid var(--border);background:var(--surface2);cursor:default;transition:all .3s;white-space:nowrap}
-.conn-pill.online{color:var(--green);border-color:#c5e0cc;background:var(--green-bg)}
-.conn-pill.offline{color:var(--amber);border-color:#f0d5a8;background:var(--amber-bg)}
-.conn-dot{width:6px;height:6px;border-radius:50%;flex-shrink:0;transition:background .3s}
-.conn-pill.online .conn-dot{background:var(--green)}
-.conn-pill.offline .conn-dot{background:var(--amber);animation:connPulse 1.5s ease-in-out infinite}
-@keyframes connPulse{0%,100%{opacity:1}50%{opacity:.4}}
-/* Ollama status dot in model picker */
-.ollama-dot{width:7px;height:7px;border-radius:50%;flex-shrink:0;transition:background .4s}
-.ollama-dot.running{background:var(--green)}
-.ollama-dot.stopped{background:var(--text-3)}
-
-/* Mode pill in input bar */
-.mode-pill{display:none} /* replaced by input-mode-select */
-.input-mode-select{height:28px;padding:0 6px;border:1px solid var(--border);border-radius:var(--r-sm);font-family:'DM Sans',sans-serif;font-size:11px;font-weight:500;color:var(--text-2);background:var(--surface2);outline:none;cursor:pointer;flex-shrink:0;max-width:110px;transition:border-color .15s}
-.input-mode-select:hover,.input-mode-select:focus{border-color:var(--accent);color:var(--text)}
 
 /* Layout */
 .app-body{display:flex;flex:1;overflow:hidden}
@@ -263,29 +238,21 @@ body{font-family:'DM Sans',sans-serif;background:var(--bg);color:var(--text);hei
 .qc-desc{font-size:11.5px;color:var(--text-3);margin-top:2px;display:block;line-height:1.4}
 
 /* Messages */
-.msg-row{padding:5px 0;animation:msgIn .22s cubic-bezier(.16,1,.3,1)}
-@keyframes msgIn{from{opacity:0;transform:translateY(6px)}to{opacity:1;transform:translateY(0)}}
-.msg-inner{max-width:740px;margin:0 auto;padding:0 24px;display:flex;align-items:flex-end;gap:8px}
+.msg-row{padding:3px 0;animation:msgIn .2s ease}
+@keyframes msgIn{from{opacity:0;transform:translateY(5px)}to{opacity:1;transform:translateY(0)}}
+.msg-inner{max-width:720px;margin:0 auto;padding:0 20px;display:flex}
 .msg-row.user .msg-inner{justify-content:flex-end}
 .msg-row.assistant .msg-inner{justify-content:flex-start}
-.bubble{max-width:72%;padding:11px 15px;border-radius:18px;font-size:13.5px;line-height:1.7;word-break:break-word}
-.msg-row.user .bubble{background:var(--accent);color:#fff;border-bottom-right-radius:4px;box-shadow:0 2px 8px rgba(28,28,26,.15)}
-.msg-row.assistant .bubble{background:var(--surface);color:var(--text);border:1px solid var(--border);border-bottom-left-radius:4px;box-shadow:0 1px 4px rgba(0,0,0,.05)}
-.msg-avatar{width:26px;height:26px;border-radius:50%;background:var(--accent);display:flex;align-items:center;justify-content:center;flex-shrink:0;margin-bottom:2px;font-size:11px;color:#fff;font-weight:700;font-family:'DM Serif Display',serif;letter-spacing:-.02em;box-shadow:0 1px 3px rgba(0,0,0,.12)}
-.msg-row.user .msg-avatar{display:none}
-.bubble p{margin-bottom:9px}.bubble p:last-child{margin-bottom:0}
+.bubble{max-width:74%;padding:10px 14px;border-radius:12px;font-size:13.5px;line-height:1.65;word-break:break-word}
+.msg-row.user .bubble{background:var(--accent);color:#fff;border-bottom-right-radius:3px}
+.msg-row.assistant .bubble{background:var(--surface);color:var(--text);border:1px solid var(--border);box-shadow:0 1px 3px rgba(0,0,0,0.04);border-bottom-left-radius:3px}
+.bubble p{margin-bottom:8px}.bubble p:last-child{margin-bottom:0}
 .bubble strong{font-weight:600}.bubble em{font-style:italic}
-.bubble h1,.bubble h2,.bubble h3{font-family:'DM Serif Display',serif;font-weight:400;margin:14px 0 5px;line-height:1.3}
-.bubble h1{font-size:18px}.bubble h2{font-size:15px}.bubble h3{font-size:13.5px;font-family:'DM Sans',sans-serif;font-weight:600}
-.bubble code{font-family:'DM Mono',monospace;font-size:11.5px;background:rgba(0,0,0,.07);padding:2px 6px;border-radius:4px}
-.msg-row.user .bubble code{background:rgba(255,255,255,.18)}
-.bubble pre{background:#18181A;color:#b8f0cc;padding:13px 15px;border-radius:8px;overflow-x:auto;margin:10px 0;font-family:'DM Mono',monospace;font-size:11.5px;line-height:1.55;border:1px solid rgba(255,255,255,.05)}
-.bubble pre code{background:none;padding:0;font-size:11px}
-.bubble ul,.bubble ol{padding-left:20px;margin:7px 0}.bubble li{margin-bottom:4px;line-height:1.6}
-.bubble table{width:100%;border-collapse:collapse;font-size:12.5px;margin:10px 0;border-radius:6px;overflow:hidden}
-.bubble th{background:var(--surface2);padding:7px 10px;text-align:left;font-weight:600;border-bottom:2px solid var(--border);font-size:11.5px}
-.bubble td{padding:6px 10px;border-bottom:1px solid var(--border-light)}
-.bubble blockquote{border-left:3px solid var(--border);padding:6px 0 6px 12px;color:var(--text-2);margin:8px 0;font-style:italic}
+.bubble code{font-family:'DM Mono',monospace;font-size:11.5px;background:rgba(0,0,0,0.06);padding:1px 5px;border-radius:3px}
+.msg-row.user .bubble code{background:rgba(255,255,255,0.15)}
+.bubble pre{background:#1C1C1A;color:#a8e6c0;padding:12px 14px;border-radius:var(--r-sm);overflow-x:auto;margin:8px 0;font-family:'DM Mono',monospace;font-size:11.5px;line-height:1.5}
+.bubble pre code{background:none;padding:0}
+.bubble ul,.bubble ol{padding-left:18px;margin:6px 0}.bubble li{margin-bottom:3px}
 
 /* Doc card */
 .doc-card{display:flex;align-items:center;gap:10px;background:var(--bg);border:1px solid var(--border);border-radius:var(--r-sm);padding:10px 12px;margin-top:10px;cursor:pointer;transition:all .15s}
@@ -297,28 +264,16 @@ body{font-family:'DM Sans',sans-serif;background:var(--bg);color:var(--text);hei
 .doc-card-action{font-size:11px;color:var(--green);font-weight:500;white-space:nowrap}
 
 /* Typing */
-.typing-row{padding:5px 0}
-.typing-inner{max-width:740px;margin:0 auto;padding:0 24px;display:flex;align-items:flex-end;gap:8px}
-.typing-avatar{width:26px;height:26px;border-radius:50%;background:var(--accent);display:flex;align-items:center;justify-content:center;flex-shrink:0;font-size:11px;color:#fff;font-weight:700;font-family:'DM Serif Display',serif;box-shadow:0 1px 3px rgba(0,0,0,.12)}
-.typing-bubble{background:var(--surface);border:1px solid var(--border);border-radius:18px;border-bottom-left-radius:4px;padding:13px 16px;display:inline-flex;gap:5px;align-items:center;box-shadow:0 1px 4px rgba(0,0,0,.05)}
+.typing-row{padding:3px 0}
+.typing-inner{max-width:720px;margin:0 auto;padding:0 20px}
+.typing-bubble{background:var(--surface);border:1px solid var(--border);border-radius:12px;border-bottom-left-radius:3px;padding:12px 14px;display:inline-flex;gap:4px;align-items:center;box-shadow:0 1px 3px rgba(0,0,0,0.04)}
 .td{width:5px;height:5px;border-radius:50%;background:var(--text-3);animation:td 1.2s infinite}
 .td:nth-child(2){animation-delay:.2s}.td:nth-child(3){animation-delay:.4s}
 @keyframes td{0%,60%,100%{transform:translateY(0);opacity:.4}30%{transform:translateY(-4px);opacity:1}}
-.msg-meta{max-width:740px;margin:1px auto 0;padding:0 24px 0 58px;display:flex;align-items:center;gap:4px}
-.msg-row.user .msg-meta{justify-content:flex-end;padding:1px 24px 0 24px}
-/* Branch / sub-conversation */
-.branch-btn{background:none;border:none;cursor:pointer;padding:3px 5px;border-radius:4px;font-size:10px;color:var(--text-3);opacity:0;transition:opacity .15s,background .15s;display:inline-flex;align-items:center;gap:3px;line-height:1;margin-left:4px}
-.msg-row:hover .branch-btn{opacity:1}
-.branch-btn:hover{background:var(--surface2);color:var(--text-2)}
-.branch-badge{display:inline-flex;align-items:center;gap:3px;font-size:9.5px;color:var(--green);background:var(--green-bg);border:1px solid #c5e0cc;border-radius:10px;padding:1px 6px;margin-left:6px;cursor:pointer;vertical-align:middle}
-.branch-badge:hover{filter:brightness(.95)}
-/* Sub-conv back bar */
-.branch-bar{display:flex;align-items:center;gap:8px;padding:7px 12px 5px;background:var(--surface2);border-bottom:1px solid var(--border);font-size:11.5px;color:var(--text-2);flex-shrink:0}
-.branch-bar-back{background:none;border:none;cursor:pointer;font-size:11px;color:var(--green);font-family:'DM Sans',sans-serif;font-weight:500;padding:2px 6px;border-radius:4px}
-.branch-bar-back:hover{background:var(--green-bg)}
-.branch-bar-label{flex:1;overflow:hidden;text-overflow:ellipsis;white-space:nowrap;font-style:italic}
-/* Conv-item branch indicator in sidebar */
-.conv-branch-dot{width:6px;height:6px;border-radius:50%;background:var(--green);flex-shrink:0;margin-right:-2px}
+.branch-btn{display:inline-flex;align-items:center;gap:4px;padding:2px 7px;background:transparent;border:1px solid var(--border);border-radius:5px;font-size:10px;color:var(--text-3);cursor:pointer;margin-left:8px;transition:all .15s}
+.branch-btn:hover{border-color:var(--accent);color:var(--accent)}
+.msg-meta{max-width:720px;margin:2px auto 0;padding:0 20px;display:flex}
+.msg-row.user .msg-meta{justify-content:flex-end}
 .msg-time{font-size:10px;color:var(--text-3);font-family:'DM Mono',monospace}
 
 /* Input */
@@ -391,11 +346,11 @@ body{font-family:'DM Sans',sans-serif;background:var(--bg);color:var(--text);hei
 .mode-bar{padding:6px 10px;border-bottom:1px solid var(--border-light);display:flex;align-items:center;gap:6px}
 .mode-select{flex:1;padding:5px 8px;border:1px solid var(--border);border-radius:var(--r-sm);font-family:'DM Sans',sans-serif;font-size:12px;font-weight:500;color:var(--text);background:var(--surface2);outline:none;cursor:pointer;transition:border-color .15s}
 .mode-select:focus{border-color:var(--accent)}
-.mode-help{width:18px;height:18px;border-radius:50%;border:1.5px solid var(--border);background:var(--surface);color:var(--text-2);font-size:10px;font-weight:700;cursor:pointer;display:flex;align-items:center;justify-content:center;flex-shrink:0;position:relative;transition:all .15s}
-.mode-help:hover{border-color:var(--accent);color:var(--accent);background:var(--surface2)}
-.mode-tooltip{position:fixed;width:256px;background:var(--surface);border:1px solid var(--border);border-radius:var(--r);padding:12px 14px;font-size:11.5px;color:var(--text-2);line-height:1.6;z-index:9999;box-shadow:0 8px 30px rgba(0,0,0,0.15);display:none;pointer-events:none}
+.mode-help{width:18px;height:18px;border-radius:50%;border:1px solid var(--border);background:var(--surface2);color:var(--text-3);font-size:10px;font-weight:600;cursor:pointer;display:flex;align-items:center;justify-content:center;flex-shrink:0;position:relative}
+.mode-help:hover{border-color:var(--accent);color:var(--accent)}
+.mode-tooltip{position:absolute;left:24px;top:50%;transform:translateY(-50%);width:240px;background:var(--surface);border:1px solid var(--border);border-radius:var(--r);padding:10px 12px;font-size:11px;color:var(--text-2);line-height:1.5;z-index:200;box-shadow:0 4px 16px rgba(0,0,0,0.12);display:none}
 .mode-tooltip.show{display:block}
-.mode-tooltip b{color:var(--text);display:block;margin-top:8px;font-size:12px}
+.mode-tooltip b{color:var(--text);display:block;margin-top:6px}
 .mode-tooltip b:first-child{margin-top:0}
 
 /* ── PROJECTS ── */
@@ -431,11 +386,9 @@ body{font-family:'DM Sans',sans-serif;background:var(--bg);color:var(--text);hei
 .att-chip-rm:hover{color:var(--red)}
 
 /* ── SEARCH INDICATOR ── */
-/* search icon in input bar */
-.search-icon-btn{width:28px;height:28px;border:1px solid var(--border);border-radius:var(--r-sm);background:transparent;cursor:default;display:flex;align-items:center;justify-content:center;color:var(--text-3);transition:all .25s;flex-shrink:0;font-size:14px}
-.search-icon-btn.active{color:var(--blue);border-color:var(--blue);background:var(--blue-bg);animation:searchPulse 1.2s ease-in-out infinite}
-@keyframes searchPulse{0%,100%{box-shadow:0 0 0 0 rgba(26,77,143,.0)}50%{box-shadow:0 0 0 3px rgba(26,77,143,.15)}}
-.search-indicator{display:none}.search-indicator.show{display:none}
+.search-indicator{display:none;align-items:center;gap:6px;padding:6px 12px;font-size:11.5px;color:var(--blue);background:var(--blue-bg);border-top:1px solid #d0dff5}
+.search-indicator.show{display:flex}
+.si-spin{width:10px;height:10px;border:1.5px solid var(--blue);border-top-color:transparent;border-radius:50%;animation:spin .6s linear infinite}
 @keyframes spin{to{transform:rotate(360deg)}}
 
 /* ── ARTIFACTS PANEL ── */
@@ -456,167 +409,9 @@ body{font-family:'DM Sans',sans-serif;background:var(--bg);color:var(--text);hei
 .drop-overlay.show{display:flex}
 .drop-overlay-icon{font-size:32px}
 .drop-overlay-text{font-size:14px;font-weight:600;color:var(--blue)}
-
-/* ════════════════════════════════════════════════════
-   MOBILE RESPONSIVE — full iPhone/Android layout
-════════════════════════════════════════════════════ */
-@media (max-width: 768px) {
-
-  /* ── Sidebar: hidden by default, slides in as drawer ── */
-  .sidebar {
-    position: fixed !important;
-    top: 0; left: 0; bottom: 0;
-    width: 280px !important;
-    z-index: 500;
-    transform: translateX(-100%);
-    transition: transform .25s cubic-bezier(.16,1,.3,1);
-    box-shadow: 4px 0 24px rgba(0,0,0,.15);
-  }
-  .sidebar.open {
-    transform: translateX(0);
-  }
-  .sidebar-overlay {
-    display: none;
-    position: fixed;
-    inset: 0;
-    background: rgba(0,0,0,.35);
-    z-index: 499;
-    backdrop-filter: blur(1px);
-  }
-  .sidebar-overlay.show { display: block; }
-
-  /* ── Chat panel takes full width ── */
-  .chat-panel {
-    width: 100% !important;
-    flex: 1 !important;
-  }
-
-  /* ── Topbar: add hamburger, hide some elements ── */
-  .topbar { padding: 0 12px; gap: 8px; }
-  .logo { font-size: 18px; }
-  .tb-divider { display: none; }
-  .status-pill { display: none; }
-  .topbar-right { gap: 4px; }
-  .mb-tier { display: none; }
-
-  /* Hamburger button */
-  .mob-menu-btn {
-    width: 32px; height: 32px;
-    border: none; background: transparent;
-    cursor: pointer; display: flex !important;
-    align-items: center; justify-content: center;
-    color: var(--text); border-radius: var(--r-sm);
-    flex-shrink: 0;
-  }
-  .mob-menu-btn:hover { background: var(--surface2); }
-
-  /* ── Messages ── */
-  .msg-inner { padding: 0 12px !important; }
-  .msg-meta  { padding: 1px 12px 0 44px !important; }
-  .msg-row.user .msg-meta { padding: 1px 12px 0 12px !important; }
-  .bubble { max-width: 85% !important; font-size: 14px !important; }
-  .msg-avatar { width: 22px !important; height: 22px !important; font-size: 10px !important; }
-
-  /* ── Input area ── */
-  .input-area { padding: 8px 10px 12px !important; }
-  .input-wrap { border-radius: 16px !important; }
-  #userInput { font-size: 16px !important; } /* prevent iOS zoom */
-  .input-footer { display: none; } /* hide keyboard hints on mobile */
-
-  /* ── Mode bar in sidebar ── */
-  .mode-bar { padding: 6px 10px; }
-  .mode-select { font-size: 12px; }
-
-  /* ── Model picker ── */
-  .card-picker {
-    position: fixed !important;
-    top: auto !important; bottom: 70px !important;
-    left: 8px !important; right: 8px !important;
-    width: auto !important;
-    max-height: 60vh;
-    overflow-y: auto;
-  }
-
-  /* ── Settings panel ── */
-  .settings-panel {
-    position: fixed !important;
-    inset: 0 !important;
-    width: 100% !important;
-    border-radius: 0 !important;
-    z-index: 600;
-    overflow-y: auto;
-  }
-
-  /* ── Artifacts panel ── */
-  .artifacts-panel {
-    position: fixed !important;
-    top: 0; right: 0; bottom: 0;
-    width: 88vw !important;
-    max-width: 340px;
-    z-index: 500;
-    transform: translateX(100%);
-    transition: transform .25s cubic-bezier(.16,1,.3,1);
-    box-shadow: -4px 0 24px rgba(0,0,0,.12);
-  }
-  .artifacts-panel:not(.hidden) { transform: translateX(0); }
-
-  /* ── Auth card ── */
-  .auth-card {
-    width: 100% !important;
-    max-width: 100% !important;
-    border-radius: 0 !important;
-    min-height: 100vh;
-    border: none !important;
-    box-shadow: none !important;
-  }
-  .auth-wrap {
-    align-items: flex-start !important;
-    padding-top: env(safe-area-inset-top, 20px);
-  }
-
-  /* ── Preview panel ── */
-  .preview-panel {
-    position: fixed !important;
-    inset: 0 !important;
-    width: 100% !important;
-    z-index: 600;
-    border-radius: 0 !important;
-  }
-
-  /* ── Branch bar ── */
-  .branch-bar { font-size: 11px; padding: 6px 10px 4px; }
-
-  /* ── Empty state ── */
-  .empty-icon { font-size: 28px !important; }
-  .empty-title { font-size: 16px !important; }
-  .quick-btns { flex-direction: column !important; }
-  .quick-btn { font-size: 12px !important; }
-
-  /* ── Mode pill ── */
-  .mode-pill { display: none; } /* save space on mobile */
-
-  /* ── Tooltip ── */
-  .mode-tooltip { width: 220px !important; font-size: 11px !important; }
-}
-
-/* iPhone safe areas */
-@supports (padding-bottom: env(safe-area-inset-bottom)) {
-  @media (max-width: 768px) {
-    .input-area {
-      padding-bottom: calc(12px + env(safe-area-inset-bottom)) !important;
-    }
-    .topbar {
-      padding-top: env(safe-area-inset-top, 0);
-      height: calc(50px + env(safe-area-inset-top, 0)) !important;
-    }
-  }
-}
 </style>
 </head>
 <body>
-
-<!-- Mobile sidebar overlay -->
-<div class="sidebar-overlay" id="sidebarOverlay" onclick="toggleMobileSidebar()"></div>
 
 <!-- Offline banner -->
 <div class="offline-banner" id="offlineBanner">
@@ -640,7 +435,7 @@ body{font-family:'DM Sans',sans-serif;background:var(--bg);color:var(--text);hei
 <div id="authScreen" class="screen active">
   <div class="auth-wrap">
     <div class="auth-card">
-      <div class="auth-logo">Aide <span>/ private AI assistant</span></div>
+      <div class="auth-logo">Aide <span>/ private AI</span></div>
       <div class="auth-tagline">Your AI. Your data. Nobody else's.</div>
 
       <!-- VIEW: returning user with passkey registered -->
@@ -654,13 +449,13 @@ body{font-family:'DM Sans',sans-serif;background:var(--bg);color:var(--text);hei
         <div class="auth-demo-row" style="margin-top:16px">
           First time? <a href="#" onclick="setAuthView('setup');return false">Set up this device →</a>
         </div>
-        <div class="auth-demo-row"><a href="#" onclick="tryDemoFromAuth();return false">Try without an account (5 messages)</a></div>
+        <div class="auth-demo-row"><a href="#" onclick="setAuthView('friends');return false">Guest access →</a></div>
       </div>
 
-      <!-- VIEW: first-time setup — just a name, then Face ID -->
+      <!-- VIEW: first-time setup — name then Face ID -->
       <div class="auth-view" id="authView_setup">
         <div class="auth-title">Set up Aide</div>
-        <div class="auth-subtitle">No email needed. Just choose a name and register your device with Face ID or Touch ID.</div>
+        <div class="auth-subtitle">No email needed. Choose a name and register with Face ID or Touch ID.</div>
         <div class="auth-field">
           <label class="auth-label">Your name</label>
           <input class="auth-input" id="setupName" type="text" placeholder="Alex" autocomplete="name"
@@ -676,12 +471,31 @@ body{font-family:'DM Sans',sans-serif;background:var(--bg);color:var(--text);hei
         </div>
       </div>
 
-      <!-- VIEW: not supported fallback -->
+      <!-- VIEW: friends guest access -->
+      <div class="auth-view" id="authView_friends">
+        <div class="auth-title">Guest access</div>
+        <div class="auth-subtitle">Enter the access password. Each session is fresh — 10 messages included.</div>
+        <div class="auth-field">
+          <label class="auth-label">Password</label>
+          <input class="auth-input" id="friendsPassword" type="password" placeholder="••••••"
+            onkeydown="if(event.key==='Enter')friendsSignIn()" />
+        </div>
+        <div class="auth-error" id="friendsError"></div>
+        <button class="passkey-btn" onclick="friendsSignIn()" id="friendsBtn">
+          <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="8" r="4"/><path d="M4 20c0-4 3.6-7 8-7s8 3 8 7"/></svg>
+          Enter as Guest
+        </button>
+        <div class="auth-demo-row" style="margin-top:10px">
+          <a href="#" onclick="setAuthView('login');return false">← Back</a>
+        </div>
+      </div>
+
+      <!-- VIEW: passkeys not supported -->
       <div class="auth-view" id="authView_fallback">
         <div class="auth-icon-lg">🔒</div>
         <div class="auth-title">Passkeys not supported</div>
-        <div class="auth-subtitle">Your browser doesn't support passkeys. Use a modern browser (Safari on iPhone, Chrome on desktop) or continue without an account.</div>
-        <button class="auth-btn auth-btn-primary" onclick="tryDemoFromAuth()">Continue without account</button>
+        <div class="auth-subtitle">Use Safari on iPhone/Mac or Chrome on desktop, or use guest access.</div>
+        <button class="auth-btn auth-btn-primary" onclick="setAuthView('friends')">Guest access</button>
       </div>
 
     </div>
@@ -838,18 +652,11 @@ body{font-family:'DM Sans',sans-serif;background:var(--bg);color:var(--text);hei
 ════════════════════════════════ -->
 <div id="app" class="screen">
   <div class="topbar">
-    <button class="mob-menu-btn" id="mobMenuBtn" onclick="toggleMobileSidebar()" style="display:none" title="Menu">
-      <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"><line x1="3" y1="6" x2="21" y2="6"/><line x1="3" y1="12" x2="21" y2="12"/><line x1="3" y1="18" x2="21" y2="18"/></svg>
-    </button>
     <div class="logo">Aide</div>
     <div class="tb-divider"></div>
     <div class="status-pill">
       <div class="sdot on" id="appDot"></div>
       <div class="stext" id="appStatus">Ready</div>
-    </div>
-    <div class="conn-pill online" id="connPill">
-      <div class="conn-dot"></div>
-      <span id="connLabel">Online</span>
     </div>
     <div class="topbar-right">
       <div class="model-picker-wrap" id="modelPickerWrap">
@@ -928,6 +735,10 @@ body{font-family:'DM Sans',sans-serif;background:var(--bg);color:var(--text);hei
       <div class="input-area">
         <div class="input-wrap">
           <div class="attachments-bar" id="attachmentsBar"></div>
+          <div class="search-indicator" id="searchIndicator">
+            <div class="si-spin"></div>
+            <span id="searchStatus">Searching the web…</span>
+          </div>
           <div class="input-row">
             <button class="attach-btn" onclick="triggerFileUpload()" title="Attach file">
               <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M21.44 11.05l-9.19 9.19a6 6 0 01-8.49-8.49l9.19-9.19a4 4 0 015.66 5.66l-9.2 9.19a2 2 0 01-2.83-2.83l8.49-8.48"/></svg>
@@ -935,10 +746,6 @@ body{font-family:'DM Sans',sans-serif;background:var(--bg);color:var(--text);hei
             <input type="file" id="fileInput" style="display:none" multiple accept=".pdf,.docx,.xlsx,.xls,.csv,.txt,.png,.jpg,.jpeg,.gif,.webp" onchange="handleFileSelect(event)" />
             <textarea id="userInput" placeholder="Ask anything, attach files, or say 'create an Excel tracker with…'" rows="1"
               onkeydown="handleKey(event)" oninput="autoResize(this)"></textarea>
-            <button class="search-icon-btn" id="searchIconBtn" title="Web search" style="opacity:.55">
-              <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="11" cy="11" r="8"/><line x1="21" y1="21" x2="16.65" y2="16.65"/></svg>
-            </button>
-            <select class="input-mode-select" id="inputModeSelect" onchange="setMode(this.value)" title="Active mode"></select>
             <button class="send-btn" id="sendBtn" onclick="sendMsg()">
               <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><line x1="22" y1="2" x2="11" y2="13"/><polygon points="22 2 15 22 11 13 2 9 22 2"/></svg>
             </button>
@@ -982,37 +789,17 @@ body{font-family:'DM Sans',sans-serif;background:var(--bg);color:var(--text);hei
       <button class="btn-ghost-sm" style="width:auto;padding:5px 10px;font-size:12px;margin:0" onclick="toggleSettings()">Close</button>
     </div>
     <div class="drawer-body">
-      <div class="sg"><div class="sl">Display name</div><input class="si" id="sDisplayName" type="text" placeholder="Your name (e.g. Alex)" /><div style="font-size:11px;color:var(--text-3);margin-top:4px">Updates how you appear in the sidebar</div></div>
       <div class="sg"><div class="sl">Claude API key</div><input class="si" id="sClaudeKey" type="password" placeholder="sk-ant-..." /></div>
       <div class="sg"><div class="sl">OpenAI API key</div><input class="si" id="sOpenAIKey" type="password" placeholder="sk-..." /></div>
       <div class="sg"><div class="sl">Gemini API key</div><input class="si" id="sGeminiKey" type="password" placeholder="AIza..." /></div>
       <div class="sg"><div class="sl">Mistral API key</div><input class="si" id="sMistralKey" type="password" placeholder="..." /></div>
-      <div class="sg">
-        <div class="sl" style="display:flex;align-items:center;gap:6px">OpenRouter key <span style="font-size:9px;background:#E8F0FF;color:#1A4D8F;padding:1px 5px;border-radius:8px;font-weight:600">300+ models</span></div>
-        <input class="si" id="sOpenRouterKey" type="password" placeholder="sk-or-v1-..." />
-        <div style="font-size:10.5px;color:var(--text-3);margin-top:4px">Claude, GPT-4o, Gemini, DeepSeek, Llama, Grok and more. <a href="https://openrouter.ai/keys" target="_blank" style="color:var(--green)">Get key →</a></div>
-      </div>
       <div class="sg"><div class="sl">Tavily Search key</div><input class="si" id="sBraveKey" type="password" placeholder="tvly-..." /><div style="font-size:11px;color:var(--text-3);margin-top:4px">Free at <a href="https://tavily.com" target="_blank" style="color:var(--blue)">tavily.com</a> · 1,000 searches/month free</div></div>
-      <div class="sg">
-        <div class="sl">Ollama (local AI)</div>
-        <input class="si" id="sOllamaUrl" placeholder="http://localhost:11434" />
-        <input class="si" id="sOllamaModel" placeholder="Model e.g. qwen2.5:14b" style="margin-top:6px"/>
-        <div style="font-size:10.5px;color:var(--text-3);margin-top:6px;line-height:1.6">
-          <b style="color:var(--text-2)">One-time setup</b> — paste in Terminal, then quit &amp; reopen Ollama:<br>
-          <code style="font-size:10px;background:var(--surface2);padding:3px 6px;border-radius:3px;display:block;margin-top:4px;user-select:all;cursor:text">launchctl setenv OLLAMA_ORIGINS 'https://noexmc.github.io/app'</code>
-        </div>
-      </div>
+      <div class="sg"><div class="sl">Ollama URL</div><input class="si" id="sOllamaUrl" /><input class="si" id="sOllamaModel" placeholder="Model" style="margin-top:6px"/></div>
       <div class="sg"><div class="sl">License key</div><input class="si" id="sLicenseKey" type="text" /></div>
       <div class="sg">
         <div class="sl">Conversations</div>
         <button class="btn-ghost-sm" onclick="exportConversations();toggleSettings()">↓ Export all conversations</button>
         <button class="btn-ghost-sm" style="margin-top:4px" onclick="importConversations()">↑ Import conversations</button>
-      </div>
-      <div id="passkeySettingsRow"></div>
-      <div class="sg">
-        <div class="sl">API Usage</div>
-        <button class="btn-ghost-sm" id="fetchUsageBtn" onclick="fetchApiUsage()">↻ Fetch usage</button>
-        <div id="usageResult" style="font-size:11.5px;color:var(--text-2);margin-top:8px;line-height:1.7"></div>
       </div>
       <button class="btn-save" onclick="saveSettings()">Save settings</button>
       <button class="btn-ghost-sm" onclick="resetApp()">Reset & re-activate</button>
@@ -1061,17 +848,6 @@ const PRODUCT_CONFIG = {
     { id:'opus',      label:'Opus 4.6',        badge:'🔥 Top',   provider:'anthropic', apiModel:'claude-opus-4-6',            tier:'lifetime' },
     { id:'gpt4o',     label:'GPT-4o',          badge:'',         provider:'openai',    apiModel:'gpt-4o',                     tier:'lifetime' },
     { id:'mistral-l', label:'Mistral Large',   badge:'',         provider:'mistral',   apiModel:'mistral-large-latest',       tier:'lifetime' },
-    // OpenRouter models — unlocked when openrouterKey is set
-    { id:'or-sonnet',  label:'Claude Sonnet',   badge:'',         provider:'openrouter', apiModel:'anthropic/claude-sonnet-4-5',          tier:'byok' },
-    { id:'or-opus',    label:'Claude Opus',     badge:'🔥 Top',   provider:'openrouter', apiModel:'anthropic/claude-opus-4-5',            tier:'byok' },
-    { id:'or-gpt4o',   label:'GPT-4o',          badge:'',         provider:'openrouter', apiModel:'openai/gpt-4o',                        tier:'byok' },
-    { id:'or-o3',      label:'o3 mini',         badge:'🧠 Reason', provider:'openrouter', apiModel:'openai/o3-mini',                      tier:'byok' },
-    { id:'or-gemini',  label:'Gemini 2.0 Pro',  badge:'',         provider:'openrouter', apiModel:'google/gemini-2.0-pro-exp-02-05',      tier:'byok' },
-    { id:'or-deep',    label:'DeepSeek R1',     badge:'🧠 Reason', provider:'openrouter', apiModel:'deepseek/deepseek-r1',                tier:'byok' },
-    { id:'or-llama',   label:'Llama 3.3 70B',   badge:'',         provider:'openrouter', apiModel:'meta-llama/llama-3.3-70b-instruct',   tier:'byok' },
-    { id:'or-qwen',    label:'Qwen 2.5 72B',    badge:'',         provider:'openrouter', apiModel:'qwen/qwen-2.5-72b-instruct',          tier:'byok' },
-    { id:'or-mistral', label:'Mistral Large 2',  badge:'',         provider:'openrouter', apiModel:'mistralai/mistral-large-2411',        tier:'byok' },
-    { id:'or-grok',    label:'Grok 2',           badge:'',         provider:'openrouter', apiModel:'x-ai/grok-2-1212',                   tier:'byok' },
   ],
 
   // ── PLAN → MAX TIER ──
@@ -1300,7 +1076,6 @@ let cfg = {
   selectedModelId: 'haiku',
   activeMode: 'executive',  // which MODES preset is active
   claudeKey: '', claudeModel: 'claude-sonnet-4-6',
-  openrouterKey: '',
   openaiKey: '', openaiModel: 'gpt-4o',
   geminiKey: '', mistralKey: '',
   braveKey: '',
@@ -1452,24 +1227,6 @@ async function pullFromSupabase() {
     const decrypted = await decrypt(rows[0].data, encPassword);
     const remote = JSON.parse(decrypted);
 
-    // Always restore API keys from remote (fixes cross-device key loss)
-    if (remote.cfgKeys) {
-      ['claudeKey','openrouterKey','openaiKey','geminiKey','mistralKey','ollamaUrl','ollamaModel'].forEach(k => {
-        if (remote.cfgKeys[k]) cfg[k] = remote.cfgKeys[k];
-      });
-      saveCfg();
-      saveGlobalKeys();
-      if (typeof buildProvSwitch === 'function') buildProvSwitch();
-      if (typeof loadSettingsUI === 'function') loadSettingsUI();
-    }
-    // Always re-apply lifetime for passkey users after pull
-    if (typeof loadPasskeys === 'function' && loadPasskeys().length > 0) {
-      cfg.mode = 'byok';
-      cfg.licenseData = { plan: 'lifetime', customer: currentUser?.name || 'User' };
-      cfg.activated = true;
-      saveCfg();
-    }
-
     // Merge: remote wins for conversations updated more recently
     let changed = false;
     Object.entries(remote.convs || {}).forEach(([id, remoteConv]) => {
@@ -1486,6 +1243,7 @@ async function pullFromSupabase() {
     if (changed) {
       saveConvs(); saveProjects();
       renderConvList(); renderProjList();
+      // Reload current conv if it changed
       if (curConv && convs[curConv]) renderMessages();
     }
   } catch(e) {
@@ -1523,49 +1281,497 @@ function init() {
   checkAuthSession();
 }
 
-async function checkAuthSession() {
-  // If passkeys registered + active session in localStorage, restore silently
-  const savedCfg = localStorage.getItem('aide_cfg_restore');
-  if (savedCfg) {
-    try {
-      const sc = JSON.parse(savedCfg);
-      if (sc.userId && sc.activated) {
-        // Prefer passkey match but fall back to stored name (works on new/reinstalled device)
-        const pk = loadPasskeys().find(p => p.userId === sc.userId);
-        const name = pk?.name || sc.name || 'User';
-        currentUser = { id: sc.userId, name, email: name };
-        loadUserData();
-        cfg.activated = true;
-        cfg.mode = 'byok';
-        cfg.licenseData = { plan: 'lifetime', customer: name };
-        saveCfg();
-        launchApp();
-        return;
-      }
-    } catch(e) {}
-  }
-  // Show auth screen — detect if passkeys exist to choose right view
-  showAuthScreen();
-  if (hasPasskeys()) {
-    setAuthView('login');
-  } else if (!passkeySupported()) {
-    setAuthView('fallback');
-  } else {
-    setAuthView('setup');
+async 
+// ── Passkey helpers ──────────────────────────────────────
+function b64url(buf) {
+  return btoa(String.fromCharCode(...new Uint8Array(buf)))
+    .replace(/\+/g,'-').replace(/\//g,'_').replace(/=+$/,'');
+}
+function b64urlDecode(s) {
+  s = (s||'').replace(/-/g,'+').replace(/_/g,'/');
+  while (s.length%4) s+='=';
+  return Uint8Array.from(atob(s), ch=>ch.charCodeAt(0));
+}
+function passkeySupported() { return !!window.PublicKeyCredential; }
+function loadPasskeys() {
+  try { return JSON.parse(localStorage.getItem('aide_passkeys')||'[]'); } catch(e) { return []; }
+}
+function savePasskeys(list) { localStorage.setItem('aide_passkeys', JSON.stringify(list)); }
+function hasPasskeys() { return loadPasskeys().length > 0; }
+
+async function passkeySetup() {
+  const name = (document.getElementById('setupName')?.value||'').trim() || 'User';
+  const err  = document.getElementById('setupError');
+  if (err) err.textContent = '';
+  if (!passkeySupported()) { setAuthView('fallback'); return; }
+  const userId   = 'aide_' + Date.now().toString(36) + '_' + Math.random().toString(36).slice(2,8);
+  const challenge = crypto.getRandomValues(new Uint8Array(32));
+  const btn = document.getElementById('setupBtn');
+  if (btn) btn.textContent = 'Waiting for Face ID…';
+  try {
+    const cred = await navigator.credentials.create({ publicKey: {
+      challenge,
+      rp: { name: 'Aide' },
+      user: { id: new TextEncoder().encode(userId), name, displayName: name },
+      pubKeyCredParams: [{ type:'public-key', alg:-7 }, { type:'public-key', alg:-257 }],
+      authenticatorSelection: { authenticatorAttachment:'platform', userVerification:'required', residentKey:'required' },
+      timeout: 60000,
+    }});
+    const stored = loadPasskeys();
+    stored.push({ credId: b64url(cred.rawId), userId, name, created: Date.now() });
+    savePasskeys(stored);
+    currentUser = { id: userId, name, email: name };
+    loadUserData();
+    cfg.activated = true; cfg.mode = 'byok';
+    cfg.licenseData = { plan: 'lifetime', customer: name };
+    saveCfg();
+    persistSession();
+    launchApp();
+  } catch(e) {
+    if (btn) btn.textContent = 'Register with Face ID / Touch ID';
+    if (err) err.textContent = e.name === 'NotAllowedError' ? 'Cancelled. Try again.' : (e.message || 'Registration failed.');
   }
 }
 
-// ── Auth helpers ──────────────────────────────────────────────────────
+async function passkeySignIn() {
+  if (!passkeySupported()) { setAuthView('fallback'); return; }
+  const stored = loadPasskeys();
+  const err = document.getElementById('authError');
+  if (err) err.textContent = '';
+  if (!stored.length) {
+    if (err) err.textContent = 'No passkey on this device yet.';
+    setTimeout(() => setAuthView('setup'), 1200);
+    return;
+  }
+  const challenge = crypto.getRandomValues(new Uint8Array(32));
+  try {
+    const assertion = await navigator.credentials.get({ publicKey: {
+      challenge,
+      allowCredentials: stored.map(s => ({ type:'public-key', id: b64urlDecode(s.credId), transports:['internal','hybrid'] })),
+      userVerification: 'required',
+      timeout: 60000,
+    }});
+    const credId = b64url(assertion.rawId);
+    const match  = stored.find(s => s.credId === credId);
+    if (!match) throw new Error('Passkey not recognised.');
+    currentUser = { id: match.userId, name: match.name, email: match.name };
+    loadUserData();
+    cfg.activated = true; cfg.mode = 'byok';
+    cfg.licenseData = cfg.licenseData || { plan: 'lifetime', customer: match.name };
+    saveCfg();
+    persistSession();
+    launchApp();
+  } catch(e) {
+    if (err) err.textContent = e.name === 'NotAllowedError' ? 'Verification cancelled.' : (e.message || 'Sign-in failed.');
+  }
+}
+
+function friendsSignIn() {
+  const pw  = (document.getElementById('friendsPassword')?.value||'').trim();
+  const err = document.getElementById('friendsError');
+  if (err) err.textContent = '';
+  if (pw !== 'smokey') {
+    if (err) err.textContent = 'Incorrect password.';
+    return;
+  }
+  currentUser = { id: 'guest', name: 'Guest', email: 'guest' };
+  cfg.mode = 'friends';
+  cfg.demoCount = 0;
+  cfg.activated = true;
+  launchApp();
+}
+
+function persistSession() {
+  if (currentUser && currentUser.id !== 'guest') {
+    localStorage.setItem('aide_session', JSON.stringify({
+      userId: currentUser.id,
+      name: currentUser.name,
+      savedAt: Date.now()
+    }));
+  }
+}
+
+function confirmLogout() {
+  if (!confirm('Sign out?')) return;
+  localStorage.removeItem('aide_session');
+  currentUser = null;
+  cfg.mode = null;
+  document.getElementById('app').classList.remove('active');
+  showAuthScreen();
+  setAuthView(hasPasskeys() ? 'login' : 'setup');
+}
+
 function setAuthView(view) {
   document.querySelectorAll('.auth-view').forEach(el => el.classList.remove('active'));
   const el = document.getElementById('authView_' + view);
   if (el) el.classList.add('active');
 }
+
+function showAuthScreen() {
+  document.getElementById('authScreen').classList.add('active');
+  document.getElementById('app').classList.remove('active');
+}
+
+async function checkAuthSession() {
+  // Passkey silent restore
+  try {
+    const sc = JSON.parse(localStorage.getItem('aide_session') || 'null');
+    if (sc && sc.userId && sc.name) {
+      const pk = loadPasskeys().find(p => p.userId === sc.userId);
+      if (pk) {
+        currentUser = { id: sc.userId, name: sc.name, email: sc.name };
+        loadUserData();
+        cfg.activated = true;
+        cfg.mode = 'byok';
+        cfg.licenseData = { plan: 'lifetime', customer: sc.name };
+        saveCfg();
+        launchApp();
+        return;
+      }
+    }
+  } catch(e) {}
+  // No valid session — show auth
+  showAuthScreen();
+  setAuthView(hasPasskeys() ? 'login' : 'setup');
+}
+function loadUserData() {
+  const k = KEYS();
+  const saved = localStorage.getItem(k.cfg);
+  if (saved) cfg = { ...cfg, ...JSON.parse(saved) };
+  const savedC = localStorage.getItem(k.convs);
+  if (savedC) convs = JSON.parse(savedC);
+  const savedP = localStorage.getItem(k.projects);
+  if (savedP) projects = JSON.parse(savedP);
+}
+
 function showAuthScreen() {
   document.getElementById('activation').classList.remove('active');
   document.getElementById('app').classList.remove('active');
   document.getElementById('authScreen').classList.add('active');
 }
+
+function saveCfg() { localStorage.setItem(KEYS().cfg, JSON.stringify(cfg)); }
+function saveConvs() { localStorage.setItem(KEYS().convs, JSON.stringify(convs)); schedulePush(); }
+function saveProjects() { localStorage.setItem(KEYS().projects, JSON.stringify(projects)); schedulePush(); }
+
+// ══════════════════════════════════
+// ACTIVATION — MANAGED
+// ══════════════════════════════════
+let actTab = 'managed';
+
+function switchActTab(tab, el) {
+  actTab = tab;
+  document.querySelectorAll('.act-tab').forEach(t => t.classList.remove('active'));
+  el.classList.add('active');
+  document.getElementById('managedPane').classList.toggle('show', tab==='managed');
+  document.getElementById('byokPane').classList.toggle('show', tab==='byok');
+}
+
+function selectPlan(plan, el) {
+  selectedPlan = plan;
+  document.querySelectorAll('.plan-card').forEach(c => c.classList.remove('selected'));
+  el.classList.add('selected');
+}
+
+function formatLicenseInput(input) {
+  let v = input.value.toUpperCase().replace(/[^A-Z0-9]/g,'');
+  let parts = [];
+  for (let i = 0; i < v.length && parts.length < 4; i+=4) {
+    parts.push(v.substr(i,4));
+  }
+  input.value = parts.join('-');
+}
+
+function openCheckout(e) {
+  e.preventDefault();
+  window.open(PRODUCT_CONFIG.CHECKOUT_URL, '_blank');
+}
+
+async function activateLicense() {
+  const key = document.getElementById('licenseKeyInput').value.trim();
+  const result = document.getElementById('licenseResult');
+  const btn = document.getElementById('activateBtn');
+
+  if (!key || key.length < 10) {
+    result.className = 'act-result error';
+    result.textContent = 'Please enter your license key.';
+    return;
+  }
+
+  btn.disabled = true;
+  btn.textContent = 'Validating…';
+  result.className = 'act-result';
+
+  try {
+    // Demo key bypass
+    if (key === 'AIDE-DEMO-TEST-0001') {
+      cfg.mode = 'managed';
+      cfg.licenseKey = key;
+      cfg.licenseData = { plan:'pro', expires:'2030-12-31', customer:'Demo User' };
+      cfg.provider = 'claude';
+      cfg.activated = true;
+      saveCfg();
+      launchApp();
+      return;
+    }
+
+    // Fetch validation JSON from GitHub
+    const r = await fetch(PRODUCT_CONFIG.KEYS_VALIDATION_URL + '?t=' + Date.now(), {
+      signal: AbortSignal.timeout(8000)
+    });
+
+    if (!r.ok) throw new Error('Could not reach validation server. Check your internet connection.');
+
+    const data = await r.json();
+    const keyData = data.keys?.[key];
+
+    if (!keyData) {
+      result.className = 'act-result error';
+      result.textContent = '✕ Invalid license key. Check for typos or get one at aide.app';
+      return;
+    }
+
+    // Check expiry
+    if (keyData.expires !== '2030-12-31' && new Date(keyData.expires) < new Date()) {
+      result.className = 'act-result error';
+      result.textContent = `✕ This key expired on ${keyData.expires}. Please renew at aide.app`;
+      return;
+    }
+
+    // Valid!
+    cfg.mode = 'managed';
+    cfg.licenseKey = key;
+    cfg.licenseData = keyData;
+    cfg.provider = 'claude';
+    cfg.activated = true;
+    saveCfg();
+    launchApp();
+
+  } catch(e) {
+    if (e.name === 'TimeoutError') {
+      result.className = 'act-result error';
+      result.textContent = '✕ Validation timed out. Check your internet and try again.';
+    } else {
+      result.className = 'act-result error';
+      result.textContent = '✕ ' + e.message;
+    }
+  }
+
+  btn.disabled = false;
+  btn.textContent = 'Activate';
+}
+
+function tryDemo() {
+  cfg.mode = 'demo';
+  cfg.demoCount = 0;
+  cfg.licenseData = { plan:'demo', customer:'Demo' };
+  cfg.activated = true;
+  saveCfg();
+  launchApp();
+}
+
+// ══════════════════════════════════
+// ACTIVATION — BYOK
+// ══════════════════════════════════
+function selectBYOKProvider(p, el) {
+  byokProvider = p;
+  document.querySelectorAll('.bpr-btn').forEach(b => b.classList.remove('selected'));
+  el.classList.add('selected');
+  ['bpClaude','bpOpenAI','bpOllama','bpGemini','bpMistral'].forEach(id => {
+    document.getElementById(id).classList.remove('show');
+  });
+  const map = { claude:'bpClaude', openai:'bpOpenAI', ollama:'bpOllama', gemini:'bpGemini', mistral:'bpMistral' };
+  document.getElementById(map[p])?.classList.add('show');
+}
+
+async function activateBYOK() {
+  const result = document.getElementById('byokResult');
+  result.className = 'act-result';
+
+  try {
+    if (byokProvider === 'claude') {
+      const key = document.getElementById('claudeKeyBYOK').value.trim();
+      if (!key) throw new Error('Enter your Claude API key');
+      const r = await fetch('https://api.anthropic.com/v1/messages', {
+        method:'POST',
+        headers:{'Content-Type':'application/json','x-api-key':key,'anthropic-version':'2023-06-01','anthropic-dangerous-direct-browser-access':'true'},
+        body:JSON.stringify({model:'claude-haiku-4-5-20251001',max_tokens:5,messages:[{role:'user',content:'hi'}]})
+      });
+      if (!r.ok) { const e=await r.json(); throw new Error(e.error?.message||'Invalid key'); }
+      cfg.claudeKey = key;
+      cfg.claudeModel = document.getElementById('claudeModelBYOK').value;
+
+    } else if (byokProvider === 'openai') {
+      const key = document.getElementById('openaiKeyBYOK').value.trim();
+      if (!key) throw new Error('Enter your OpenAI API key');
+      const r = await fetch('https://api.openai.com/v1/chat/completions', {
+        method:'POST',
+        headers:{'Content-Type':'application/json','Authorization':'Bearer '+key},
+        body:JSON.stringify({model:'gpt-4o-mini',max_tokens:5,messages:[{role:'user',content:'hi'}]})
+      });
+      if (!r.ok) { const e=await r.json(); throw new Error(e.error?.message||'Invalid key'); }
+      cfg.openaiKey = key;
+      cfg.openaiModel = document.getElementById('openaiModelBYOK').value;
+
+    } else if (byokProvider === 'gemini') {
+      const key = document.getElementById('geminiKeyBYOK').value.trim();
+      if (!key) throw new Error('Enter your Gemini API key');
+      const model = document.getElementById('geminiModelBYOK').value;
+      const r = await fetch(`https://generativelanguage.googleapis.com/v1beta/models/${model}:generateContent?key=${key}`, {
+        method:'POST', headers:{'Content-Type':'application/json'},
+        body:JSON.stringify({contents:[{role:'user',parts:[{text:'hi'}]}],generationConfig:{maxOutputTokens:5}})
+      });
+      if (!r.ok) { const e=await r.json(); throw new Error(e.error?.message||'Invalid Gemini key'); }
+      cfg.geminiKey = key;
+
+    } else if (byokProvider === 'mistral') {
+      const key = document.getElementById('mistralKeyBYOK').value.trim();
+      if (!key) throw new Error('Enter your Mistral API key');
+      const model = document.getElementById('mistralModelBYOK').value;
+      const r = await fetch('https://api.mistral.ai/v1/chat/completions', {
+        method:'POST',
+        headers:{'Content-Type':'application/json','Authorization':'Bearer '+key},
+        body:JSON.stringify({model,max_tokens:5,messages:[{role:'user',content:'hi'}]})
+      });
+      if (!r.ok) { const e=await r.json(); throw new Error(e.error?.message||'Invalid Mistral key'); }
+      cfg.mistralKey = key;
+
+    } else {
+      const url = document.getElementById('ollamaUrlBYOK').value.trim();
+      const r = await fetch(`${url}/api/tags`, {signal:AbortSignal.timeout(4000)});
+      if (!r.ok) throw new Error('Cannot reach Ollama. Make sure it is running.');
+      cfg.ollamaUrl = url;
+      cfg.ollamaModel = document.getElementById('ollamaModelBYOK').value.trim();
+    }
+
+    cfg.mode = 'byok';
+    cfg.provider = byokProvider;
+    cfg.licenseData = { plan:'byok', customer:'Self-hosted' };
+    cfg.activated = true;
+    saveCfg();
+    launchApp();
+
+  } catch(e) {
+    result.className = 'act-result error';
+    result.textContent = '✕ ' + e.message;
+  }
+}
+
+// ══════════════════════════════════
+// AUTH — Supabase email/password + magic link
+// ══════════════════════════════════
+let authView = 'login'; // 'login' | 'register' | 'magic' | 'check-email' | 'demo-prompt'
+
+function setAuthView(view) {
+  authView = view;
+  document.querySelectorAll('.auth-view').forEach(el => el.classList.remove('active'));
+  const el = document.getElementById('authView_' + view);
+  if (el) el.classList.add('active');
+}
+
+async function authSignIn() {
+  const email = document.getElementById('authEmail').value.trim();
+  const pass  = document.getElementById('authPassword').value;
+  const err   = document.getElementById('authError');
+  err.textContent = '';
+  if (!email || !pass) { err.textContent = 'Please enter email and password.'; return; }
+  setAuthLoading(true);
+  try {
+    const res = await fetch(`${PRODUCT_CONFIG.SUPABASE_URL}/auth/v1/token?grant_type=password`, {
+      method: 'POST',
+      headers: { 'Content-Type':'application/json', 'apikey': PRODUCT_CONFIG.SUPABASE_ANON_KEY },
+      body: JSON.stringify({ email, password: pass })
+    });
+    const data = await res.json();
+    if (!res.ok) throw new Error(data.error_description || data.msg || 'Sign in failed');
+    await onAuthSuccess(data.access_token, data.user);
+  } catch(e) { err.textContent = e.message; }
+  setAuthLoading(false);
+}
+
+async function authRegister() {
+  const email = document.getElementById('regEmail').value.trim();
+  const pass  = document.getElementById('regPassword').value;
+  const pass2 = document.getElementById('regPassword2').value;
+  const err   = document.getElementById('regError');
+  err.textContent = '';
+  if (!email || !pass) { err.textContent = 'Please enter email and password.'; return; }
+  if (pass !== pass2)  { err.textContent = 'Passwords do not match.'; return; }
+  if (pass.length < 6) { err.textContent = 'Password must be at least 6 characters.'; return; }
+  setAuthLoading(true);
+  try {
+    const res = await fetch(`${PRODUCT_CONFIG.SUPABASE_URL}/auth/v1/signup`, {
+      method: 'POST',
+      headers: { 'Content-Type':'application/json', 'apikey': PRODUCT_CONFIG.SUPABASE_ANON_KEY },
+      body: JSON.stringify({ email, password: pass })
+    });
+    const data = await res.json();
+    if (!res.ok) throw new Error(data.error_description || data.msg || 'Registration failed');
+    // If email confirmation is disabled, we get a token immediately
+    if (data.access_token) {
+      await onAuthSuccess(data.access_token, data.user);
+    } else {
+      setAuthView('check-email');
+    }
+  } catch(e) { err.textContent = e.message; }
+  setAuthLoading(false);
+}
+
+async function authMagicLink() {
+  const email = document.getElementById('magicEmail').value.trim();
+  const err   = document.getElementById('magicError');
+  err.textContent = '';
+  if (!email) { err.textContent = 'Please enter your email.'; return; }
+  setAuthLoading(true);
+  try {
+    const res = await fetch(`${PRODUCT_CONFIG.SUPABASE_URL}/auth/v1/magiclink`, {
+      method: 'POST',
+      headers: { 'Content-Type':'application/json', 'apikey': PRODUCT_CONFIG.SUPABASE_ANON_KEY },
+      body: JSON.stringify({ email })
+    });
+    if (!res.ok) { const d = await res.json(); throw new Error(d.error_description || 'Failed to send link'); }
+    setAuthView('check-email');
+  } catch(e) { err.textContent = e.message; }
+  setAuthLoading(false);
+}
+
+async function onAuthSuccess(token, user) {
+  localStorage.setItem('aide_auth_token', token);
+  currentUser = { id: user.id, email: user.email, name: user.email.split('@')[0] };
+  loadUserData();
+  // Ensure cfg has activated flag for managed users with a key
+  if (!cfg.activated) {
+    cfg.activated = true;
+    cfg.mode = cfg.mode || 'managed';
+  }
+  launchApp();
+}
+
+function confirmLogout() {
+  if (confirm('Sign out? Your conversations are saved and will be here when you return.')) {
+    logout();
+  }
+}
+
+async function logout() {
+  // Revoke token server-side
+  const token = localStorage.getItem('aide_auth_token');
+  if (token) {
+    fetch(`${PRODUCT_CONFIG.SUPABASE_URL}/auth/v1/logout`, {
+      method: 'POST',
+      headers: { 'apikey': PRODUCT_CONFIG.SUPABASE_ANON_KEY, 'Authorization': 'Bearer ' + token }
+    }).catch(()=>{});
+  }
+  // Clear local session (keep cfg for re-login convenience)
+  localStorage.removeItem('aide_auth_token');
+  currentUser = null;
+  convs = {}; projects = {}; curConv = null;
+  cfg.activated = false;
+  document.getElementById('app').classList.remove('active');
+  showAuthScreen();
+  setAuthView('login');
+}
+
 function tryDemoFromAuth() {
   currentUser = { id: 'demo_' + Date.now(), email: 'demo', name: 'Demo' };
   cfg.mode = 'demo';
@@ -1616,9 +1822,8 @@ function launchApp() {
     badge.className = 'license-badge managed';
     badge.textContent = '✦ ' + (cfg.licenseData?.plan||'managed').charAt(0).toUpperCase() + (cfg.licenseData?.plan||'managed').slice(1);
   } else if (cfg.mode === 'byok') {
-    const _plan = cfg.licenseData?.plan || '';
-    badge.className = 'license-badge ' + (_plan === 'lifetime' ? 'managed' : 'byok');
-    badge.textContent = _plan === 'lifetime' ? '✦ Lifetime' : '🔑 BYOK';
+    badge.className = 'license-badge byok';
+    badge.textContent = '🔑 BYOK';
   } else {
     badge.className = 'license-badge';
     badge.style.background = '#fef3e2';
@@ -1628,12 +1833,18 @@ function launchApp() {
 
   // User row — email + logout
   const userRow = document.getElementById('userRow');
-  if (currentUser && currentUser.email !== 'demo') {
-    const displayName = currentUser.name || currentUser.email;
-    userRow.innerHTML = `
-      <span class="user-email" title="${displayName}">👤 ${displayName}</span>
-      <button class="logout-btn" onclick="confirmLogout()" title="Sign out">Sign out</button>`;
-    userRow.style.display = 'flex';
+  if (userRow) {
+    if (cfg.mode === 'friends') {
+      userRow.innerHTML = `<span class="user-email">👥 Guest session</span>
+        <button class="logout-btn" onclick="location.reload()">End session</button>`;
+      userRow.style.display = 'flex';
+    } else if (currentUser && currentUser.name) {
+      userRow.innerHTML = `<span class="user-email">👤 ${currentUser.name}</span>
+        <button class="logout-btn" onclick="confirmLogout()">Sign out</button>`;
+      userRow.style.display = 'flex';
+    } else {
+      userRow.style.display = 'none';
+    }
   } else {
     userRow.style.display = 'none';
   }
@@ -1645,10 +1856,9 @@ function launchApp() {
   } else {
     newConv();
   }
-  // Persist session for silent restore on next open
-  if (typeof persistSession === 'function') persistSession();
-  setupMobileUI();
-  setupConnectivity();
+
+  if (typeof setupMobileUI === 'function') setupMobileUI();
+  if (typeof setupConnectivity === 'function') setupConnectivity();
 }
 
 // ── MODEL HELPERS ──
@@ -1664,20 +1874,13 @@ function tierRank(tier) {
 function getAvailableModels() {
   const planTier = getPlanTier();
   const planRank = tierRank(planTier);
-  const base = PRODUCT_CONFIG.MODELS.filter(m => m.provider !== 'openrouter' && tierRank(m.tier) <= planRank);
-  if (cfg.openrouterKey) {
-    const orModels = PRODUCT_CONFIG.MODELS.filter(m => m.provider === 'openrouter');
-    return [...base, ...orModels];
-  }
-  return base;
+  return PRODUCT_CONFIG.MODELS.filter(m => tierRank(m.tier) <= planRank);
 }
 
 function getLockedModels() {
   const planTier = getPlanTier();
   const planRank = tierRank(planTier);
-  const baseLocked = PRODUCT_CONFIG.MODELS.filter(m => m.provider !== 'openrouter' && tierRank(m.tier) > planRank);
-  if (!cfg.openrouterKey) return baseLocked;
-  return baseLocked;
+  return PRODUCT_CONFIG.MODELS.filter(m => tierRank(m.tier) > planRank);
 }
 
 function getModel(id) {
@@ -1701,17 +1904,7 @@ const MODEL_META = {
   'gemini-pro':{ icon:'♊', iconBg:'#FEF3D0', use:'Gemini Pro reasoning',      speed:[1,1,0], tierStyle:'background:#FEF3D0;color:#92530A' },
   'mistral-small':{ icon:'🌀', iconBg:'#F5F0FF', use:'Fast Mistral tasks',    speed:[1,1,1], tierStyle:'background:#F5F0FF;color:#6B3FA0' },
   'mistral-large':{ icon:'🌀', iconBg:'#EDE5FF', use:'Mistral flagship',      speed:[1,0,0], tierStyle:'background:#EDE5FF;color:#6B3FA0' },
-  ollama:      { icon:'💻', iconBg:'#F0EFE9', use:'Offline · private · free',       speed:[1,1,0], tierStyle:'background:#F0EFE9;color:#5C5B55' },
-  'or-sonnet':  { icon:'✦',  iconBg:'#EEF4FB', use:'Claude Sonnet via OpenRouter',   speed:[1,1,0], tierStyle:'background:#EEF4FB;color:#1A3A5C' },
-  'or-opus':    { icon:'🔥', iconBg:'#FEF3D0', use:'Claude Opus via OpenRouter',     speed:[1,0,0], tierStyle:'background:#FEF3D0;color:#92530A' },
-  'or-gpt4o':   { icon:'🤖', iconBg:'#E8F5E9', use:'OpenAI GPT-4o',                 speed:[1,1,0], tierStyle:'background:#E8F5E9;color:#1D6A3E' },
-  'or-o3':      { icon:'🧠', iconBg:'#EDE5FF', use:'OpenAI o3 mini — deep reasoning',speed:[1,0,0], tierStyle:'background:#EDE5FF;color:#6B3FA0' },
-  'or-gemini':  { icon:'♊', iconBg:'#EEF4FB', use:'Google Gemini 2.0 Pro',          speed:[1,1,0], tierStyle:'background:#EEF4FB;color:#1A3A5C' },
-  'or-deep':    { icon:'🐋', iconBg:'#E8F0FF', use:'DeepSeek R1 — best open reasoning',speed:[1,0,0], tierStyle:'background:#E8F0FF;color:#1A4D8F' },
-  'or-llama':   { icon:'🦙', iconBg:'#F0F7E6', use:'Meta Llama 3.3 70B',            speed:[1,1,0], tierStyle:'background:#F0F7E6;color:#3A6B1A' },
-  'or-qwen':    { icon:'🔮', iconBg:'#F5F0FF', use:'Qwen 2.5 72B — multilingual',   speed:[1,1,0], tierStyle:'background:#F5F0FF;color:#6B3FA0' },
-  'or-mistral': { icon:'🌀', iconBg:'#EDE5FF', use:'Mistral Large 2',               speed:[1,1,0], tierStyle:'background:#EDE5FF;color:#6B3FA0' },
-  'or-grok':    { icon:'𝕏',  iconBg:'#F0F0F0', use:'xAI Grok 2',                   speed:[1,1,0], tierStyle:'background:#F0F0F0;color:#333' },
+  ollama:   { icon:'💻', iconBg:'#F0EFE9', use:'Offline · private · free',    speed:[1,1,0], tierStyle:'background:#F0EFE9;color:#5C5B55' },
 };
 
 function buildProvSwitch() {
@@ -1768,20 +1961,18 @@ function buildProvSwitch() {
     html += `<div class="cp-divider"></div>
       <div class="cp-item ${isOllama?'cp-active':''}" onclick="selectCardModel('ollama')">
         <div class="cp-icon" style="background:#F0EFE9">💻</div>
-        <div><div class="cp-name" style="display:flex;align-items:center;gap:5px">Local (Ollama)<div class="ollama-dot ${_ollamaRunning?'running':'stopped'}" title="${_ollamaRunning?'Ollama running':'Ollama not detected'}"></div></div><div class="cp-use">Offline · private · free</div></div>
+        <div><div class="cp-name">Local (Ollama)</div><div class="cp-use">Offline · private · free</div></div>
         <div class="cp-right">
           <div class="cp-speed"><span class="on g"></span><span class="on g"></span><span></span></div>
           <div class="cp-tier" style="background:#F0EFE9;color:#5C5B55">Local</div>
         </div>
       </div>
       <div class="cp-ollama-row ${isOllama?'show':''}" id="cpOllamaRow">
-        <select id="cpOllamaSelect" onchange="selectOllamaModel(this.value)" onclick="event.stopPropagation()">
-          <option value="${cfg.ollamaModel||'qwen2.5:14b'}">${cfg.ollamaModel||'qwen2.5:14b'}</option>
-        </select>
-        <div class="ollama-fetch-hint" id="ollamaFetchHint">↻ detecting models…</div>
+        <input id="cpOllamaInput" value="${cfg.ollamaModel||'qwen2.5:14b'}"
+          placeholder="model name e.g. qwen2.5:14b"
+          onchange="cfg.ollamaModel=this.value;saveCfg();updateStatus();buildProvSwitch()"
+          onclick="event.stopPropagation()" />
       </div>`;
-    // Fetch models after render
-    if (isOllama) setTimeout(fetchOllamaModels, 80);
 
     cp.innerHTML = html;
 
@@ -1798,12 +1989,10 @@ function buildProvSwitch() {
       `<button class="pb ${cfg.provider===p.id?'active':''}" onclick="setProvider('${p.id}',this)">${p.label}</button>`
     ).join('');
     const ollamaExtra = cfg.provider === 'ollama'
-      ? `<select id="tbOllamaSelect" onchange="selectOllamaModel(this.value)"
-          style="font-family:'DM Mono',monospace;font-size:11px;padding:3px 7px;border:1px solid var(--border);
-          border-radius:var(--r-sm);background:var(--surface2);color:var(--text);outline:none;cursor:pointer;max-width:130px">
-          <option value="${cfg.ollamaModel||'qwen2.5:14b'}">${cfg.ollamaModel||'qwen2.5:14b'}</option>
-         </select>` : '';
-    if (cfg.provider === 'ollama') setTimeout(fetchOllamaModels, 80);
+      ? `<input id="tbOllamaModel" value="${cfg.ollamaModel||'qwen2.5:14b'}"
+          onchange="cfg.ollamaModel=this.value;saveCfg();updateStatus()"
+          style="font-family:'DM Mono',sans-serif;font-size:11px;padding:3px 7px;border:1px solid var(--border);
+          border-radius:var(--r-sm);background:var(--surface2);color:var(--text);outline:none;width:120px"/>` : '';
 
     sw.className = 'prov-switch';
     sw.innerHTML = btns + ollamaExtra;
@@ -1880,15 +2069,11 @@ function toggleWS() {}
 // MODES
 // ══════════════════════════════════
 function renderModeBar() {
-  // Sync both mode selects
-  ['modeSelect','inputModeSelect'].forEach(id => {
-    const el = document.getElementById(id);
-    if (!el) return;
-    el.innerHTML = MODES.map(m => `<option value="${m.id}" ${cfg.activeMode===m.id?'selected':''}>${m.icon} ${m.label}</option>`).join('');
-  });
   const sel = document.getElementById('modeSelect');
   if (!sel) return;
-  // (mode selects populated above)
+  sel.innerHTML = MODES.map(m =>
+    `<option value="${m.id}" ${cfg.activeMode===m.id?'selected':''}>${m.icon} ${m.label}</option>`
+  ).join('');
 }
 
 function setMode(id) {
@@ -2187,9 +2372,7 @@ async function callAnthropicWithSearch(key, model, history, content, systemPromp
   const messages = [...history, {role:'user', content}];
 
   document.getElementById('searchIndicator').classList.add('show');
-  const sib = document.getElementById('searchIconBtn');
-  if (sib) { sib.classList.add('active'); sib.style.opacity='1'; sib.title='Searching…'; }
-  document.getElementById('searchIconBtn')?.setAttribute('title','Searching the web…');
+  document.getElementById('searchStatus').textContent = 'Searching the web…';
 
   try {
     const r = await fetch('https://api.anthropic.com/v1/messages', {
@@ -2218,8 +2401,7 @@ async function callAnthropicWithSearch(key, model, history, content, systemPromp
       const textSoFar = d.content.filter(b => b.type === 'text').map(b => b.text).join('');
 
       if (toolUseBlock) {
-        const sib3 = document.getElementById('searchIconBtn');
-        if (sib3) sib3.title = `Searching: "${(toolUseBlock.input?.query||'').slice(0,32)}"…`;
+        document.getElementById('searchStatus').textContent = `Searching: "${(toolUseBlock.input?.query||'').slice(0,40)}"…`;
 
         // Send tool result back (Anthropic handles the actual search)
         const r2 = await fetch('https://api.anthropic.com/v1/messages', {
@@ -2253,8 +2435,6 @@ async function callAnthropicWithSearch(key, model, history, content, systemPromp
 
   } finally {
     document.getElementById('searchIndicator').classList.remove('show');
-  const sib2 = document.getElementById('searchIconBtn');
-  if (sib2) { sib2.classList.remove('active'); sib2.style.opacity='.55'; sib2.title='Web search'; }
   }
 }
 
@@ -2264,49 +2444,6 @@ async function fetchWebSearch(query) { return null; }
 // ══════════════════════════════════
 // CONVERSATIONS
 // ══════════════════════════════════
-// ══════════════════════════════════
-// BRANCH / SUB-CONVERSATIONS
-// ══════════════════════════════════
-function branchFromMsg(btn) {
-  const ts = btn.dataset.ts;
-  const parentId = curConv;
-  const parentConv = convs[parentId];
-  if (!parentConv) return;
-
-  const msgIdx = parentConv.messages.findIndex(m => String(m.timestamp) === String(ts));
-  const contextMsg = msgIdx >= 0 ? parentConv.messages[msgIdx] : null;
-
-  const branchId = 'b_' + Date.now().toString(36);
-  const branchTitle = '↳ ' + (contextMsg?.content || 'Branch').slice(0, 38) + '…';
-
-  convs[branchId] = {
-    id: branchId, title: branchTitle, messages: [],
-    parentId, parentMsgTs: ts, createdAt: Date.now(), updatedAt: Date.now(),
-    _branchContext: contextMsg?.content || ''
-  };
-
-  if (msgIdx >= 0) parentConv.messages[msgIdx].branchId = branchId;
-
-  saveConvs(); renderConvList();
-  loadConv(branchId);
-
-  const starter = contextMsg
-    ? `I've branched from this response. What would you like to explore further?
-
-> ${(contextMsg.content||'').slice(0,200)}${contextMsg.content?.length>200?'…':''}`
-    : 'Branch started. What would you like to explore?';
-  appendMsg('assistant', starter, starter, null);
-}
-
-function exitBranch() {
-  const conv = convs[curConv];
-  if (conv?.parentId && convs[conv.parentId]) loadConv(conv.parentId);
-}
-
-function getBranchContext() {
-  return convs[curConv]?._branchContext || null;
-}
-
 function newConv() {
   const id = 'c'+Date.now();
   convs[id] = {id, title:'New conversation', messages:[], createdAt:Date.now()};
@@ -2319,15 +2456,7 @@ function loadConv(id) {
   if (!convs[id]) return;
   curConv = id;
   localStorage.setItem(KEYS().last, id);
-  const conv = convs[id];
-  const bar = document.getElementById('branchBar');
-  const lbl = document.getElementById('branchBarLabel');
-  if (conv?.parentId && convs[conv.parentId] && bar && lbl) {
-    lbl.textContent = (convs[conv.parentId]?.title || 'main').slice(0,50);
-    bar.style.display = 'flex';
-  } else if (bar) { bar.style.display = 'none'; }
   renderConvList(); renderProjList(); renderMessages(); renderArtifacts();
-  closeMobileSidebar();
 }
 
 function delConv(id, e) {
@@ -2409,19 +2538,9 @@ function renderMsg(m) {
       </div>`;
     }
   }
-  const ts = m.timestamp || Date.now();
-  const branchBtn = m.role === 'assistant'
-    ? `<button class="branch-btn" data-ts="${ts}" onclick="branchFromMsg(this)" title="Branch from this message">
-        <svg width="10" height="10" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><line x1="6" y1="3" x2="6" y2="15"/><circle cx="18" cy="6" r="3"/><circle cx="6" cy="18" r="3"/><path d="M18 9a9 9 0 01-9 9"/></svg>
-        Branch
-      </button>` : '';
-  const branchRef = m.branchId && convs[m.branchId]
-    ? `<span class="branch-badge" onclick="loadConv('${m.branchId}')" title="Open branch conversation">↳ ${esc((convs[m.branchId]?.title||'Branch').slice(0,22))}</span>` : '';
-  const avatar = m.role === 'assistant'
-    ? `<div class="msg-avatar">A</div>` : '';
-  return `<div class="msg-row ${m.role}" data-ts="${m.timestamp||''}">
-    <div class="msg-inner">${avatar}<div class="bubble">${content}</div></div>
-    <div class="msg-meta"><span class="msg-time">${time}</span>${branchBtn}${branchRef}</div>
+  return `<div class="msg-row ${m.role}">
+    <div class="msg-inner"><div class="bubble">${content}</div></div>
+    <div class="msg-meta"><span class="msg-time">${time}</span>${m.role==='assistant'?`<button class="branch-btn" onclick="branchFromMsg(this)" data-ts="${m.timestamp||''}" title="Branch from here"><svg width="10" height="10" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><line x1="6" y1="3" x2="6" y2="15"/><circle cx="18" cy="6" r="3"/><circle cx="6" cy="18" r="3"/><path d="M18 9a9 9 0 01-9 9"/></svg> Branch</button>`:''}</div>
   </div>`;
 }
 
@@ -2449,7 +2568,7 @@ function showTyping() {
   const c = document.getElementById('messages');
   const el = document.createElement('div');
   el.id='typing'; el.className='typing-row';
-  el.innerHTML='<div class="typing-inner"><div class="typing-avatar">A</div><div class="typing-bubble"><div class="td"></div><div class="td"></div><div class="td"></div></div></div>';
+  el.innerHTML='<div class="typing-inner"><div class="typing-bubble"><div class="td"></div><div class="td"></div><div class="td"></div></div></div>';
   c.appendChild(el); c.scrollTop=c.scrollHeight;
 }
 
@@ -2495,28 +2614,24 @@ async function sendMsg() {
     const systemPrompt = getActivePrompt();
 
     let raw='';
-    const currentModelId = cfg.selectedModelId || 'haiku';
-    const currentModel   = getModel(currentModelId);
-    // Ollama wins if either the selectedModelId is 'ollama' OR provider is explicitly 'ollama'
-    const isOllamaSelected = currentModelId === 'ollama' || cfg.provider === 'ollama';
-    const currentProvider  = isOllamaSelected ? 'ollama'
-      : (currentModel?.provider || cfg.provider || 'anthropic');
-
-    if (isOllamaSelected) {
+    // Read current selection directly from DOM as source of truth
+    const modelSelectEl = document.getElementById('modelSelect');
+    const currentModelId = modelSelectEl ? modelSelectEl.value : cfg.selectedModelId;
+    const useOllama = currentModelId === 'ollama' || cfg.provider === 'ollama';
+    if (useOllama) {
       raw = await callOllama(history, msgContent, systemPrompt);
-    } else if (currentProvider === 'openrouter') {
-      if (!cfg.openrouterKey) throw new Error('No OpenRouter key. Add it in ⚙ Settings.');
-      raw = await _callOpenRouter(cfg.openrouterKey, currentModel.apiModel, history, msgContent, systemPrompt);
-    } else if (currentProvider === 'anthropic') {
+    } else if (cfg.mode==='managed' || cfg.mode==='demo') {
+      raw = await callManaged(history, msgContent, systemPrompt);
+    } else if (cfg.provider==='claude') {
       raw = await callClaude(history, msgContent, systemPrompt);
-    } else if (currentProvider === 'openai') {
+    } else if (cfg.provider==='openai') {
       raw = await callOpenAI(history, msgContent, systemPrompt);
-    } else if (currentProvider === 'gemini') {
+    } else if (cfg.provider==='gemini') {
       raw = await callGemini(history, msgContent, systemPrompt);
-    } else if (currentProvider === 'mistral') {
+    } else if (cfg.provider==='mistral') {
       raw = await callMistral(history, msgContent, systemPrompt);
     } else {
-      raw = await callClaude(history, msgContent, systemPrompt);
+      raw = await callOllama(history, msgContent, systemPrompt);
     }
 
     // Clear attachments after send
@@ -2592,54 +2707,19 @@ async function callManaged(history, content, systemPrompt) {
     const key = PRODUCT_CONFIG.MISTRAL_KEY || cfg.mistralKey;
     if (!key) throw new Error('Mistral not configured. Contact support.');
     return await _callMistral(key, model.apiModel, history, content, systemPrompt);
-  } else if (provider === 'openrouter') {
-    const key = cfg.openrouterKey;
-    if (!key) throw new Error('OpenRouter key not set. Open ⚙ Settings → OpenRouter Key.');
-    return await _callOpenRouter(key, model.apiModel, history, content, systemPrompt);
   }
   throw new Error('Unknown provider: ' + provider);
 }
 
-async function _callOpenRouter(key, model, history, content, systemPrompt) {
-  // OpenRouter uses OpenAI-compatible API
-  const messages = [
-    ...(systemPrompt ? [{role:'system', content: systemPrompt}] : []),
-    ...history,
-    {role:'user', content}
-  ];
-  const r = await fetch('https://openrouter.ai/api/v1/chat/completions', {
-    method: 'POST',
-    headers: {
-      'Content-Type': 'application/json',
-      'Authorization': 'Bearer ' + key,
-      'HTTP-Referer': window.location.origin,
-      'X-Title': 'Aide',
-    },
-    body: JSON.stringify({
-      model,
-      messages,
-      max_tokens: 4096,
-      stream: false,
-    })
-  });
-  if (!r.ok) {
-    const e = await r.json().catch(() => ({}));
-    throw new Error(e.error?.message || `OpenRouter error ${r.status}`);
-  }
-  const d = await r.json();
-  return d.choices?.[0]?.message?.content || '';
-}
-
 async function callClaude(history, content, systemPrompt) {
-  const key = PRODUCT_CONFIG.ANTHROPIC_KEY || cfg.claudeKey;
-  if (!key) throw new Error('No Anthropic key. Open ⚙ Settings → Claude API key.');
+  if (!cfg.claudeKey) throw new Error('No Claude API key. Open Settings to add one.');
   if (cfg.webSearch) {
-    return await callAnthropicWithSearch(key, cfg.claudeModel, history, content, systemPrompt);
+    return await callAnthropicWithSearch(cfg.claudeKey, cfg.claudeModel, history, content, systemPrompt);
   }
   const messages=[...history,{role:'user',content}];
   const r=await fetch('https://api.anthropic.com/v1/messages',{
     method:'POST',
-    headers:{'Content-Type':'application/json','x-api-key':key,'anthropic-version':'2023-06-01','anthropic-dangerous-direct-browser-access':'true'},
+    headers:{'Content-Type':'application/json','x-api-key':cfg.claudeKey,'anthropic-version':'2023-06-01','anthropic-dangerous-direct-browser-access':'true'},
     body:JSON.stringify({model:cfg.claudeModel,max_tokens:4096,system:systemPrompt,messages})
   });
   if (!r.ok){const e=await r.json();throw new Error(e.error?.message||`Claude error ${r.status}`);}
@@ -2701,45 +2781,15 @@ async function _callMistral(key, model, history, content, systemPrompt) {
 }
 
 async function callOllama(history, content, systemPrompt) {
-  const ollamaUrl   = (cfg.ollamaUrl  || 'http://localhost:11434').replace(/\/$/,'');
-  const ollamaModel = (cfg.ollamaModel || 'qwen2.5:14b').trim();
-
-  // GitHub Pages is HTTPS — direct calls to http://localhost are blocked by mixed-content policy.
-  // Solution: use the Ollama origin header trick and ensure OLLAMA_ORIGINS is set.
-  // We catch the TypeError (network fail) and give a clear message.
-  const textContent = typeof content === 'string' ? content
-    : content.find?.(p=>p.type==='text')?.text || JSON.stringify(content);
-
-  const messages = [
-    { role: 'system', content: systemPrompt },
-    ...history.map(m => ({ role: m.role, content: typeof m.content === 'string' ? m.content : (m.content?.find?.(p=>p.type==='text')?.text||'') })),
-    { role: 'user', content: textContent }
-  ];
-
-  let r;
-  try {
-    r = await fetch(`${ollamaUrl}/api/chat`, {
-      method: 'POST',
-      headers: { 'Content-Type': 'application/json' },
-      body: JSON.stringify({ model: ollamaModel, messages, stream: false })
-    });
-  } catch(netErr) {
-    // Mixed-content or network error — give actionable guidance
-    throw new Error(
-      '⚠ Cannot reach Ollama.\n\n' +
-      'One-time fix — paste in Terminal, then quit & reopen Ollama:\n\n' +
-      'launchctl setenv OLLAMA_ORIGINS \'https://noexmc.github.io/app\'\n\n' +
-      '(Survives reboots — you only need to do this once.)'
-    );
-  }
-
-  if (!r.ok) {
-    const body = await r.text().catch(()=>'');
-    throw new Error(`Ollama error ${r.status}: ${body || 'Is the model pulled?'}`);
-  }
-
-  const d = await r.json();
-  return d.message?.content || '';
+  const textContent = typeof content === 'string' ? content : content.find?.(p=>p.type==='text')?.text || '';
+  const messages=[{role:'system',content:systemPrompt},...history,{role:'user',content:textContent}];
+  const r=await fetch(`${cfg.ollamaUrl}/api/chat`,{
+    method:'POST',
+    headers:{'Content-Type':'application/json'},
+    body:JSON.stringify({model:cfg.ollamaModel,messages,stream:false})
+  });
+  if (!r.ok) throw new Error(`Ollama error ${r.status}. Is Ollama running?`);
+  const d=await r.json(); return d.message?.content||'';
 }
 
 // ══════════════════════════════════
@@ -3215,49 +3265,86 @@ async function downloadDoc() {
 
 function toggleModeTooltip(e) {
   e.stopPropagation();
-  const tt   = document.getElementById('modeTooltip');
-  const rect = e.currentTarget.getBoundingClientRect();
-  // Default: open to the right, top-aligned with button
-  let left = rect.right + 10;
-  let top  = rect.top;
-  tt.style.left = left + 'px';
-  tt.style.top  = top + 'px';
-  tt.classList.toggle('show');
-  if (tt.classList.contains('show')) {
-    requestAnimationFrame(() => {
-      const tr = tt.getBoundingClientRect();
-      // If goes off right edge, flip to left of button
-      if (tr.right > window.innerWidth - 8) left = rect.left - tr.width - 10;
-      // Clamp bottom — never push top above button
-      if (tr.bottom > window.innerHeight - 8) top = Math.max(rect.top, window.innerHeight - tr.height - 8);
-      tt.style.left = left + 'px';
-      tt.style.top  = top + 'px';
-    });
-  }
+  document.getElementById('modeTooltip').classList.toggle('show');
 }
 document.addEventListener('click', () => {
   document.getElementById('modeTooltip')?.classList.remove('show');
 });
 
+function toggleArtifactsPanel() {
+  document.getElementById('artifactsPanel').classList.toggle('hidden');
+}
+
+function closePreview() {
+  document.getElementById('previewPanel').classList.add('hidden');
+  document.getElementById('pvDl').style.display='none';
+  curDoc=null;
+}
+
+function renderArtifacts() {
+  const conv = convs[curConv];
+  const list = document.getElementById('artList');
+  if (!conv) { list.innerHTML='<div class="art-empty">Files you create will appear here.</div>'; return; }
+  const docs = conv.messages.filter(m=>m.doc).map(m=>m.doc);
+  if (!docs.length) { list.innerHTML='<div class="art-empty">Files you create will appear here — Excel, PowerPoint, Word docs.</div>'; return; }
+  const icons={excel:'📊',ppt:'📑',word:'📄'};
+  const types={excel:'Excel spreadsheet',ppt:'PowerPoint',word:'Word document'};
+  list.innerHTML = [...docs].reverse().map(doc => {
+    const encoded=encodeURIComponent(JSON.stringify(doc));
+    return `<div class="art-item" onclick="openDoc('${encoded}')">
+      <div class="art-icon">${icons[doc.type]||'📎'}</div>
+      <div class="art-info">
+        <div class="art-name">${esc(doc.filename)}</div>
+        <div class="art-meta">${types[doc.type]||'File'}</div>
+      </div>
+      <div class="art-dl">Open →</div>
+    </div>`;
+  }).join('');
+}
 
 // ══════════════════════════════════
-// CONNECTIVITY & OLLAMA STATUS
+// SETTINGS
 // ══════════════════════════════════
-let _wasOnline = true;
+function toggleSettings() { document.getElementById('settingsOverlay').classList.toggle('open'); }
+function handleSettingsClick(e) { if(e.target===document.getElementById('settingsOverlay')) toggleSettings(); }
+
+function loadSettingsUI() {
+  document.getElementById('sClaudeKey').value=cfg.claudeKey;
+  document.getElementById('sOpenAIKey').value=cfg.openaiKey;
+  document.getElementById('sGeminiKey').value=cfg.geminiKey||'';
+  document.getElementById('sMistralKey').value=cfg.mistralKey||'';
+  document.getElementById('sBraveKey').value=cfg.braveKey||'';
+  document.getElementById('sOllamaUrl').value=cfg.ollamaUrl;
+  document.getElementById('sOllamaModel').value=cfg.ollamaModel;
+  document.getElementById('sLicenseKey').value=cfg.licenseKey||'';
+}
+
+function saveSettings() {
+  cfg.claudeKey=document.getElementById('sClaudeKey').value.trim();
+  cfg.openaiKey=document.getElementById('sOpenAIKey').value.trim();
+  cfg.geminiKey=document.getElementById('sGeminiKey').value.trim();
+  cfg.mistralKey=document.getElementById('sMistralKey').value.trim();
+  cfg.braveKey=document.getElementById('sBraveKey').value.trim();
+  cfg.ollamaUrl=document.getElementById('sOllamaUrl').value.trim();
+  cfg.ollamaModel=document.getElementById('sOllamaModel').value.trim();
+  cfg.licenseKey=document.getElementById('sLicenseKey').value.trim();
+  saveCfg();
+  buildProvSwitch();
+  updateStatus();
+  toggleSettings();
+}
+
+function resetApp() {
+  if (!confirm('Reset Aide? This clears your activation but keeps conversations.')) return;
+  cfg.activated=false; cfg.mode=null; cfg.licenseKey=''; cfg.licenseData=null;
+  saveCfg();
+  toggleSettings();
+  document.getElementById('app').classList.remove('active');
+  document.getElementById('activation').classList.add('active');
+}
+
 let _ollamaRunning = false;
 
-function updateConnPill(online) {
-  const pill  = document.getElementById('connPill');
-  const label = document.getElementById('connLabel');
-  if (!pill || !label) return;
-  if (online) {
-    pill.className  = 'conn-pill online';
-    label.textContent = 'Online';
-  } else {
-    pill.className  = 'conn-pill offline';
-    label.textContent = 'Offline';
-  }
-}
 
 async function pingOllama() {
   const url = (cfg.ollamaUrl || 'http://localhost:11434').replace(/\/$/,'');
@@ -3369,166 +3456,37 @@ function renderArtifacts() {
   }).join('');
 }
 
-// ══════════════════════════════════
-// SETTINGS
-// ══════════════════════════════════
-function toggleSettings() { document.getElementById('settingsOverlay').classList.toggle('open'); }
-function handleSettingsClick(e) { if(e.target===document.getElementById('settingsOverlay')) toggleSettings(); }
+function branchFromMsg(btn) {
+  const ts = btn.dataset.ts;
+  const parentId = curConv;
+  const parentConv = convs[parentId];
+  if (!parentConv) return;
 
+  const msgIdx = parentConv.messages.findIndex(m => String(m.timestamp) === String(ts));
+  const contextMsg = msgIdx >= 0 ? parentConv.messages[msgIdx] : null;
 
-// ══════════════════════════════════
-// API USAGE CHECKER
-// ══════════════════════════════════
-async function fetchApiUsage() {
-  const el  = document.getElementById('usageResult');
-  const btn = document.getElementById('fetchUsageBtn');
-  if (!el) return;
-  el.textContent = 'Fetching…';
-  btn.disabled = true;
-  const results = [];
+  const branchId = 'b_' + Date.now().toString(36);
+  const branchTitle = '↳ ' + (contextMsg?.content || 'Branch').slice(0, 38) + '…';
 
-  // ── Anthropic ──
-  const anthropicKey = PRODUCT_CONFIG.ANTHROPIC_KEY || cfg.claudeKey;
-  if (anthropicKey) {
-    try {
-      // Anthropic usage endpoint (last 30 days)
-      const today = new Date();
-      const start = new Date(today); start.setDate(today.getDate()-30);
-      const fmt = d => d.toISOString().split('T')[0];
-      const r = await fetch(`https://api.anthropic.com/v1/usage?start_time=${fmt(start)}&end_time=${fmt(today)}`, {
-        headers: { 'x-api-key': anthropicKey, 'anthropic-version': '2023-06-01', 'anthropic-dangerous-direct-browser-access':'true' }
-      });
-      if (r.ok) {
-        const d = await r.json();
-        const total = d.data?.reduce((s,x) => s + (x.input_tokens||0) + (x.output_tokens||0), 0) || 0;
-        results.push(`<b>Anthropic</b> — ${total.toLocaleString()} tokens used (last 30d)`);
-      } else {
-        results.push(`<b>Anthropic</b> — usage API not available (check console.anthropic.com)`);
-      }
-    } catch(e) { results.push(`<b>Anthropic</b> — ${e.message}`); }
-  }
+  convs[branchId] = {
+    id: branchId, title: branchTitle, messages: [],
+    parentId, parentMsgTs: ts, createdAt: Date.now(), updatedAt: Date.now(),
+    _branchContext: contextMsg?.content || ''
+  };
 
-  // ── OpenRouter ──
-  if (cfg.openrouterKey) {
-    try {
-      const r = await fetch('https://openrouter.ai/api/v1/auth/key', {
-        headers: { 'Authorization': 'Bearer ' + cfg.openrouterKey }
-      });
-      if (r.ok) {
-        const d = await r.json();
-        const data = d.data || d;
-        const used  = data.usage !== undefined ? `$${Number(data.usage).toFixed(4)} used` : '';
-        const limit = data.limit !== undefined ? ` / $${Number(data.limit).toFixed(2)} limit` : '';
-        const left  = data.limit_remaining !== undefined ? ` · $${Number(data.limit_remaining).toFixed(4)} remaining` : '';
-        results.push(`<b>OpenRouter</b> — ${used}${limit}${left}`);
-      } else {
-        results.push(`<b>OpenRouter</b> — could not fetch (key may be invalid)`);
-      }
-    } catch(e) { results.push(`<b>OpenRouter</b> — ${e.message}`); }
-  }
+  if (msgIdx >= 0) parentConv.messages[msgIdx].branchId = branchId;
 
-  // ── OpenAI ──
-  if (cfg.openaiKey || PRODUCT_CONFIG.OPENAI_KEY) {
-    results.push(`<b>OpenAI</b> — check usage at <a href="https://platform.openai.com/usage" target="_blank" style="color:var(--green)">platform.openai.com/usage</a>`);
-  }
+  saveConvs(); renderConvList();
+  loadConv(branchId);
 
-  if (!results.length) {
-    el.innerHTML = '<span style="color:var(--text-3)">No API keys configured yet.</span>';
-  } else {
-    el.innerHTML = results.join('<br>');
-  }
-  btn.disabled = false;
+  const starter = contextMsg
+    ? `I've branched from this response. What would you like to explore further?
+
+> ${(contextMsg.content||'').slice(0,200)}${contextMsg.content?.length>200?'…':''}`
+    : 'Branch started. What would you like to explore?';
+  appendMsg('assistant', starter, starter, null);
 }
 
-function showPasskeySettingsRow() {
-  if (!passkeySupported()) return '<div style="font-size:12px;color:var(--text-3);margin-top:8px">Passkeys not supported on this browser.</div>';
-  const stored = loadPasskeys();
-  const mine = stored.filter(s => s.userId === currentUser?.id);
-  return `<div style="margin-top:10px;padding-top:10px;border-top:1px solid var(--border-light)">
-    <div style="font-size:11px;font-weight:600;color:var(--text-3);text-transform:uppercase;letter-spacing:.05em;margin-bottom:7px">Passkey · Face ID / Touch ID</div>
-    <div style="font-size:12px;color:${mine.length?'var(--green)':'var(--text-3)'};margin-bottom:8px">${mine.length ? '✓ '+mine.length+' passkey'+(mine.length>1?'s':'')+' on this device' : 'No passkey on this device yet'}</div>
-    <button onclick="passkeyAddAnother()" style="padding:7px 14px;background:var(--accent);color:#fff;border:none;border-radius:6px;font-family:'DM Sans',sans-serif;font-size:12px;font-weight:500;cursor:pointer">${mine.length?'+ Add another passkey':'Register this device'}</button>
-  </div>`;
-}
-
-async function passkeyAddAnother() {
-  if (!currentUser) return;
-  const challenge = crypto.getRandomValues(new Uint8Array(32));
-  try {
-    const cred = await navigator.credentials.create({ publicKey: {
-      challenge,
-      rp: { name: PASSKEY_RP_NAME },
-      user: {
-        id: new TextEncoder().encode((currentUser.id||'user').slice(0,32).padEnd(32,'0')),
-        name: currentUser.name||'User', displayName: currentUser.name||'User',
-      },
-      pubKeyCredParams: [{type:'public-key',alg:-7},{type:'public-key',alg:-257}],
-      authenticatorSelection: { authenticatorAttachment:'platform', userVerification:'required', residentKey:'required' },
-      timeout: 60000,
-    }});
-    const stored = loadPasskeys();
-    stored.push({ credId:b64url(cred.rawId), userId:currentUser.id, name:currentUser.name, created:Date.now() });
-    savePasskeys(stored);
-    const row = document.getElementById('passkeySettingsRow');
-    if (row) row.innerHTML = showPasskeySettingsRow();
-    alert('Passkey registered on this device.');
-  } catch(e) {
-    alert('Failed: '+(e.message||e.name));
-  }
-}
-
-function loadSettingsUI() {
-  const pkRow = document.getElementById('passkeySettingsRow');
-  if (pkRow && currentUser) pkRow.innerHTML = showPasskeySettingsRow ? showPasskeySettingsRow() : '';
-  const nameEl = document.getElementById('sDisplayName');
-  if (nameEl) nameEl.value = currentUser?.name || '';
-  document.getElementById('sClaudeKey').value=cfg.claudeKey || PRODUCT_CONFIG.ANTHROPIC_KEY;
-  document.getElementById('sOpenRouterKey').value=cfg.openrouterKey||'';
-  document.getElementById('sOpenAIKey').value=cfg.openaiKey;
-  document.getElementById('sGeminiKey').value=cfg.geminiKey||'';
-  document.getElementById('sMistralKey').value=cfg.mistralKey||'';
-  document.getElementById('sBraveKey').value=cfg.braveKey||'';
-  document.getElementById('sOllamaUrl').value=cfg.ollamaUrl;
-  document.getElementById('sOllamaModel').value=cfg.ollamaModel;
-  document.getElementById('sLicenseKey').value=cfg.licenseKey||'';
-}
-
-function saveSettings() {
-  const newName = document.getElementById('sDisplayName')?.value.trim();
-  if (newName && currentUser) {
-    currentUser.name = newName;
-    // Update stored passkey entry too
-    const passkeys = loadPasskeys();
-    const pk = passkeys.find(p => p.userId === currentUser.id);
-    if (pk) { pk.name = newName; savePasskeys(passkeys); }
-    persistSession();
-    // Update sidebar
-    const userRow = document.getElementById('userRow');
-    if (userRow) userRow.querySelector('.user-email').textContent = '👤 ' + newName;
-  }
-  cfg.claudeKey=document.getElementById('sClaudeKey').value.trim();
-  cfg.openrouterKey=document.getElementById('sOpenRouterKey').value.trim();
-  cfg.openaiKey=document.getElementById('sOpenAIKey').value.trim();
-  cfg.geminiKey=document.getElementById('sGeminiKey').value.trim();
-  cfg.mistralKey=document.getElementById('sMistralKey').value.trim();
-  cfg.braveKey=document.getElementById('sBraveKey').value.trim();
-  cfg.ollamaUrl=document.getElementById('sOllamaUrl').value.trim();
-  cfg.ollamaModel=document.getElementById('sOllamaModel').value.trim();
-  cfg.licenseKey=document.getElementById('sLicenseKey').value.trim();
-  saveCfg();
-  buildProvSwitch();
-  updateStatus();
-  toggleSettings();
-}
-
-function resetApp() {
-  if (!confirm('Reset Aide? This clears your activation but keeps conversations.')) return;
-  cfg.activated=false; cfg.mode=null; cfg.licenseKey=''; cfg.licenseData=null;
-  saveCfg();
-  toggleSettings();
-  document.getElementById('app').classList.remove('active');
-  document.getElementById('activation').classList.add('active');
-}
 
 // ══════════════════════════════════
 // UTILS
