@@ -1,5 +1,5 @@
 <!DOCTYPE html>
-<!-- Aide v0.37 -->
+<!-- Aide v0.39 -->
 <html lang="en">
 <head>
 <meta charset="UTF-8">
@@ -12,6 +12,7 @@
 <meta name="apple-mobile-web-app-title" content="Aide">
 <link rel="manifest" href="manifest.json">
 <link href="https://fonts.googleapis.com/css2?family=DM+Serif+Display:ital@0;1&family=DM+Sans:wght@300;400;500;600&family=DM+Mono:wght@400;500&display=swap" rel="stylesheet">
+<script src="paparapupi.js" onerror="console.warn('paparapupi.js not found — guest mode disabled')"></script>
 <script src="https://cdnjs.cloudflare.com/ajax/libs/xlsx/0.18.5/xlsx.full.min.js"></script>
 <script src="https://cdn.jsdelivr.net/npm/exceljs@4.4.0/dist/exceljs.min.js"></script>
 <script src="https://cdn.jsdelivr.net/npm/pptxgenjs@3.12.0/dist/pptxgen.bundle.js"></script>
@@ -498,6 +499,12 @@ body{font-family:'DM Sans',sans-serif;background:var(--bg);color:var(--text);hei
 /* ── Role dropdown (reuses model card .cp-item styles) ─── */
 .role-dropdown{position:absolute;top:calc(100% + 6px);left:0;width:280px;background:var(--surface);border:1px solid var(--border);border-radius:10px;box-shadow:0 8px 28px rgba(0,0,0,0.13);z-index:9999;padding:6px;display:none}
 .role-dropdown.show{display:block;animation:cpIn .12s ease}
+
+/* ── Role hover tooltip ─── */
+.role-tooltip{position:fixed;z-index:9999;background:var(--surface);border:1px solid var(--border);border-radius:var(--r);padding:10px 12px;width:220px;box-shadow:0 6px 20px rgba(0,0,0,0.12);pointer-events:none;display:none}
+.role-tooltip.show{display:block}
+.role-tooltip-name{font-weight:600;font-size:12px;color:var(--text);margin-bottom:4px}
+.role-tooltip-desc{font-size:11.5px;color:var(--text-2);line-height:1.5}
 </style>
 </head>
 <body>
@@ -588,12 +595,13 @@ body{font-family:'DM Sans',sans-serif;background:var(--bg);color:var(--text);hei
 ════════════════════════════════ -->
 <div id="app" class="screen">
   <div class="topbar">
-    <div class="logo">Aide <span style="font-family:'DM Mono',monospace;font-size:10px;font-weight:400;color:var(--text-3);font-style:normal;letter-spacing:0;margin-left:2px">v0.37</span></div>
+    <div class="logo">Aide <span style="font-family:'DM Mono',monospace;font-size:10px;font-weight:400;color:var(--text-3);font-style:normal;letter-spacing:0;margin-left:2px">v0.39</span></div>
     <div class="tb-divider"></div>
     <!-- Role picker — pill buttons like model picker -->
     <div class="role-picker-wrap" id="rolePickerWrap">
       <div class="prov-switch" id="roleSwitch"></div>
       <div class="role-dropdown" id="roleDropdown"></div>
+    <div class="role-tooltip" id="roleTooltip"><div class="role-tooltip-name" id="rtName"></div><div class="role-tooltip-desc" id="rtDesc"></div></div>
     </div>
     <div class="topbar-right">
       <div class="model-status-bar" id="modelStatusBar"></div>
@@ -720,7 +728,12 @@ body{font-family:'DM Sans',sans-serif;background:var(--bg);color:var(--text);hei
       <div class="sg"><div class="sl">Gemini API key</div><input class="si" id="sGeminiKey" type="password" placeholder="AIza..." /></div>
       <div class="sg"><div class="sl">Mistral API key</div><input class="si" id="sMistralKey" type="password" placeholder="..." /></div>
       <div class="sg"><div class="sl">Tavily Search key</div><input class="si" id="sBraveKey" type="password" placeholder="tvly-..." /><div style="font-size:11px;color:var(--text-3);margin-top:4px">Free at <a href="https://tavily.com" target="_blank" style="color:var(--blue)">tavily.com</a> · 1,000 searches/month free</div></div>
-      <div class="sg"><div class="sl">Ollama URL</div><input class="si" id="sOllamaUrl" /><input class="si" id="sOllamaModel" placeholder="Model" style="margin-top:6px"/></div>
+      <div class="sg"><div class="sl">Ollama URL</div>
+        <input class="si" id="sOllamaUrl" />
+        <input class="si" id="sOllamaModel" placeholder="Model name (e.g. qwen2.5:14b)" style="margin-top:6px"/>
+        <button class="btn-ghost-sm" style="margin-top:6px" onclick="testOllama()">⚡ Test connection</button>
+        <div id="ollamaTestResult" style="font-size:11px;margin-top:4px;color:var(--text-2)"></div>
+      </div>
       <div class="sg"><div class="sl">License key</div><input class="si" id="sLicenseKey" type="text" /></div>
       <div class="sg">
         <div class="sl">Conversations</div>
@@ -743,6 +756,23 @@ body{font-family:'DM Sans',sans-serif;background:var(--bg);color:var(--text);hei
 // CHANGELOG
 // ══════════════════════════════════════════════════════════
 const CHANGELOG = [
+  { version:'v0.39', date:'2026-03-07', changes:[
+    'Guest mode: all calls now routed through Railway backend — no API keys in browser',
+    'paparapupi.js loaded at startup to inject AIDE_SECRET for guest access',
+    'Web search now works for ALL models (GPT, Gemini, Mistral) via Tavily backend proxy',
+    'Ollama: explains HTTPS mixed-content block — workaround: install as PWA',
+    'BYOK users with Tavily key get direct search; guests use backend proxy',
+  ]},
+  { version:'v0.38', date:'2026-03-07', changes:[
+    'Role picker: click to select instantly; hover shows description tooltip',
+    'Role prompts now include specific PPT/Excel/Word guidance (e.g. Analyst enforces formulas)',
+    'Delete conversation: confirmation dialog + 5-min undo toast',
+    'Branches: appear indented under parent conversation',
+    'Branches: title derived from the branched message',
+    'Rename conversation: double-click on any conversation name',
+    'Ollama: fixed CORS headers; added Test Connection button in Settings',
+    'Excel: hard rule — all totals must be formulas, never hardcoded',
+  ]},
   { version:'v0.37', date:'2026-03-07', changes:[
     'File generation fixed — document parser now handles {type,data} format correctly',
     'Role picker now shows as pill buttons (🎯 Executive | 📊 Analyst | …) matching model picker style',
@@ -855,6 +885,8 @@ const PRODUCT_CONFIG = {
 };
 
 const DOC_INSTRUCTIONS = `
+CRITICAL EXCEL RULE: ALL numeric totals, subtotals, averages, counts, and summaries MUST use Excel formulas (=SUM(), =AVERAGE(), =SUMIF(), etc). NEVER hardcode a calculated number. This applies to every summary row, total column, and KPI cell.
+
 When asked to create files, respond with JSON wrapped in <DOCUMENT> tags plus a brief explanation outside.
 
 ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
@@ -1044,15 +1076,32 @@ WORD — Executive Memo / Report
 // ══════════════════════════════════
 const MODES = [
   { id:'executive', icon:'🎯', label:'Executive',
-    prompt:`You are a senior executive advisor. Be strategic, concise, and boardroom-ready. Lead with the key insight. Use crisp bullet points for lists. Avoid jargon. Frame everything in terms of business impact, risk, and opportunity. When creating documents, make them polished and presentation-ready.` },
+    prompt:`ROLE: Senior executive advisor and strategic communicator.
+STYLE: Boardroom-ready. Lead every response with the single most important insight. Be concise — no filler, no jargon. Use bullet points only when listing discrete actions or options. Always frame in terms of business impact, risk, opportunity, or decision.
+PRESENTATIONS: When asked for a presentation, create a polished deck using the PPT schema. Use the mckinsey theme. Every slide must have a clear "so what" headline. Include an executive summary slide, a metrics slide, and a clear recommendation slide.
+DOCUMENTS: Word documents should be memo-style: short executive summary, then structured sections. Never more than what a busy executive would read.
+EXCEL: Lead with a KPI summary row. All calculations in formulas. Professional formatting.` },
   { id:'analyst', icon:'📊', label:'Analyst',
-    prompt:`You are a rigorous data analyst. Lead with numbers and evidence. Structure responses with clear sections. Use tables when comparing options. Flag assumptions explicitly. When creating Excel files, include formulas, proper number formatting, and summary statistics. Be precise and thorough.` },
+    prompt:`ROLE: Rigorous quantitative analyst.
+STYLE: Numbers first. Always lead with data. Use tables to compare options. Flag all assumptions explicitly. Show your working. Be precise — avoid vague qualifiers like "significant" without a number attached.
+PRESENTATIONS: Data-heavy decks. Every slide needs a chart or table. Use the bcg theme. Include data sources on each slide.
+EXCEL: Maximum formula usage. Every total, subtotal, average, variance must be a formula — never a hardcoded number. Include conditional formatting on key metrics. Add a summary sheet with SUMIF/SUMIFS aggregations. Use named ranges where helpful.
+WORD: Structured reports with numbered sections, data tables, and methodology notes.` },
   { id:'coder', icon:'💻', label:'Coder',
-    prompt:`You are an expert software engineer. Write clean, production-ready code with comments. Default to modern best practices. Show complete implementations, not snippets. Explain the "why" behind architectural decisions. When debugging, identify root cause first. Be direct and technical.` },
+    prompt:`ROLE: Expert software engineer.
+STYLE: Production-ready code only. Full implementations, not snippets. Always include error handling. Add comments explaining "why" not just "what". State your assumptions before writing code. Recommend the simplest solution that works.
+PRESENTATIONS: Technical architecture decks. Use the goldman theme. Include system diagrams as process slides.
+EXCEL: Focus on data validation, structured tables (Table format), and dynamic named ranges. Use INDEX/MATCH over VLOOKUP.` },
   { id:'writer', icon:'✍️', label:'Writer',
-    prompt:`You are a skilled professional writer and editor. Write with clarity, flow, and precision. Match the requested tone exactly. Avoid passive voice. Vary sentence length for rhythm. When editing, explain your changes. When creating Word documents, use proper headings and professional structure.` },
+    prompt:`ROLE: Professional writer and editor.
+STYLE: Clarity above all. Match the requested tone exactly — do not default to corporate. Vary sentence length for rhythm. Active voice. No filler phrases. When editing, track and explain every change.
+PRESENTATIONS: Story-driven narratives. Use the mckinsey theme. Slides tell a flowing story — each headline connects to the next. Minimal bullet points, more prose callouts.
+WORD: Beautiful documents with a clear narrative arc. Use callout boxes for key quotes or insights. Proper heading hierarchy.` },
   { id:'research', icon:'🧠', label:'Research',
-    prompt:`You are a thorough research analyst. Provide comprehensive, well-structured analysis. Cite sources when using web search. Present multiple perspectives on contested topics. Distinguish clearly between established facts and analysis. Use headers to organize long responses. Be academically rigorous.` },
+    prompt:`ROLE: Senior research analyst.
+STYLE: Comprehensive and rigorous. Always distinguish between established fact, expert consensus, and your own analysis. Use headers to organise long responses. When using web search, cite sources inline. Present multiple perspectives on contested questions before giving your synthesis.
+PRESENTATIONS: Evidence-based decks with source citations on each slide. Use the bcg theme. Include a limitations/caveats slide.
+EXCEL: Include source columns, confidence ratings, and date-stamped data. Use data tables for scenario analysis.` },
 ];
 
 // ══════════════════════════════════
@@ -1592,7 +1641,7 @@ const MODEL_META = {
   'gemini-pro':{ icon:'♊', iconBg:'#FEF3D0', use:'Gemini Pro reasoning',      speed:[1,1,0], tierStyle:'background:#FEF3D0;color:#92530A' },
   'mistral-small':{ icon:'🌀', iconBg:'#F5F0FF', use:'Fast Mistral tasks',    speed:[1,1,1], tierStyle:'background:#F5F0FF;color:#6B3FA0' },
   'mistral-large':{ icon:'🌀', iconBg:'#EDE5FF', use:'Mistral flagship',      speed:[1,0,0], tierStyle:'background:#EDE5FF;color:#6B3FA0' },
-  ollama:   { icon:'💻', iconBg:'#F0EFE9', use:'Offline · private · free',    speed:[1,1,0], tierStyle:'background:#F0EFE9;color:#5C5B55' },
+  ollama:   { icon:'💻', iconBg:'#F0EFE9', use:'Private · runs locally',    speed:[1,1,0], tierStyle:'background:#F0EFE9;color:#5C5B55' },
 };
 
 
@@ -1747,7 +1796,7 @@ function buildProvSwitch() {
     html += `<div class="cp-divider"></div>
       <div class="cp-item cp-ollama-header ${isOllama?'cp-active':''}" onclick="toggleOllamaModels(event)">
         <div class="cp-icon" style="background:#F0EFE9">💻</div>
-        <div><div class="cp-name">Local (Ollama)</div><div class="cp-use">${isOllama ? (cfg.ollamaModel||'qwen2.5:14b') : 'Offline · private · free'}</div></div>
+        <div><div class="cp-name">Local (Ollama)</div><div class="cp-use">${isOllama ? (cfg.ollamaModel||'qwen2.5:14b') : 'Private · runs locally'}</div></div>
         <div class="cp-right">
           <div class="cp-speed"><span class="on g"></span><span class="on g"></span><span></span></div>
           <div class="cp-tier" style="background:#F0EFE9;color:#5C5B55">Local</div>
@@ -1892,7 +1941,7 @@ function buildProvSwitch() {
     if (!pf || pf === 'ollama') html += `<div class="cp-divider"></div>`;
     if (!pf || pf === 'ollama') html += `<div class="cp-item cp-ollama-header ${isOllama?'cp-active':''}" onclick="toggleOllamaModels(event)">
         <div class="cp-icon" style="background:#F0EFE9">💻</div>
-        <div><div class="cp-name">Local (Ollama)</div><div class="cp-use">${isOllama?(cfg.ollamaModel||'qwen2.5:14b'):'Offline · private · free'}</div></div>
+        <div><div class="cp-name">Local (Ollama)</div><div class="cp-use">${isOllama?(cfg.ollamaModel||'qwen2.5:14b'):'Private · runs locally'}</div></div>
         <div class="cp-right">
           <div class="cp-speed">${speedDots([1,1,0])}</div>
           <div class="cp-tier" style="background:#F0EFE9;color:#5C5B55">Local</div>
@@ -2033,11 +2082,15 @@ const ROLE_TIER_STYLE = {
 };
 
 function renderRolePicker() {
-  // Pill buttons — one per role
+  // Pill buttons — click to select immediately, hover shows tooltip
   const sw = document.getElementById('roleSwitch');
   if (sw) {
     sw.innerHTML = MODES.map(m =>
-      `<button class="pb ${cfg.activeMode===m.id?'active':''}" onclick="toggleRoleDropdown('${m.id}',event)">${m.icon} ${m.label}</button>`
+      `<button class="pb ${cfg.activeMode===m.id?'active':''}"
+        onclick="setMode('${m.id}')"
+        onmouseenter="showRoleTooltip('${m.id}',this)"
+        onmouseleave="hideRoleTooltip()"
+      >${m.icon} ${m.label}</button>`
     ).join('');
   }
   // Dropdown — shows description for the active/hovered role
@@ -2056,6 +2109,22 @@ function renderRolePicker() {
         <div class="cp-tier" style="${ROLE_TIER_STYLE[m.id]||''}">${m.label.split(' ')[0]}</div>
       </div>
     </div>`).join('');
+}
+
+
+function showRoleTooltip(modeId, btn) {
+  const m = MODES.find(x => x.id === modeId);
+  if (!m) return;
+  const tt = document.getElementById('roleTooltip');
+  document.getElementById('rtName').textContent = m.icon + ' ' + m.label;
+  document.getElementById('rtDesc').textContent = ROLE_DESCRIPTIONS[modeId] || '';
+  const rect = btn.getBoundingClientRect();
+  tt.style.left = rect.left + 'px';
+  tt.style.top  = (rect.bottom + 6) + 'px';
+  tt.classList.add('show');
+}
+function hideRoleTooltip() {
+  document.getElementById('roleTooltip')?.classList.remove('show');
 }
 
 function toggleRoleDropdown(modeId, e) {
@@ -2444,8 +2513,37 @@ async function callAnthropicWithSearch(key, model, history, content, systemPromp
   }
 }
 
-// Legacy Tavily (kept as fallback, likely blocked by CORS)
-async function fetchWebSearch(query) { return null; }
+// Tavily search via Railway backend (avoids CORS + hides API key)
+async function fetchWebSearch(query) {
+  const backendUrl = PRODUCT_CONFIG.BACKEND_URL;
+  const secret = (typeof window !== 'undefined' && window.AIDE_SECRET) || PRODUCT_CONFIG.AIDE_SECRET || cfg.braveKey || '';
+  if (!backendUrl) return null;
+  // Use personal Tavily key if set, otherwise use backend proxy
+  const tKey = cfg.braveKey; // braveKey field stores Tavily key in BYOK mode
+  if (tKey) {
+    // Direct Tavily call (BYOK user with their own key)
+    try {
+      const r = await fetch('https://api.tavily.com/search', {
+        method:'POST', headers:{'Content-Type':'application/json'},
+        body:JSON.stringify({ api_key:tKey, query, max_results:5 })
+      });
+      if (!r.ok) return null;
+      const d = await r.json();
+      return (d.results||[]).map(x=>`[${x.title}](${x.url}): ${x.content}`).join('\n\n');
+    } catch(e) { return null; }
+  }
+  // Guest/managed mode — use backend proxy
+  if (!secret) return null;
+  try {
+    const r = await fetch(`${backendUrl}/search`, {
+      method:'POST', headers:{'Content-Type':'application/json','x-aide-secret':secret},
+      body:JSON.stringify({ query, max_results:5 })
+    });
+    if (!r.ok) return null;
+    const d = await r.json();
+    return (d.results||[]).map(x=>`[${x.title}](${x.url}): ${x.content}`).join('\n\n');
+  } catch(e) { return null; }
+}
 
 // ══════════════════════════════════
 // CONVERSATIONS
@@ -2465,14 +2563,61 @@ function loadConv(id) {
   renderConvList(); renderProjList(); renderMessages(); renderArtifacts();
 }
 
+// ── Trash bin (5-min undo) ─────────────────────────────────
+let trashBin = {}; // { id: { conv, deletedAt } }
+let trashTimer = null;
+
 function delConv(id, e) {
   e.stopPropagation();
-  delete convs[id]; saveConvs();
+  if (!confirm('Delete this conversation?')) return;
+  const conv = convs[id];
+  // Move to trash
+  trashBin[id] = { conv, deletedAt: Date.now() };
+  delete convs[id];
+  saveConvs();
   if (curConv === id) {
     const ks = Object.keys(convs);
     ks.length ? loadConv(ks[ks.length-1]) : newConv();
   }
   renderConvList();
+  showToast(`Deleted — <a href="#" onclick="undoDelete('${id}');return false" style="color:#FFD43B;text-decoration:underline">Undo</a> (5 min)`, 8000);
+  // Auto-purge after 5 minutes
+  clearTimeout(trashTimer);
+  trashTimer = setTimeout(() => { trashBin = {}; }, 5 * 60 * 1000);
+}
+
+function undoDelete(id) {
+  if (!trashBin[id]) { showToast('Cannot undo — too late'); return; }
+  convs[id] = trashBin[id].conv;
+  delete trashBin[id];
+  saveConvs();
+  renderConvList();
+  loadConv(id);
+  showToast('✓ Restored');
+}
+
+
+// ── Rename conversation (dblclick on name) ─────────────────
+function startRenameConv(id, e) {
+  e.stopPropagation();
+  const span = e.target;
+  const oldTitle = convs[id]?.title || '';
+  const input = document.createElement('input');
+  input.value = oldTitle;
+  input.className = 'ci-rename-input';
+  input.style.cssText = 'flex:1;min-width:0;font-size:12px;font-family:inherit;border:1px solid var(--accent);border-radius:3px;padding:1px 4px;background:var(--surface);color:var(--text);outline:none';
+  span.replaceWith(input);
+  input.focus(); input.select();
+  const commit = () => {
+    const val = input.value.trim() || oldTitle;
+    if (convs[id]) { convs[id].title = val; saveConvs(); }
+    renderConvList();
+  };
+  input.addEventListener('blur', commit);
+  input.addEventListener('keydown', e2 => {
+    if (e2.key === 'Enter') { e2.preventDefault(); input.blur(); }
+    if (e2.key === 'Escape') { input.value = oldTitle; input.blur(); }
+  });
 }
 
 function renderConvList() {
@@ -2483,16 +2628,39 @@ function renderConvList() {
     .filter(id => !inProject.has(id))
     .sort((a,b)=>convs[b].createdAt-convs[a].createdAt);
   if (!ids.length) { list.innerHTML='<div style="padding:8px 10px;font-size:12px;color:var(--text-3)">No conversations yet</div>'; return; }
-  list.innerHTML = ids.map(id => {
-    const c = convs[id];
-    const icon = c.title.match(/excel|spreadsheet|csv/i)?'📊':c.title.match(/slide|ppt|presentation/i)?'📑':c.title.match(/word|doc|report/i)?'📄':'💬';
+  // Group: parent convs first, then branches nested under them
+  const branchOf = {}; // parentId → [childId, ...]
+  const topLevel = [];
+  ids.forEach(id => {
+    const p = convs[id]?.branchedFrom;
+    if (p && convs[p]) {
+      if (!branchOf[p]) branchOf[p] = [];
+      branchOf[p].push(id);
+    } else {
+      topLevel.push(id);
+    }
+  });
+
+  function ciHtml(id, isChild) {
+    const cv = convs[id];
+    const icon = cv.title.match(/excel|spreadsheet|csv/i)?'📊':cv.title.match(/slide|ppt|presentation/i)?'📑':cv.title.match(/word|doc|report/i)?'📄':isChild?'⎇':'💬';
+    const indent = isChild ? 'style="margin-left:14px;border-left:2px solid var(--border);padding-left:6px"' : '';
     return `<div class="ci ${id===curConv?'active':''}" onclick="loadConv('${id}')"
-      draggable="true" ondragstart="onDragStart(event,'${id}')">
+      draggable="true" ondragstart="onDragStart(event,'${id}')" ${indent}>
       <span class="ci-icon">${icon}</span>
-      <span class="ci-name">${esc(c.title)}</span>
+      <span class="ci-name" ondblclick="startRenameConv('${id}',event)">${esc(cv.title)}</span>
       <button class="ci-del" onclick="delConv('${id}',event)">✕</button>
     </div>`;
-  }).join('');
+  }
+
+  const parts = [];
+  topLevel.forEach(id => {
+    parts.push(ciHtml(id, false));
+    (branchOf[id] || []).sort((a,b) => convs[a].createdAt - convs[b].createdAt).forEach(bid => {
+      parts.push(ciHtml(bid, true));
+    });
+  });
+  list.innerHTML = parts.join('');
 }
 
 // ══════════════════════════════════
@@ -2596,21 +2764,26 @@ function branchFromMsg(msgId) {
   const srcConv = convs[curConv];
   if (!srcConv) return;
 
-  // Find the message index — match by id, timestamp, or string coercion
   const idx = srcConv.messages.findIndex(m => String(m.id||m.timestamp||'') === String(msgId));
   if (idx < 0) { showToast('Could not find message to branch from'); return; }
+
+  // Derive title from the message being branched
+  const msg = srcConv.messages[idx];
+  const raw = (msg.role === 'user' ? msg.content : srcConv.messages.slice(0,idx).reverse().find(m=>m.role==='user')?.content) || '';
+  const branchTitle = '⎇ ' + raw.slice(0,36).split('\n').join(' ') + (raw.length > 36 ? '…' : '');
 
   const branchMsgs = srcConv.messages.slice(0, idx + 1).map(m => ({...m}));
   const branchId = 'c' + Date.now();
   convs[branchId] = {
     id: branchId,
-    title: (srcConv.title || 'Chat') + ' ⎇',
+    title: branchTitle,
     messages: branchMsgs,
     createdAt: Date.now(),
-    branchedFrom: curConv,
+    branchedFrom: curConv,    // key — renders as sub-item under parent
     projectId: srcConv.projectId || null,
   };
   saveConvs();
+  renderConvList();
   loadConv(branchId);
   showToast('⎇ Branched');
 }
@@ -2723,35 +2896,31 @@ function sendQuick(t) { document.getElementById('userInput').value=t; sendMsg();
 async function callManaged(history, content, systemPrompt) {
   const model = getModel(cfg.selectedModelId) || getDefaultModel();
   const provider = model.provider;
-  const messages = [...history, {role:'user', content}];
+  const messages = [...history, {role:'user', content: typeof content === 'string' ? content : (content.find?.(x=>x.type==='text')?.text||'')}];
+  const secret = (typeof window !== 'undefined' && window.AIDE_SECRET) || PRODUCT_CONFIG.AIDE_SECRET || '';
+  const backendUrl = PRODUCT_CONFIG.BACKEND_URL;
+  if (!backendUrl) throw new Error('Backend not configured.');
+  if (!secret) throw new Error('Guest access not configured — AIDE_SECRET missing in paparapupi.js');
 
-  if (provider === 'anthropic') {
-    const key = PRODUCT_CONFIG.ANTHROPIC_KEY || cfg.claudeKey;
-    if (!key) throw new Error('Managed mode not configured. Contact support.');
-    if (cfg.webSearch) {
-      return await callAnthropicWithSearch(key, model.apiModel, history, content, systemPrompt);
-    }
-    const r = await fetch('https://api.anthropic.com/v1/messages', {
+  // All managed calls go through Railway backend (keys never exposed to browser)
+  if (cfg.webSearch && provider === 'anthropic') {
+    // Use backend with web_search flag
+    const r = await fetch(`${backendUrl}/chat`, {
       method:'POST',
-      headers:{'Content-Type':'application/json','x-api-key':key,'anthropic-version':'2023-06-01','anthropic-dangerous-direct-browser-access':'true'},
-      body:JSON.stringify({model:model.apiModel,max_tokens:4096,system:systemPrompt,messages})
+      headers:{'Content-Type':'application/json','x-aide-secret':secret},
+      body:JSON.stringify({ provider:'anthropic', model:model.apiModel, system:systemPrompt, messages, max_tokens:4096, web_search:true })
     });
-    if (!r.ok) { const e=await r.json(); throw new Error(e.error?.message||`Error ${r.status}`); }
-    const d=await r.json(); return d.content?.filter(b=>b.type==='text').map(b=>b.text).join('')||'';
-  } else if (provider === 'openai') {
-    const key = PRODUCT_CONFIG.OPENAI_KEY || cfg.openaiKey;
-    if (!key) throw new Error('OpenAI not configured. Contact support.');
-    return await _callOpenAI(key, model.apiModel, history, content, systemPrompt);
-  } else if (provider === 'gemini') {
-    const key = PRODUCT_CONFIG.GEMINI_KEY || cfg.geminiKey;
-    if (!key) throw new Error('Gemini not configured. Contact support.');
-    return await _callGemini(key, model.apiModel, history, content, systemPrompt);
-  } else if (provider === 'mistral') {
-    const key = PRODUCT_CONFIG.MISTRAL_KEY || cfg.mistralKey;
-    if (!key) throw new Error('Mistral not configured. Contact support.');
-    return await _callMistral(key, model.apiModel, history, content, systemPrompt);
+    if (!r.ok) { const e=await r.json().catch(()=>{}); throw new Error(e?.detail||`Backend error ${r.status}`); }
+    const d = await r.json(); return d.text || '';
   }
-  throw new Error('Unknown provider: ' + provider);
+
+  const r = await fetch(`${backendUrl}/chat`, {
+    method:'POST',
+    headers:{'Content-Type':'application/json','x-aide-secret':secret},
+    body:JSON.stringify({ provider, model:model.apiModel, system:systemPrompt, messages, max_tokens:4096 })
+  });
+  if (!r.ok) { const e=await r.json().catch(()=>{}); throw new Error(e?.detail||`Backend error ${r.status}`); }
+  const d = await r.json(); return d.text || '';
 }
 
 async function callClaude(history, content, systemPrompt) {
@@ -2771,6 +2940,11 @@ async function callClaude(history, content, systemPrompt) {
 
 async function callOpenAI(history, content, systemPrompt) {
   if (!cfg.openaiKey) throw new Error('No OpenAI API key. Open Settings to add one.');
+  if (cfg.webSearch) {
+    const q = typeof content === 'string' ? content : (content.find?.(x=>x.type==='text')?.text||'');
+    const searchCtx = await fetchWebSearch(q);
+    if (searchCtx) systemPrompt = systemPrompt + '\n\nWeb search results (use these to answer):\n' + searchCtx;
+  }
   return await _callOpenAI(cfg.openaiKey, cfg.openaiModel, history, content, systemPrompt);
 }
 
@@ -2787,6 +2961,11 @@ async function _callOpenAI(key, model, history, content, systemPrompt) {
 
 async function callGemini(history, content, systemPrompt) {
   if (!cfg.geminiKey) throw new Error('No Gemini API key. Open Settings to add one.');
+  if (cfg.webSearch) {
+    const q = typeof content === 'string' ? content : (content.find?.(x=>x.type==='text')?.text||'');
+    const searchCtx = await fetchWebSearch(q);
+    if (searchCtx) systemPrompt = systemPrompt + '\n\nWeb search results (use these to answer):\n' + searchCtx;
+  }
   return await _callGemini(cfg.geminiKey, 'gemini-2.0-flash', history, content, systemPrompt);
 }
 
@@ -2808,6 +2987,11 @@ async function _callGemini(key, model, history, content, systemPrompt) {
 
 async function callMistral(history, content, systemPrompt) {
   if (!cfg.mistralKey) throw new Error('No Mistral API key. Open Settings to add one.');
+  if (cfg.webSearch) {
+    const q = typeof content === 'string' ? content : (content.find?.(x=>x.type==='text')?.text||'');
+    const searchCtx = await fetchWebSearch(q);
+    if (searchCtx) systemPrompt = systemPrompt + '\n\nWeb search results (use these to answer):\n' + searchCtx;
+  }
   return await _callMistral(cfg.mistralKey, 'mistral-small-latest', history, content, systemPrompt);
 }
 
@@ -2823,6 +3007,33 @@ async function _callMistral(key, model, history, content, systemPrompt) {
   const d=await r.json(); return d.choices?.[0]?.message?.content||'';
 }
 
+
+async function testOllama() {
+  const url = (document.getElementById('sOllamaUrl').value.trim() || 'http://localhost:11434').replace(/\/+$/, '');
+  const out = document.getElementById('ollamaTestResult');
+  out.textContent = '⏳ Testing…'; out.style.color = 'var(--text-2)';
+  try {
+    const r = await fetch(`${url}/api/tags`, { mode:'cors', credentials:'omit' });
+    if (r.ok) {
+      const d = await r.json();
+      const models = (d.models||[]).map(m=>m.name).join(', ') || 'none pulled yet';
+      out.textContent = `✓ Connected! Models: ${models}`;
+      out.style.color = 'var(--green)';
+    } else {
+      out.textContent = `✗ HTTP ${r.status}`;
+      out.style.color = 'var(--red)';
+    }
+  } catch(e) {
+    const isHttps = location.protocol === 'https:';
+    if (isHttps && url.startsWith('http://')) {
+      out.innerHTML = `✗ Mixed content block: this page is HTTPS but Ollama is HTTP. <br>Workaround: use the installed PWA (Add to Home Screen → opens as standalone app without mixed-content block).`;
+    } else {
+      out.textContent = `✗ Cannot reach ${url} — run: launchctl setenv OLLAMA_ORIGINS '*' then restart Ollama`;
+    }
+    out.style.color = 'var(--red)';
+  }
+}
+
 async function callOllama(history, content, systemPrompt) {
   const textContent = typeof content === 'string' ? content : content.find?.(p=>p.type==='text')?.text || '';
   const messages=[{role:'system',content:systemPrompt},...history,{role:'user',content:textContent}];
@@ -2831,11 +3042,15 @@ async function callOllama(history, content, systemPrompt) {
   try {
     r = await fetch(`${url}/api/chat`, {
       method:'POST',
-      headers:{'Content-Type':'application/json','Origin':location.origin},
+      mode:'cors',
+      credentials:'omit',
+      headers:{'Content-Type':'application/json'},
       body:JSON.stringify({model:cfg.ollamaModel||'qwen2.5:14b',messages,stream:false})
     });
   } catch(e) {
-    throw new Error('Cannot reach Ollama. Make sure Ollama is running and OLLAMA_ORIGINS is set. Run in Terminal: launchctl setenv OLLAMA_ORIGINS \'*\' then restart Ollama.');
+    const isHttps = location.protocol === 'https:';
+    const httpsNote = isHttps ? '\n\n⚠️ HTTPS→HTTP BLOCK: This app runs on https://, but Ollama uses http://localhost. Chrome/Safari block this (mixed content). Workaround: install the app as PWA (Add to Home Screen) OR use the desktop version.' : '';
+    throw new Error(`Cannot reach Ollama at ${url}.${httpsNote}\n\nAlso run in Terminal:\n  launchctl setenv OLLAMA_ORIGINS '*'\nThen quit and restart Ollama from menu bar.`);
   }
   if (!r.ok) throw new Error(`Ollama error ${r.status}: ${await r.text()}`);
   const d=await r.json(); return d.message?.content||'';
@@ -3452,7 +3667,7 @@ init();
 // ══════════════════════════════════════════════════════════════
 
 // ── Service Worker registration ───────────────────────────────
-const APP_VERSION = 'v0.37';
+const APP_VERSION = 'v0.39';
 if ('serviceWorker' in navigator) {
   window.addEventListener('load', async () => {
     // Unregister all old service workers and clear all caches on version change
