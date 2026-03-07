@@ -201,9 +201,23 @@ body{font-family:'DM Sans',sans-serif;background:var(--bg);color:var(--text);hei
 .logout-btn{font-size:10px;color:var(--text-3);background:none;border:none;cursor:pointer;padding:2px 6px;border-radius:4px;flex-shrink:0;font-family:'DM Sans',sans-serif;transition:all .15s}
 .logout-btn:hover{color:var(--red);background:var(--red-bg)}
 
+/* Connectivity pill */
+.conn-pill{display:flex;align-items:center;gap:5px;padding:4px 9px;border-radius:20px;font-size:11px;font-weight:500;border:1px solid var(--border);background:var(--surface2);cursor:default;transition:all .3s;white-space:nowrap}
+.conn-pill.online{color:var(--green);border-color:#c5e0cc;background:var(--green-bg)}
+.conn-pill.offline{color:var(--amber);border-color:#f0d5a8;background:var(--amber-bg)}
+.conn-dot{width:6px;height:6px;border-radius:50%;flex-shrink:0;transition:background .3s}
+.conn-pill.online .conn-dot{background:var(--green)}
+.conn-pill.offline .conn-dot{background:var(--amber);animation:connPulse 1.5s ease-in-out infinite}
+@keyframes connPulse{0%,100%{opacity:1}50%{opacity:.4}}
+/* Ollama status dot in model picker */
+.ollama-dot{width:7px;height:7px;border-radius:50%;flex-shrink:0;transition:background .4s}
+.ollama-dot.running{background:var(--green)}
+.ollama-dot.stopped{background:var(--text-3)}
+
 /* Mode pill in input bar */
-.mode-pill{height:20px;padding:0 7px;border-radius:10px;background:var(--surface2);border:1px solid var(--border);font-size:10px;font-weight:600;color:var(--text-3);display:flex;align-items:center;gap:3px;white-space:nowrap;flex-shrink:0;letter-spacing:.01em;transition:all .2s;cursor:pointer}
-.mode-pill:hover{border-color:var(--text-2);color:var(--text)}
+.mode-pill{display:none} /* replaced by input-mode-select */
+.input-mode-select{height:28px;padding:0 6px;border:1px solid var(--border);border-radius:var(--r-sm);font-family:'DM Sans',sans-serif;font-size:11px;font-weight:500;color:var(--text-2);background:var(--surface2);outline:none;cursor:pointer;flex-shrink:0;max-width:110px;transition:border-color .15s}
+.input-mode-select:hover,.input-mode-select:focus{border-color:var(--accent);color:var(--text)}
 
 /* Layout */
 .app-body{display:flex;flex:1;overflow:hidden}
@@ -439,9 +453,167 @@ body{font-family:'DM Sans',sans-serif;background:var(--bg);color:var(--text);hei
 .drop-overlay.show{display:flex}
 .drop-overlay-icon{font-size:32px}
 .drop-overlay-text{font-size:14px;font-weight:600;color:var(--blue)}
+
+/* ════════════════════════════════════════════════════
+   MOBILE RESPONSIVE — full iPhone/Android layout
+════════════════════════════════════════════════════ */
+@media (max-width: 768px) {
+
+  /* ── Sidebar: hidden by default, slides in as drawer ── */
+  .sidebar {
+    position: fixed !important;
+    top: 0; left: 0; bottom: 0;
+    width: 280px !important;
+    z-index: 500;
+    transform: translateX(-100%);
+    transition: transform .25s cubic-bezier(.16,1,.3,1);
+    box-shadow: 4px 0 24px rgba(0,0,0,.15);
+  }
+  .sidebar.open {
+    transform: translateX(0);
+  }
+  .sidebar-overlay {
+    display: none;
+    position: fixed;
+    inset: 0;
+    background: rgba(0,0,0,.35);
+    z-index: 499;
+    backdrop-filter: blur(1px);
+  }
+  .sidebar-overlay.show { display: block; }
+
+  /* ── Chat panel takes full width ── */
+  .chat-panel {
+    width: 100% !important;
+    flex: 1 !important;
+  }
+
+  /* ── Topbar: add hamburger, hide some elements ── */
+  .topbar { padding: 0 12px; gap: 8px; }
+  .logo { font-size: 18px; }
+  .tb-divider { display: none; }
+  .status-pill { display: none; }
+  .topbar-right { gap: 4px; }
+  .mb-tier { display: none; }
+
+  /* Hamburger button */
+  .mob-menu-btn {
+    width: 32px; height: 32px;
+    border: none; background: transparent;
+    cursor: pointer; display: flex !important;
+    align-items: center; justify-content: center;
+    color: var(--text); border-radius: var(--r-sm);
+    flex-shrink: 0;
+  }
+  .mob-menu-btn:hover { background: var(--surface2); }
+
+  /* ── Messages ── */
+  .msg-inner { padding: 0 12px !important; }
+  .msg-meta  { padding: 1px 12px 0 44px !important; }
+  .msg-row.user .msg-meta { padding: 1px 12px 0 12px !important; }
+  .bubble { max-width: 85% !important; font-size: 14px !important; }
+  .msg-avatar { width: 22px !important; height: 22px !important; font-size: 10px !important; }
+
+  /* ── Input area ── */
+  .input-area { padding: 8px 10px 12px !important; }
+  .input-wrap { border-radius: 16px !important; }
+  #userInput { font-size: 16px !important; } /* prevent iOS zoom */
+  .input-footer { display: none; } /* hide keyboard hints on mobile */
+
+  /* ── Mode bar in sidebar ── */
+  .mode-bar { padding: 6px 10px; }
+  .mode-select { font-size: 12px; }
+
+  /* ── Model picker ── */
+  .card-picker {
+    position: fixed !important;
+    top: auto !important; bottom: 70px !important;
+    left: 8px !important; right: 8px !important;
+    width: auto !important;
+    max-height: 60vh;
+    overflow-y: auto;
+  }
+
+  /* ── Settings panel ── */
+  .settings-panel {
+    position: fixed !important;
+    inset: 0 !important;
+    width: 100% !important;
+    border-radius: 0 !important;
+    z-index: 600;
+    overflow-y: auto;
+  }
+
+  /* ── Artifacts panel ── */
+  .artifacts-panel {
+    position: fixed !important;
+    top: 0; right: 0; bottom: 0;
+    width: 88vw !important;
+    max-width: 340px;
+    z-index: 500;
+    transform: translateX(100%);
+    transition: transform .25s cubic-bezier(.16,1,.3,1);
+    box-shadow: -4px 0 24px rgba(0,0,0,.12);
+  }
+  .artifacts-panel:not(.hidden) { transform: translateX(0); }
+
+  /* ── Auth card ── */
+  .auth-card {
+    width: 100% !important;
+    max-width: 100% !important;
+    border-radius: 0 !important;
+    min-height: 100vh;
+    border: none !important;
+    box-shadow: none !important;
+  }
+  .auth-wrap {
+    align-items: flex-start !important;
+    padding-top: env(safe-area-inset-top, 20px);
+  }
+
+  /* ── Preview panel ── */
+  .preview-panel {
+    position: fixed !important;
+    inset: 0 !important;
+    width: 100% !important;
+    z-index: 600;
+    border-radius: 0 !important;
+  }
+
+  /* ── Branch bar ── */
+  .branch-bar { font-size: 11px; padding: 6px 10px 4px; }
+
+  /* ── Empty state ── */
+  .empty-icon { font-size: 28px !important; }
+  .empty-title { font-size: 16px !important; }
+  .quick-btns { flex-direction: column !important; }
+  .quick-btn { font-size: 12px !important; }
+
+  /* ── Mode pill ── */
+  .mode-pill { display: none; } /* save space on mobile */
+
+  /* ── Tooltip ── */
+  .mode-tooltip { width: 220px !important; font-size: 11px !important; }
+}
+
+/* iPhone safe areas */
+@supports (padding-bottom: env(safe-area-inset-bottom)) {
+  @media (max-width: 768px) {
+    .input-area {
+      padding-bottom: calc(12px + env(safe-area-inset-bottom)) !important;
+    }
+    .topbar {
+      padding-top: env(safe-area-inset-top, 0);
+      height: calc(50px + env(safe-area-inset-top, 0)) !important;
+    }
+  }
+}
 </style>
 </head>
 <body>
+
+<!-- Mobile sidebar overlay -->
+<div class="sidebar-overlay" id="sidebarOverlay" onclick="toggleMobileSidebar()"></div>
 
 <!-- Offline banner -->
 <div class="offline-banner" id="offlineBanner">
@@ -663,11 +835,18 @@ body{font-family:'DM Sans',sans-serif;background:var(--bg);color:var(--text);hei
 ════════════════════════════════ -->
 <div id="app" class="screen">
   <div class="topbar">
+    <button class="mob-menu-btn" id="mobMenuBtn" onclick="toggleMobileSidebar()" style="display:none" title="Menu">
+      <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"><line x1="3" y1="6" x2="21" y2="6"/><line x1="3" y1="12" x2="21" y2="12"/><line x1="3" y1="18" x2="21" y2="18"/></svg>
+    </button>
     <div class="logo">Aide</div>
     <div class="tb-divider"></div>
     <div class="status-pill">
       <div class="sdot on" id="appDot"></div>
       <div class="stext" id="appStatus">Ready</div>
+    </div>
+    <div class="conn-pill online" id="connPill">
+      <div class="conn-dot"></div>
+      <span id="connLabel">Online</span>
     </div>
     <div class="topbar-right">
       <div class="model-picker-wrap" id="modelPickerWrap">
@@ -756,7 +935,7 @@ body{font-family:'DM Sans',sans-serif;background:var(--bg);color:var(--text);hei
             <button class="search-icon-btn" id="searchIconBtn" title="Web search" style="opacity:.55">
               <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="11" cy="11" r="8"/><line x1="21" y1="21" x2="16.65" y2="16.65"/></svg>
             </button>
-            <div class="mode-pill" id="modePill" title="Active mode"></div>
+            <select class="input-mode-select" id="inputModeSelect" onchange="setMode(this.value)" title="Active mode"></select>
             <button class="send-btn" id="sendBtn" onclick="sendMsg()">
               <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><line x1="22" y1="2" x2="11" y2="13"/><polygon points="22 2 15 22 11 13 2 9 22 2"/></svg>
             </button>
@@ -826,6 +1005,11 @@ body{font-family:'DM Sans',sans-serif;background:var(--bg);color:var(--text);hei
         <button class="btn-ghost-sm" style="margin-top:4px" onclick="importConversations()">↑ Import conversations</button>
       </div>
       <div id="passkeySettingsRow"></div>
+      <div class="sg">
+        <div class="sl">API Usage</div>
+        <button class="btn-ghost-sm" id="fetchUsageBtn" onclick="fetchApiUsage()">↻ Fetch usage</button>
+        <div id="usageResult" style="font-size:11.5px;color:var(--text-2);margin-top:8px;line-height:1.7"></div>
+      </div>
       <button class="btn-save" onclick="saveSettings()">Save settings</button>
       <button class="btn-ghost-sm" onclick="resetApp()">Reset & re-activate</button>
     </div>
@@ -1352,6 +1536,12 @@ function loadUserData() {
   if (savedC) convs = JSON.parse(savedC);
   const savedP = localStorage.getItem(k.projects);
   if (savedP) projects = JSON.parse(savedP);
+  // Always ensure passkey users have lifetime plan
+  if (loadPasskeys().length > 0) {
+    cfg.mode = 'byok';
+    cfg.licenseData = { plan: 'lifetime', customer: currentUser?.name || 'User' };
+    cfg.activated = true;
+  }
 }
 
 function showAuthScreen() {
@@ -1881,6 +2071,8 @@ function launchApp() {
   }
   // Persist session for silent restore on next open
   if (typeof persistSession === 'function') persistSession();
+  setupMobileUI();
+  setupConnectivity();
 }
 
 // ── MODEL HELPERS ──
@@ -2000,7 +2192,7 @@ function buildProvSwitch() {
     html += `<div class="cp-divider"></div>
       <div class="cp-item ${isOllama?'cp-active':''}" onclick="selectCardModel('ollama')">
         <div class="cp-icon" style="background:#F0EFE9">💻</div>
-        <div><div class="cp-name">Local (Ollama)</div><div class="cp-use">Offline · private · free</div></div>
+        <div><div class="cp-name" style="display:flex;align-items:center;gap:5px">Local (Ollama)<div class="ollama-dot ${_ollamaRunning?'running':'stopped'}" title="${_ollamaRunning?'Ollama running':'Ollama not detected'}"></div></div><div class="cp-use">Offline · private · free</div></div>
         <div class="cp-right">
           <div class="cp-speed"><span class="on g"></span><span class="on g"></span><span></span></div>
           <div class="cp-tier" style="background:#F0EFE9;color:#5C5B55">Local</div>
@@ -2108,17 +2300,15 @@ function toggleWS() {}
 // MODES
 // ══════════════════════════════════
 function renderModeBar() {
-  // Update mode pill in input bar
-  const mp = document.getElementById('modePill');
-  if (mp) {
-    const m = MODES.find(x => x.id === cfg.activeMode);
-    if (m) { mp.textContent = m.icon + ' ' + m.label; mp.onclick = () => { document.getElementById('modeSelect')?.focus(); }; }
-  }
+  // Sync both mode selects
+  ['modeSelect','inputModeSelect'].forEach(id => {
+    const el = document.getElementById(id);
+    if (!el) return;
+    el.innerHTML = MODES.map(m => `<option value="${m.id}" ${cfg.activeMode===m.id?'selected':''}>${m.icon} ${m.label}</option>`).join('');
+  });
   const sel = document.getElementById('modeSelect');
   if (!sel) return;
-  sel.innerHTML = MODES.map(m =>
-    `<option value="${m.id}" ${cfg.activeMode===m.id?'selected':''}>${m.icon} ${m.label}</option>`
-  ).join('');
+  // (mode selects populated above)
 }
 
 function setMode(id) {
@@ -2494,6 +2684,49 @@ async function fetchWebSearch(query) { return null; }
 // ══════════════════════════════════
 // CONVERSATIONS
 // ══════════════════════════════════
+// ══════════════════════════════════
+// BRANCH / SUB-CONVERSATIONS
+// ══════════════════════════════════
+function branchFromMsg(btn) {
+  const ts = btn.dataset.ts;
+  const parentId = curConv;
+  const parentConv = convs[parentId];
+  if (!parentConv) return;
+
+  const msgIdx = parentConv.messages.findIndex(m => String(m.timestamp) === String(ts));
+  const contextMsg = msgIdx >= 0 ? parentConv.messages[msgIdx] : null;
+
+  const branchId = 'b_' + Date.now().toString(36);
+  const branchTitle = '↳ ' + (contextMsg?.content || 'Branch').slice(0, 38) + '…';
+
+  convs[branchId] = {
+    id: branchId, title: branchTitle, messages: [],
+    parentId, parentMsgTs: ts, createdAt: Date.now(), updatedAt: Date.now(),
+    _branchContext: contextMsg?.content || ''
+  };
+
+  if (msgIdx >= 0) parentConv.messages[msgIdx].branchId = branchId;
+
+  saveConvs(); renderConvList();
+  loadConv(branchId);
+
+  const starter = contextMsg
+    ? `I've branched from this response. What would you like to explore further?
+
+> ${(contextMsg.content||'').slice(0,200)}${contextMsg.content?.length>200?'…':''}`
+    : 'Branch started. What would you like to explore?';
+  appendMsg('assistant', starter, starter, null);
+}
+
+function exitBranch() {
+  const conv = convs[curConv];
+  if (conv?.parentId && convs[conv.parentId]) loadConv(conv.parentId);
+}
+
+function getBranchContext() {
+  return convs[curConv]?._branchContext || null;
+}
+
 function newConv() {
   const id = 'c'+Date.now();
   convs[id] = {id, title:'New conversation', messages:[], createdAt:Date.now()};
@@ -2514,6 +2747,7 @@ function loadConv(id) {
     bar.style.display = 'flex';
   } else if (bar) { bar.style.display = 'none'; }
   renderConvList(); renderProjList(); renderMessages(); renderArtifacts();
+  closeMobileSidebar();
 }
 
 function delConv(id, e) {
@@ -2595,8 +2829,9 @@ function renderMsg(m) {
       </div>`;
     }
   }
+  const ts = m.timestamp || Date.now();
   const branchBtn = m.role === 'assistant'
-    ? `<button class="branch-btn" onclick="branchFromMsg(${JSON.stringify(m.content||'').slice(0,60)+'...'},'${m.timestamp||Date.now()}')" title="Open sub-conversation from this message">
+    ? `<button class="branch-btn" data-ts="${ts}" onclick="branchFromMsg(this)" title="Branch from this message">
         <svg width="10" height="10" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><line x1="6" y1="3" x2="6" y2="15"/><circle cx="18" cy="6" r="3"/><circle cx="6" cy="18" r="3"/><path d="M18 9a9 9 0 01-9 9"/></svg>
         Branch
       </button>` : '';
@@ -3406,6 +3641,105 @@ document.addEventListener('click', () => {
   document.getElementById('modeTooltip')?.classList.remove('show');
 });
 
+
+// ══════════════════════════════════
+// CONNECTIVITY & OLLAMA STATUS
+// ══════════════════════════════════
+let _wasOnline = true;
+let _ollamaRunning = false;
+
+function updateConnPill(online) {
+  const pill  = document.getElementById('connPill');
+  const label = document.getElementById('connLabel');
+  if (!pill || !label) return;
+  if (online) {
+    pill.className  = 'conn-pill online';
+    label.textContent = 'Online';
+  } else {
+    pill.className  = 'conn-pill offline';
+    label.textContent = 'Offline';
+  }
+}
+
+async function pingOllama() {
+  const url = (cfg.ollamaUrl || 'http://localhost:11434').replace(/\/$/,'');
+  try {
+    const r = await fetch(url + '/api/tags', { method:'GET', signal: AbortSignal.timeout(2000) });
+    _ollamaRunning = r.ok;
+  } catch(e) {
+    _ollamaRunning = false;
+  }
+  // Update dot in model picker if visible
+  document.querySelectorAll('.ollama-dot').forEach(d => {
+    d.className = 'ollama-dot ' + (_ollamaRunning ? 'running' : 'stopped');
+    d.title     = _ollamaRunning ? 'Ollama running' : 'Ollama not detected';
+  });
+}
+
+function setupConnectivity() {
+  function onOnline()  { _wasOnline = true;  updateConnPill(true); }
+  function onOffline() {
+    _wasOnline = false; updateConnPill(false);
+    // Auto-switch to Ollama when offline
+    if (cfg.selectedModelId !== 'ollama') {
+      window._offlineBackup = { modelId: cfg.selectedModelId, provider: cfg.provider };
+      cfg.selectedModelId = 'ollama';
+      cfg.provider = 'ollama';
+      buildProvSwitch();
+      updateStatus();
+    }
+  }
+  window.addEventListener('online',  onOnline);
+  window.addEventListener('offline', onOffline);
+  updateConnPill(navigator.onLine);
+  _wasOnline = navigator.onLine;
+
+  // Restore model when back online
+  window.addEventListener('online', () => {
+    if (window._offlineBackup) {
+      cfg.selectedModelId = window._offlineBackup.modelId;
+      cfg.provider        = window._offlineBackup.provider;
+      window._offlineBackup = null;
+      buildProvSwitch(); updateStatus();
+    }
+  });
+
+  // Poll Ollama every 8s
+  pingOllama();
+  setInterval(pingOllama, 8000);
+}
+
+// ── MOBILE SIDEBAR ──────────────────────────────────────────────────
+function isMobile() { return window.innerWidth <= 768; }
+
+function toggleMobileSidebar() {
+  const sb  = document.querySelector('.sidebar');
+  const ov  = document.getElementById('sidebarOverlay');
+  const open = sb.classList.toggle('open');
+  ov.classList.toggle('show', open);
+}
+
+function closeMobileSidebar() {
+  if (!isMobile()) return;
+  document.querySelector('.sidebar').classList.remove('open');
+  document.getElementById('sidebarOverlay').classList.remove('show');
+}
+
+function setupMobileUI() {
+  const btn = document.getElementById('mobMenuBtn');
+  if (!btn) return;
+  if (isMobile()) {
+    btn.style.display = 'flex';
+  } else {
+    btn.style.display = 'none';
+    // Ensure sidebar is always visible on desktop
+    document.querySelector('.sidebar').classList.remove('open');
+    document.getElementById('sidebarOverlay').classList.remove('show');
+  }
+}
+
+window.addEventListener('resize', setupMobileUI);
+
 function toggleArtifactsPanel() {
   document.getElementById('artifactsPanel').classList.toggle('hidden');
 }
@@ -3442,6 +3776,71 @@ function renderArtifacts() {
 // ══════════════════════════════════
 function toggleSettings() { document.getElementById('settingsOverlay').classList.toggle('open'); }
 function handleSettingsClick(e) { if(e.target===document.getElementById('settingsOverlay')) toggleSettings(); }
+
+
+// ══════════════════════════════════
+// API USAGE CHECKER
+// ══════════════════════════════════
+async function fetchApiUsage() {
+  const el  = document.getElementById('usageResult');
+  const btn = document.getElementById('fetchUsageBtn');
+  if (!el) return;
+  el.textContent = 'Fetching…';
+  btn.disabled = true;
+  const results = [];
+
+  // ── Anthropic ──
+  const anthropicKey = PRODUCT_CONFIG.ANTHROPIC_KEY || cfg.claudeKey;
+  if (anthropicKey) {
+    try {
+      // Anthropic usage endpoint (last 30 days)
+      const today = new Date();
+      const start = new Date(today); start.setDate(today.getDate()-30);
+      const fmt = d => d.toISOString().split('T')[0];
+      const r = await fetch(`https://api.anthropic.com/v1/usage?start_time=${fmt(start)}&end_time=${fmt(today)}`, {
+        headers: { 'x-api-key': anthropicKey, 'anthropic-version': '2023-06-01', 'anthropic-dangerous-direct-browser-access':'true' }
+      });
+      if (r.ok) {
+        const d = await r.json();
+        const total = d.data?.reduce((s,x) => s + (x.input_tokens||0) + (x.output_tokens||0), 0) || 0;
+        results.push(`<b>Anthropic</b> — ${total.toLocaleString()} tokens used (last 30d)`);
+      } else {
+        results.push(`<b>Anthropic</b> — usage API not available (check console.anthropic.com)`);
+      }
+    } catch(e) { results.push(`<b>Anthropic</b> — ${e.message}`); }
+  }
+
+  // ── OpenRouter ──
+  if (cfg.openrouterKey) {
+    try {
+      const r = await fetch('https://openrouter.ai/api/v1/auth/key', {
+        headers: { 'Authorization': 'Bearer ' + cfg.openrouterKey }
+      });
+      if (r.ok) {
+        const d = await r.json();
+        const data = d.data || d;
+        const used  = data.usage !== undefined ? `$${Number(data.usage).toFixed(4)} used` : '';
+        const limit = data.limit !== undefined ? ` / $${Number(data.limit).toFixed(2)} limit` : '';
+        const left  = data.limit_remaining !== undefined ? ` · $${Number(data.limit_remaining).toFixed(4)} remaining` : '';
+        results.push(`<b>OpenRouter</b> — ${used}${limit}${left}`);
+      } else {
+        results.push(`<b>OpenRouter</b> — could not fetch (key may be invalid)`);
+      }
+    } catch(e) { results.push(`<b>OpenRouter</b> — ${e.message}`); }
+  }
+
+  // ── OpenAI ──
+  if (cfg.openaiKey || PRODUCT_CONFIG.OPENAI_KEY) {
+    results.push(`<b>OpenAI</b> — check usage at <a href="https://platform.openai.com/usage" target="_blank" style="color:var(--green)">platform.openai.com/usage</a>`);
+  }
+
+  if (!results.length) {
+    el.innerHTML = '<span style="color:var(--text-3)">No API keys configured yet.</span>';
+  } else {
+    el.innerHTML = results.join('<br>');
+  }
+  btn.disabled = false;
+}
 
 function showPasskeySettingsRow() {
   if (!passkeySupported()) return '<div style="font-size:12px;color:var(--text-3);margin-top:8px">Passkeys not supported on this browser.</div>';
