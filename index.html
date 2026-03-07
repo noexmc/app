@@ -998,7 +998,7 @@ body{font-family:'DM Sans',sans-serif;background:var(--bg);color:var(--text);hei
         <input class="si" id="sOllamaModel" placeholder="Model e.g. qwen2.5:14b" style="margin-top:6px"/>
         <div style="font-size:10.5px;color:var(--text-3);margin-top:6px;line-height:1.6">
           <b style="color:var(--text-2)">One-time setup</b> — paste in Terminal, then quit &amp; reopen Ollama:<br>
-          <code style="font-size:10px;background:var(--surface2);padding:3px 6px;border-radius:3px;display:block;margin-top:4px;user-select:all;cursor:text">launchctl setenv OLLAMA_ORIGINS 'https://noexmc.github.io'</code>
+          <code style="font-size:10px;background:var(--surface2);padding:3px 6px;border-radius:3px;display:block;margin-top:4px;user-select:all;cursor:text">launchctl setenv OLLAMA_ORIGINS 'https://noexmc.github.io/app'</code>
         </div>
       </div>
       <div class="sg"><div class="sl">License key</div><input class="si" id="sLicenseKey" type="text" /></div>
@@ -3201,12 +3201,10 @@ async function callOllama(history, content, systemPrompt) {
   } catch(netErr) {
     // Mixed-content or network error — give actionable guidance
     throw new Error(
-      'Cannot reach Ollama. Fix:\n\n' +
-      '1. Make sure Ollama is running (check menu bar)\n' +
-      '2. Run this in Terminal to allow browser access:\n' +
-      '   OLLAMA_ORIGINS=https://noexmc.github.io ollama serve\n' +
-      '3. Or set permanently: launchctl setenv OLLAMA_ORIGINS \'https://noexmc.github.io\'\n\n' +
-      'Then restart Ollama.'
+      '⚠ Cannot reach Ollama.\n\n' +
+      'One-time fix — paste in Terminal, then quit & reopen Ollama:\n\n' +
+      'launchctl setenv OLLAMA_ORIGINS \'https://noexmc.github.io/app\'\n\n' +
+      '(Survives reboots — you only need to do this once.)'
     );
   }
 
