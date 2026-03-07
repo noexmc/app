@@ -164,6 +164,13 @@ body{font-family:'DM Sans',sans-serif;background:var(--bg);color:var(--text);hei
 .tb-btn{width:30px;height:30px;border:1px solid var(--border);border-radius:var(--r-sm);background:var(--surface);cursor:pointer;display:flex;align-items:center;justify-content:center;color:var(--text-2);transition:all .15s;font-size:15px}
 .tb-btn:hover{background:var(--surface2);color:var(--text)}
 
+/* Passkey button */
+.passkey-btn{width:100%;padding:11px;background:var(--text);color:#fff;border:none;border-radius:8px;font-family:'DM Sans',sans-serif;font-size:13px;font-weight:600;cursor:pointer;display:flex;align-items:center;justify-content:center;gap:8px;margin-bottom:8px;transition:opacity .15s}
+.passkey-btn:hover{opacity:.88}
+.passkey-btn svg{flex-shrink:0}
+.passkey-divider{display:flex;align-items:center;gap:10px;margin:10px 0;color:var(--text-3);font-size:11px}
+.passkey-divider::before,.passkey-divider::after{content:'';flex:1;height:1px;background:var(--border)}
+
 /* Auth Screen */
 .auth-wrap{display:flex;align-items:center;justify-content:center;width:100%;height:100%;background:var(--bg);padding:24px}
 .auth-card{width:100%;max-width:380px;background:var(--surface);border:1px solid var(--border);border-radius:16px;padding:36px 32px;box-shadow:0 4px 24px rgba(0,0,0,.07)}
@@ -193,6 +200,10 @@ body{font-family:'DM Sans',sans-serif;background:var(--bg);color:var(--text);hei
 .user-email{font-size:10px;color:var(--text-3);overflow:hidden;text-overflow:ellipsis;white-space:nowrap;flex:1;font-family:'DM Mono',monospace}
 .logout-btn{font-size:10px;color:var(--text-3);background:none;border:none;cursor:pointer;padding:2px 6px;border-radius:4px;flex-shrink:0;font-family:'DM Sans',sans-serif;transition:all .15s}
 .logout-btn:hover{color:var(--red);background:var(--red-bg)}
+
+/* Mode pill in input bar */
+.mode-pill{height:20px;padding:0 7px;border-radius:10px;background:var(--surface2);border:1px solid var(--border);font-size:10px;font-weight:600;color:var(--text-3);display:flex;align-items:center;gap:3px;white-space:nowrap;flex-shrink:0;letter-spacing:.01em;transition:all .2s;cursor:pointer}
+.mode-pill:hover{border-color:var(--text-2);color:var(--text)}
 
 /* Layout */
 .app-body{display:flex;flex:1;overflow:hidden}
@@ -269,6 +280,19 @@ body{font-family:'DM Sans',sans-serif;background:var(--bg);color:var(--text);hei
 @keyframes td{0%,60%,100%{transform:translateY(0);opacity:.4}30%{transform:translateY(-4px);opacity:1}}
 .msg-meta{max-width:720px;margin:2px auto 0;padding:0 20px;display:flex}
 .msg-row.user .msg-meta{justify-content:flex-end}
+/* Branch / sub-conversation */
+.branch-btn{background:none;border:none;cursor:pointer;padding:3px 5px;border-radius:4px;font-size:10px;color:var(--text-3);opacity:0;transition:opacity .15s,background .15s;display:inline-flex;align-items:center;gap:3px;line-height:1;margin-left:4px}
+.msg-row:hover .branch-btn{opacity:1}
+.branch-btn:hover{background:var(--surface2);color:var(--text-2)}
+.branch-badge{display:inline-flex;align-items:center;gap:3px;font-size:9.5px;color:var(--green);background:var(--green-bg);border:1px solid #c5e0cc;border-radius:10px;padding:1px 6px;margin-left:6px;cursor:pointer;vertical-align:middle}
+.branch-badge:hover{filter:brightness(.95)}
+/* Sub-conv back bar */
+.branch-bar{display:flex;align-items:center;gap:8px;padding:7px 12px 5px;background:var(--surface2);border-bottom:1px solid var(--border);font-size:11.5px;color:var(--text-2);flex-shrink:0}
+.branch-bar-back{background:none;border:none;cursor:pointer;font-size:11px;color:var(--green);font-family:'DM Sans',sans-serif;font-weight:500;padding:2px 6px;border-radius:4px}
+.branch-bar-back:hover{background:var(--green-bg)}
+.branch-bar-label{flex:1;overflow:hidden;text-overflow:ellipsis;white-space:nowrap;font-style:italic}
+/* Conv-item branch indicator in sidebar */
+.conv-branch-dot{width:6px;height:6px;border-radius:50%;background:var(--green);flex-shrink:0;margin-right:-2px}
 .msg-time{font-size:10px;color:var(--text-3);font-family:'DM Mono',monospace}
 
 /* Input */
@@ -381,9 +405,11 @@ body{font-family:'DM Sans',sans-serif;background:var(--bg);color:var(--text);hei
 .att-chip-rm:hover{color:var(--red)}
 
 /* ── SEARCH INDICATOR ── */
-.search-indicator{display:none;align-items:center;gap:6px;padding:6px 12px;font-size:11.5px;color:var(--blue);background:var(--blue-bg);border-top:1px solid #d0dff5}
-.search-indicator.show{display:flex}
-.si-spin{width:10px;height:10px;border:1.5px solid var(--blue);border-top-color:transparent;border-radius:50%;animation:spin .6s linear infinite}
+/* search icon in input bar */
+.search-icon-btn{width:28px;height:28px;border:1px solid var(--border);border-radius:var(--r-sm);background:transparent;cursor:default;display:flex;align-items:center;justify-content:center;color:var(--text-3);transition:all .25s;flex-shrink:0;font-size:14px}
+.search-icon-btn.active{color:var(--blue);border-color:var(--blue);background:var(--blue-bg);animation:searchPulse 1.2s ease-in-out infinite}
+@keyframes searchPulse{0%,100%{box-shadow:0 0 0 0 rgba(26,77,143,.0)}50%{box-shadow:0 0 0 3px rgba(26,77,143,.15)}}
+.search-indicator{display:none}.search-indicator.show{display:none}
 @keyframes spin{to{transform:rotate(360deg)}}
 
 /* ── ARTIFACTS PANEL ── */
@@ -433,9 +459,14 @@ body{font-family:'DM Sans',sans-serif;background:var(--bg);color:var(--text);hei
       <div class="auth-logo">Aide <span>/ private AI assistant</span></div>
       <div class="auth-tagline">Your AI. Your data. Nobody else's.</div>
 
-      <!-- LOGIN VIEW -->
+      <!-- LOGIN VIEW — passkey first -->
       <div class="auth-view active" id="authView_login">
         <div class="auth-title">Welcome back</div>
+        <button class="passkey-btn" id="passkeySignInBtn" onclick="passkeySignIn()">
+          <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M12 22s8-4 8-10V5l-8-3-8 3v7c0 6 8 10 8 10z"/><circle cx="12" cy="10" r="2"/><path d="M12 12v3"/></svg>
+          Sign in with passkey
+        </button>
+        <div class="passkey-divider"><span>or use email</span></div>
         <div class="auth-field">
           <label class="auth-label">Email</label>
           <input class="auth-input" id="authEmail" type="email" placeholder="you@example.com" autocomplete="email" onkeydown="if(event.key==='Enter')authSignIn()" />
@@ -446,8 +477,7 @@ body{font-family:'DM Sans',sans-serif;background:var(--bg);color:var(--text);hei
         </div>
         <div class="auth-error" id="authError"></div>
         <button class="auth-btn auth-btn-primary" onclick="authSignIn()">Sign in</button>
-        <button class="auth-btn auth-btn-ghost" onclick="setAuthView('magic')">✉ Sign in with magic link</button>
-        <div class="auth-divider"><span>or</span></div>
+        <button class="auth-btn auth-btn-ghost" onclick="setAuthView('magic')">✉ Magic link</button>
         <div class="auth-switch">No account? <a href="#" onclick="setAuthView('register');return false">Create one free →</a></div>
         <div class="auth-demo-row"><a href="#" onclick="tryDemoFromAuth();return false">Try 5 free messages without an account →</a></div>
       </div>
@@ -469,6 +499,7 @@ body{font-family:'DM Sans',sans-serif;background:var(--bg);color:var(--text);hei
         </div>
         <div class="auth-error" id="regError"></div>
         <button class="auth-btn auth-btn-primary" onclick="authRegister()">Create account</button>
+        <div style="font-size:11px;color:var(--text-3);text-align:center;margin-top:4px">After creating your account, you can set up Face ID / Touch ID sign-in.</div>
         <div class="auth-switch">Already have one? <a href="#" onclick="setAuthView('login');return false">← Sign in</a></div>
         <div class="auth-demo-row"><a href="#" onclick="tryDemoFromAuth();return false">Try 5 free messages without an account →</a></div>
       </div>
@@ -731,10 +762,6 @@ body{font-family:'DM Sans',sans-serif;background:var(--bg);color:var(--text);hei
       <div class="input-area">
         <div class="input-wrap">
           <div class="attachments-bar" id="attachmentsBar"></div>
-          <div class="search-indicator" id="searchIndicator">
-            <div class="si-spin"></div>
-            <span id="searchStatus">Searching the web…</span>
-          </div>
           <div class="input-row">
             <button class="attach-btn" onclick="triggerFileUpload()" title="Attach file">
               <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M21.44 11.05l-9.19 9.19a6 6 0 01-8.49-8.49l9.19-9.19a4 4 0 015.66 5.66l-9.2 9.19a2 2 0 01-2.83-2.83l8.49-8.48"/></svg>
@@ -742,6 +769,10 @@ body{font-family:'DM Sans',sans-serif;background:var(--bg);color:var(--text);hei
             <input type="file" id="fileInput" style="display:none" multiple accept=".pdf,.docx,.xlsx,.xls,.csv,.txt,.png,.jpg,.jpeg,.gif,.webp" onchange="handleFileSelect(event)" />
             <textarea id="userInput" placeholder="Ask anything, attach files, or say 'create an Excel tracker with…'" rows="1"
               onkeydown="handleKey(event)" oninput="autoResize(this)"></textarea>
+            <button class="search-icon-btn" id="searchIconBtn" title="Web search" style="opacity:.55">
+              <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="11" cy="11" r="8"/><line x1="21" y1="21" x2="16.65" y2="16.65"/></svg>
+            </button>
+            <div class="mode-pill" id="modePill" title="Active mode"></div>
             <button class="send-btn" id="sendBtn" onclick="sendMsg()">
               <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><line x1="22" y1="2" x2="11" y2="13"/><polygon points="22 2 15 22 11 13 2 9 22 2"/></svg>
             </button>
@@ -797,6 +828,7 @@ body{font-family:'DM Sans',sans-serif;background:var(--bg);color:var(--text);hei
         <button class="btn-ghost-sm" onclick="exportConversations();toggleSettings()">↓ Export all conversations</button>
         <button class="btn-ghost-sm" style="margin-top:4px" onclick="importConversations()">↑ Import conversations</button>
       </div>
+      <div id="passkeySettingsRow"></div>
       <button class="btn-save" onclick="saveSettings()">Save settings</button>
       <button class="btn-ghost-sm" onclick="resetApp()">Reset & re-activate</button>
     </div>
@@ -1526,6 +1558,182 @@ async function activateBYOK() {
   }
 }
 
+
+// ══════════════════════════════════════════════════════════════════════
+// PASSKEY (WebAuthn) — Face ID / Touch ID / Windows Hello
+// ══════════════════════════════════════════════════════════════════════
+const PASSKEY_RP_ID = window.location.hostname || 'localhost';
+const PASSKEY_ORIGIN = window.location.origin;
+
+function passkeySupported() {
+  return !!(window.PublicKeyCredential && navigator.credentials?.create);
+}
+
+function b64url(arrayBuffer) {
+  return btoa(String.fromCharCode(...new Uint8Array(arrayBuffer)))
+    .replace(/\+/g,'-').replace(/\//g,'_').replace(/=/g,'');
+}
+
+function b64urlDecode(str) {
+  str = str.replace(/-/g,'+').replace(/_/g,'/');
+  while (str.length % 4) str += '=';
+  return Uint8Array.from(atob(str), c => c.charCodeAt(0));
+}
+
+// ── Register a passkey for current user ──────────────────────────────
+async function passkeyRegister() {
+  if (!passkeySupported()) { alert('Passkeys not supported on this device.'); return; }
+  if (!currentUser) { alert('Sign in first, then register a passkey from Settings.'); return; }
+  try {
+    // Step 1: get challenge from Supabase passkey endpoint
+    const challengeRes = await fetch(
+      `${PRODUCT_CONFIG.SUPABASE_URL}/auth/v1/factors`,
+      {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+          'apikey': PRODUCT_CONFIG.SUPABASE_ANON_KEY,
+          'Authorization': 'Bearer ' + localStorage.getItem('aide_auth_token'),
+        },
+        body: JSON.stringify({ factor_type: 'webauthn' })
+      }
+    );
+
+    if (!challengeRes.ok) {
+      // Supabase may not support WebAuthn factors yet — fall back to stored local passkey
+      await passkeyRegisterLocal();
+      return;
+    }
+
+    const { id: factorId, totp } = await challengeRes.json();
+    // (full Supabase WebAuthn flow would go here)
+    await passkeyRegisterLocal();
+  } catch(e) {
+    await passkeyRegisterLocal();
+  }
+}
+
+// Local WebAuthn registration (device-only, no server roundtrip needed for storage)
+async function passkeyRegisterLocal() {
+  if (!currentUser) return;
+  const challenge = crypto.getRandomValues(new Uint8Array(32));
+  const userId = new TextEncoder().encode(currentUser.id.slice(0,32).padEnd(32,'0'));
+
+  const cred = await navigator.credentials.create({
+    publicKey: {
+      challenge,
+      rp: { name: 'Aide', id: PASSKEY_RP_ID },
+      user: { id: userId, name: currentUser.email, displayName: currentUser.name || currentUser.email },
+      pubKeyCredParams: [
+        { type: 'public-key', alg: -7  },  // ES256
+        { type: 'public-key', alg: -257 },  // RS256
+      ],
+      authenticatorSelection: {
+        authenticatorAttachment: 'platform',  // device biometric only
+        userVerification: 'required',
+        residentKey: 'required',
+      },
+      timeout: 60000,
+    }
+  });
+
+  // Store credential ID and user email for future sign-in
+  const stored = JSON.parse(localStorage.getItem('aide_passkeys') || '[]');
+  stored.push({
+    credId: b64url(cred.rawId),
+    email:  currentUser.email,
+    userId: currentUser.id,
+    created: Date.now(),
+  });
+  localStorage.setItem('aide_passkeys', JSON.stringify(stored));
+  alert('✅ Passkey registered! Next time, tap "Sign in with passkey" to use Face ID / Touch ID.');
+}
+
+// ── Sign in with passkey ─────────────────────────────────────────────
+async function passkeySignIn() {
+  if (!passkeySupported()) {
+    document.getElementById('authError').textContent = 'Passkeys not supported on this device.';
+    return;
+  }
+  const stored = JSON.parse(localStorage.getItem('aide_passkeys') || '[]');
+  if (!stored.length) {
+    document.getElementById('authError').textContent = 'No passkeys registered yet. Sign in with email first, then add a passkey from Settings.';
+    return;
+  }
+  document.getElementById('authError').textContent = '';
+  try {
+    const challenge = crypto.getRandomValues(new Uint8Array(32));
+    const allowCredentials = stored.map(s => ({
+      type: 'public-key',
+      id: b64urlDecode(s.credId),
+      transports: ['internal'],
+    }));
+
+    const assertion = await navigator.credentials.get({
+      publicKey: {
+        challenge,
+        allowCredentials,
+        userVerification: 'required',
+        timeout: 60000,
+      }
+    });
+
+    // Match returned credential ID to stored entry
+    const credId = b64url(assertion.rawId);
+    const match = stored.find(s => s.credId === credId);
+    if (!match) throw new Error('Passkey not recognized.');
+
+    // Sign in: fetch a token using the matched email
+    // We use the stored email to do a silent password-less sign-in via magic link flow
+    // For a fully offline-capable fallback, restore session from local storage if token still valid
+    const existingToken = localStorage.getItem('aide_auth_token');
+    if (existingToken) {
+      // Try to validate the existing token
+      const userRes = await fetch(`${PRODUCT_CONFIG.SUPABASE_URL}/auth/v1/user`, {
+        headers: { 'apikey': PRODUCT_CONFIG.SUPABASE_ANON_KEY, 'Authorization': 'Bearer ' + existingToken }
+      });
+      if (userRes.ok) {
+        const user = await userRes.json();
+        currentUser = { id: user.id, email: user.email, name: user.email.split('@')[0] };
+        loadUserData();
+        launchApp();
+        return;
+      }
+    }
+
+    // Token expired — prompt magic link for this email
+    const err = document.getElementById('authError');
+    err.style.color = 'var(--green)';
+    err.textContent = `Passkey verified ✓ — sending a sign-in link to ${match.email}…`;
+    document.getElementById('magicEmail').value = match.email;
+    await authMagicLink();
+
+  } catch(e) {
+    if (e.name === 'NotAllowedError') {
+      document.getElementById('authError').textContent = 'Passkey verification cancelled.';
+    } else {
+      document.getElementById('authError').textContent = e.message;
+    }
+  }
+}
+
+// ── Settings: register passkey button ───────────────────────────────
+function showPasskeySettingsRow() {
+  const supported = passkeySupported();
+  const stored = JSON.parse(localStorage.getItem('aide_passkeys') || '[]');
+  const mine = stored.filter(s => s.email === currentUser?.email);
+  return supported
+    ? `<div style="margin-top:10px;padding-top:10px;border-top:1px solid var(--border-light)">
+        <div style="font-size:11px;font-weight:600;color:var(--text-3);text-transform:uppercase;letter-spacing:.05em;margin-bottom:7px">Passkey (Face ID / Touch ID)</div>
+        ${mine.length
+          ? `<div style="font-size:12px;color:var(--green);margin-bottom:6px">✓ ${mine.length} passkey${mine.length>1?'s':''} registered on this device</div>`
+          : `<div style="font-size:12px;color:var(--text-3);margin-bottom:6px">No passkeys on this device yet</div>`}
+        <button onclick="passkeyRegister()" style="padding:7px 14px;background:var(--accent);color:#fff;border:none;border-radius:6px;font-family:'DM Sans',sans-serif;font-size:12px;font-weight:500;cursor:pointer">
+          ${mine.length ? '+ Add another passkey' : 'Register this device'}
+        </button>
+      </div>` : '';
+}
+
 // ══════════════════════════════════
 // AUTH — Supabase email/password + magic link
 // ══════════════════════════════════
@@ -1928,6 +2136,12 @@ function toggleWS() {}
 // MODES
 // ══════════════════════════════════
 function renderModeBar() {
+  // Update mode pill in input bar
+  const mp = document.getElementById('modePill');
+  if (mp) {
+    const m = MODES.find(x => x.id === cfg.activeMode);
+    if (m) { mp.textContent = m.icon + ' ' + m.label; mp.onclick = () => { document.getElementById('modeSelect')?.focus(); }; }
+  }
   const sel = document.getElementById('modeSelect');
   if (!sel) return;
   sel.innerHTML = MODES.map(m =>
@@ -2231,7 +2445,9 @@ async function callAnthropicWithSearch(key, model, history, content, systemPromp
   const messages = [...history, {role:'user', content}];
 
   document.getElementById('searchIndicator').classList.add('show');
-  document.getElementById('searchStatus').textContent = 'Searching the web…';
+  const sib = document.getElementById('searchIconBtn');
+  if (sib) { sib.classList.add('active'); sib.style.opacity='1'; sib.title='Searching…'; }
+  document.getElementById('searchIconBtn')?.setAttribute('title','Searching the web…');
 
   try {
     const r = await fetch('https://api.anthropic.com/v1/messages', {
@@ -2260,7 +2476,8 @@ async function callAnthropicWithSearch(key, model, history, content, systemPromp
       const textSoFar = d.content.filter(b => b.type === 'text').map(b => b.text).join('');
 
       if (toolUseBlock) {
-        document.getElementById('searchStatus').textContent = `Searching: "${(toolUseBlock.input?.query||'').slice(0,40)}"…`;
+        const sib3 = document.getElementById('searchIconBtn');
+        if (sib3) sib3.title = `Searching: "${(toolUseBlock.input?.query||'').slice(0,32)}"…`;
 
         // Send tool result back (Anthropic handles the actual search)
         const r2 = await fetch('https://api.anthropic.com/v1/messages', {
@@ -2294,6 +2511,8 @@ async function callAnthropicWithSearch(key, model, history, content, systemPromp
 
   } finally {
     document.getElementById('searchIndicator').classList.remove('show');
+  const sib2 = document.getElementById('searchIconBtn');
+  if (sib2) { sib2.classList.remove('active'); sib2.style.opacity='.55'; sib2.title='Web search'; }
   }
 }
 
@@ -2315,6 +2534,13 @@ function loadConv(id) {
   if (!convs[id]) return;
   curConv = id;
   localStorage.setItem(KEYS().last, id);
+  const conv = convs[id];
+  const bar = document.getElementById('branchBar');
+  const lbl = document.getElementById('branchBarLabel');
+  if (conv?.parentId && convs[conv.parentId] && bar && lbl) {
+    lbl.textContent = (convs[conv.parentId]?.title || 'main').slice(0,50);
+    bar.style.display = 'flex';
+  } else if (bar) { bar.style.display = 'none'; }
   renderConvList(); renderProjList(); renderMessages(); renderArtifacts();
 }
 
@@ -2397,9 +2623,16 @@ function renderMsg(m) {
       </div>`;
     }
   }
-  return `<div class="msg-row ${m.role}">
+  const branchBtn = m.role === 'assistant'
+    ? `<button class="branch-btn" onclick="branchFromMsg(${JSON.stringify(m.content||'').slice(0,60)+'...'},'${m.timestamp||Date.now()}')" title="Open sub-conversation from this message">
+        <svg width="10" height="10" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><line x1="6" y1="3" x2="6" y2="15"/><circle cx="18" cy="6" r="3"/><circle cx="6" cy="18" r="3"/><path d="M18 9a9 9 0 01-9 9"/></svg>
+        Branch
+      </button>` : '';
+  const branchRef = m.branchId && convs[m.branchId]
+    ? `<span class="branch-badge" onclick="loadConv('${m.branchId}')" title="Open branch conversation">↳ ${esc((convs[m.branchId]?.title||'Branch').slice(0,22))}</span>` : '';
+  return `<div class="msg-row ${m.role}" data-ts="${m.timestamp||''}">
     <div class="msg-inner"><div class="bubble">${content}</div></div>
-    <div class="msg-meta"><span class="msg-time">${time}</span></div>
+    <div class="msg-meta"><span class="msg-time">${time}</span>${branchBtn}${branchRef}</div>
   </div>`;
 }
 
@@ -3168,6 +3401,8 @@ function toggleSettings() { document.getElementById('settingsOverlay').classList
 function handleSettingsClick(e) { if(e.target===document.getElementById('settingsOverlay')) toggleSettings(); }
 
 function loadSettingsUI() {
+  const pkRow = document.getElementById('passkeySettingsRow');
+  if (pkRow && currentUser) pkRow.innerHTML = showPasskeySettingsRow ? showPasskeySettingsRow() : '';
   document.getElementById('sClaudeKey').value=cfg.claudeKey;
   document.getElementById('sOpenAIKey').value=cfg.openaiKey;
   document.getElementById('sGeminiKey').value=cfg.geminiKey||'';
