@@ -128,6 +128,36 @@ body{font-family:'DM Sans',sans-serif;background:var(--bg);color:var(--text);hei
 .sdot.on{background:var(--green)}.sdot.off{background:var(--red)}
 .stext{font-size:11px;color:var(--text-2);font-weight:500}
 .topbar-right{margin-left:auto;display:flex;align-items:center;gap:6px}
+/* Model card picker */
+.model-picker-wrap{position:relative}
+.model-btn{display:flex;align-items:center;gap:6px;padding:5px 10px 5px 8px;background:var(--surface);border:1px solid var(--border);border-radius:var(--r-sm);cursor:pointer;font-family:'DM Sans',sans-serif;font-size:12px;font-weight:500;color:var(--text);transition:all .15s;white-space:nowrap}
+.model-btn:hover,.model-picker-wrap.open .model-btn{border-color:var(--accent);box-shadow:0 0 0 2px rgba(26,58,92,.08)}
+.model-btn .mb-dot{width:6px;height:6px;border-radius:50%;background:var(--green);flex-shrink:0}
+.model-btn .mb-name{font-family:'DM Mono',monospace;font-size:11px;font-weight:500}
+.model-btn .mb-tier{font-size:10px;color:var(--gold)}
+.model-btn .mb-arr{font-size:9px;color:var(--text-3);margin-left:2px}
+.card-picker{position:absolute;top:calc(100% + 6px);right:0;width:280px;background:var(--surface);border:1px solid var(--border);border-radius:10px;box-shadow:0 8px 28px rgba(0,0,0,0.13);z-index:200;padding:6px;display:none}
+.card-picker.show{display:block;animation:cpIn .12s ease}
+@keyframes cpIn{from{opacity:0;transform:translateY(-4px)}to{opacity:1;transform:translateY(0)}}
+.cp-item{display:grid;grid-template-columns:30px 1fr auto;gap:8px;padding:8px 9px;border-radius:7px;cursor:pointer;transition:background .1s;align-items:center;border:1px solid transparent;margin-bottom:1px}
+.cp-item:hover{background:var(--surface2)}
+.cp-item.cp-active{background:#EEF4FB;border-color:#D0E4F7}
+.cp-item.cp-locked{opacity:.45;cursor:not-allowed}
+.cp-icon{width:30px;height:30px;border-radius:7px;display:flex;align-items:center;justify-content:center;font-size:13px;flex-shrink:0}
+.cp-name{font-size:12px;font-weight:600;color:var(--text)}
+.cp-use{font-size:10px;color:var(--text-3);margin-top:1px}
+.cp-right{display:flex;flex-direction:column;align-items:flex-end;gap:3px}
+.cp-speed{display:flex;gap:2px}
+.cp-speed span{width:5px;height:5px;border-radius:50%;background:var(--border)}
+.cp-speed span.on{background:var(--accent)}
+.cp-speed span.on.g{background:var(--green)}
+.cp-tier{font-size:9px;font-weight:600;padding:2px 6px;border-radius:10px}
+.cp-divider{height:1px;background:var(--border);margin:4px 2px}
+.cp-ollama-row{padding:4px 4px 2px;display:none}
+.cp-ollama-row.show{display:block}
+.cp-ollama-row input{width:100%;font-family:'DM Mono',monospace;font-size:11px;padding:5px 8px;border:1px solid var(--border);border-radius:6px;background:var(--surface2);color:var(--text);outline:none;box-sizing:border-box}
+.cp-ollama-row input:focus{border-color:var(--accent)}
+/* BYOK provider buttons (legacy) */
 .prov-switch{display:flex;background:var(--surface2);border:1px solid var(--border);border-radius:var(--r-sm);padding:2px;gap:2px}
 .pb{font-family:'DM Mono',monospace;font-size:11px;font-weight:500;padding:4px 10px;border:none;border-radius:3px;cursor:pointer;background:transparent;color:var(--text-3);transition:all .15s}
 .pb.active{background:var(--surface);color:var(--text);box-shadow:0 1px 2px rgba(0,0,0,0.06)}
@@ -521,7 +551,10 @@ body{font-family:'DM Sans',sans-serif;background:var(--bg);color:var(--text);hei
       <div class="stext" id="appStatus">Ready</div>
     </div>
     <div class="topbar-right">
-      <div class="prov-switch" id="provSwitch"></div>
+      <div class="model-picker-wrap" id="modelPickerWrap">
+        <div id="provSwitch"></div>
+        <div class="card-picker" id="cardPicker"></div>
+      </div>
       <button class="tb-btn" onclick="toggleArtifactsPanel()" title="Files created">📎</button>
       <button class="tb-btn" onclick="toggleSettings()" title="Settings">⚙</button>
     </div>
@@ -724,84 +757,68 @@ const PRODUCT_CONFIG = {
 
 const DOC_INSTRUCTIONS = `
 
-When asked to create files, respond with JSON wrapped in <DOCUMENT> tags, plus a brief explanation outside.
+When asked to create files, respond with JSON in <DOCUMENT> tags plus a brief explanation outside.
 
-━━ EXCEL FORMAT ━━
-{"excel":{"filename":"name.xlsx","sheets":[{
-  "name":"Sheet1",
-  "headerColor":"1A4D8F",
-  "headers":["Month","Revenue","Cost","Profit","Margin %","vs Last Year"],
-  "colWidths":[14,14,14,14,12,14],
-  "types":["text","currency","currency","currency","percent","percent"],
-  "rows":[
-    ["Jan",125000,87000,38000,0.304,0.12],
-    ["Feb",138000,91000,47000,0.341,0.18]
+━━ EXCEL ━━
+{"excel":{"filename":"name.xlsx","accentColor":"1A3A5C","accent2":"C8973A","sheets":[{
+  "name":"Dashboard","title":"Q1 2026 Performance Dashboard",
+  "kpis":[
+    {"label":"Total Revenue","value":"$4.2M","sub":"+18% YoY","color":"1A3A5C"},
+    {"label":"Gross Margin","value":"64.2%","sub":"+2.1pp","color":"1D6A3E"},
+    {"label":"Net Profit","value":"$890K","sub":"-3% vs plan","color":"B02A1A"},
+    {"label":"Headcount","value":"142","sub":"+8 QoQ","color":"C8973A"}
   ],
+  "headers":["Region","Revenue","Cost","Gross Profit","Margin %","vs Last Year"],
+  "colWidths":[16,14,14,14,12,14],
+  "types":["text","currency","currency","currency","percent","percent"],
+  "rows":[["APAC",1250000,450000,800000,0.64,0.18]],
   "formulas":{
-    "Profit":{"col":3,"formula":"={B}-{C}","dependsOn":["Revenue","Cost"]},
-    "Margin %":{"col":4,"formula":"={D}/{B}","dependsOn":["Profit","Revenue"]},
-    "vs Last Year":{"col":5,"formula":"=({B}-{prevB})/{prevB}","note":"fill manually if prior data unavailable"}
+    "Gross Profit":{"formula":"={Revenue}-{Cost}"},
+    "Margin %":{"formula":"={Gross Profit}/{Revenue}"}
   },
   "conditionalFormats":[
-    {"col":4,"type":"colorScale","low":"FF6B6B","mid":"FFFFFF","high":"51CF66"},
-    {"col":5,"type":"aboveBelow","above":"51CF66","below":"FF6B6B","threshold":0}
+    {"col":4,"type":"colorScale","low":"FF6B6B","mid":"FFFFFF","high":"1D6A3E"},
+    {"col":5,"type":"aboveBelow","above":"C8F7DA","below":"FAD4CF","threshold":0}
   ],
   "charts":[{
-    "type":"bar",
-    "title":"Revenue vs Cost",
-    "dataCols":[1,2],
-    "labelCol":0,
-    "position":{"col":8,"row":2,"width":8,"height":16}
-  },{
-    "type":"line",
-    "title":"Margin Trend",
-    "dataCols":[4],
-    "labelCol":0,
-    "position":{"col":8,"row":19,"width":8,"height":14}
+    "type":"column","title":"Revenue by Region",
+    "dataCols":[1,2],"labelCol":0,
+    "position":{"col":7,"row":3,"width":12,"height":16}
   }],
   "totalsRow":true
 }]}}
 
-Formula rules:
-- Use {ColName} to reference column values. System replaces with correct Excel cell refs.
-- For percent formulas always divide by a non-zero column.
-- For YoY/variance, use simple formulas or leave as raw data if prior period unavailable.
-- ALWAYS use plain numbers (not strings) for number/currency/percent columns.
-- Include formulas whenever the column is derivable from other columns (e.g. Profit = Revenue - Cost).
-- Supported formula patterns: arithmetic (+,-,*,/), percent of total, variance, running total.
+Rules: Always include kpis[] for financial/summary sheets. Always include formulas for derivable columns (Profit=Revenue-Cost, Margin=Profit/Revenue). Always add at least one chart. Use colorScale for % columns, aboveBelow for YoY/variance. Use plain numbers not strings for numeric columns.
 
-Conditional format rules:
-- colorScale: gradient from low→mid→high color on a numeric column
-- aboveBelow: green if above threshold, red if below
-
-Chart rules:
-- type: "bar" | "line" | "pie" | "area"
-- dataCols: array of 0-based column indices to plot
-- labelCol: 0-based index of the label column (usually 0)
-- Always add at least one chart for financial/analytical sheets
-
-━━ POWERPOINT FORMAT ━━
-{"ppt":{"filename":"name.pptx","theme":{"accent":"1A4D8F","dark":"1C1C1A","light":"F5F4F0"},"slides":[
-  {"layout":"title","title":"Title","subtitle":"Subtitle · Date","bg":"1A4D8F","titleColor":"FFFFFF"},
-  {"layout":"content","title":"Slide Title","bullets":["Key point with detail","Second point","Third point"],"note":"Speaker note"},
-  {"layout":"two-col","title":"Comparison","left":{"heading":"Option A","points":["Point 1","Point 2","Point 3"]},"right":{"heading":"Option B","points":["Point 1","Point 2","Point 3"]}},
-  {"layout":"metric","title":"Key Results","metrics":[{"value":"$2.4M","label":"Revenue","sub":"+18% YoY"},{"value":"94%","label":"Retention","sub":"above target"},{"value":"3.2x","label":"ROI","sub":"vs 2.1x prior"}]},
-  {"layout":"chart","title":"Performance Trend","chartType":"bar","chartData":{"labels":["Q1","Q2","Q3","Q4"],"series":[{"name":"2024","values":[120,145,132,168]},{"name":"2025","values":[145,162,158,195]}]}},
-  {"layout":"table","title":"Summary","tableHeaders":["Initiative","Owner","Status","Impact"],"tableRows":[["Project A","Team X","On track","High"],["Project B","Team Y","At risk","Medium"]]}
+━━ POWERPOINT ━━
+{"ppt":{"filename":"name.pptx","theme":{"accent":"1A3A5C","accent2":"C8973A","dark":"1C1C1A","light":"F5F4F0"},"slides":[
+  {"layout":"title","title":"Q1 2026 Business Review","subtitle":"APAC Technology · March 2026","overline":"Confidential","meta":"Prepared by Strategy Team · March 2026","bg":"1A3A5C"},
+  {"layout":"divider","section":"Section 1","title":"Financial Performance","subtitle":"Revenue, Margin & Profitability"},
+  {"layout":"metric","title":"Key Performance Indicators","metrics":[
+    {"value":"$4.2M","label":"Revenue","sub":"+18% YoY","color":"1A3A5C","context":"Ahead of $4.0M plan"},
+    {"value":"64%","label":"Gross Margin","sub":"+2pp vs PY","color":"1D6A3E"},
+    {"value":"142","label":"Headcount","sub":"+8 QoQ","color":"C8973A"}
+  ]},
+  {"layout":"content","title":"Executive Summary","headline":"Revenue growth accelerated despite macro headwinds — margin expansion confirms operating leverage","bullets":["APAC revenue reached $4.2M, +18% YoY, driven by enterprise segment (+34%)","Gross margin improved 200bps to 64.2% through pricing discipline and mix shift","Headcount grew to 142 (+8 QoQ) with R&D investment prioritised over G&A"],"note":"Internal data, March 2026"},
+  {"layout":"chart","title":"Revenue Trend — Quarterly","chartType":"line","insight":"Q4 acceleration driven by enterprise renewals; Q1 2026 run-rate implies $18M ARR","chartData":{"labels":["Q1","Q2","Q3","Q4","Q1F"],"series":[{"name":"2025","values":[3.1,3.4,3.6,4.2,null]},{"name":"2026 Forecast","values":[null,null,null,null,4.8]}]},"note":"Finance model v3.1"},
+  {"layout":"two-col","title":"Strengths vs Risks","left":{"heading":"What's Working","points":["Enterprise segment +34% — pipeline strong","Margin expansion ahead of plan","NPS improved to 71 (+6 pts)"]},"right":{"heading":"Watch Items","points":["SMB churn elevated at 8.2%","COGS pressure from FX headwinds","3 key hires still open in Engineering"]}},
+  {"layout":"table","title":"Initiative Status","tableHeaders":["Initiative","Owner","Status","Impact","ETA"],"tableRows":[["Enterprise GTM","Sales","On track","High","Q2"],["Platform v2","Eng","At risk","High","Q3"],["APAC Expansion","Strategy","On track","Medium","Q4"]],"ragCol":2}
 ]}}
 
-Slide layout rules:
-- Always start with title slide
-- metric slide: include "sub" for context below each metric (e.g. "+18% YoY")
-- chart slide: use for any trend, comparison, or distribution data
-- table slide: use for structured data, status updates, comparisons
-- Aim for 6-10 slides for a complete deck
-- Make bullets substantive (full sentence, specific data point, not vague headers)
+Slide rules: Always start with title slide. Use divider slides between sections. Use metric slide for KPIs (always include "sub" and "context"). Use insight field on chart slides for the "so what". Use ragCol on table slides for RAG status auto-coloring. Always 6-10 slides for a complete deck.
 
-━━ WORD FORMAT ━━
-{"word":{"filename":"name.docx","title":"Title","sections":[{"heading":"Section","content":"Text here\nNew paragraph"}]}}
+━━ WORD ━━
+{"word":{"filename":"name.docx","title":"Strategic Review — Q1 2026","meta":"Confidential · March 2026 · Alex Kotzev","accentColor":"1A3A5C",
+"executiveSummary":"Revenue grew 18% YoY to $4.2M driven by enterprise acceleration. Margin expansion of 200bps confirms operating leverage thesis. Three watch items require board attention.",
+"sections":[
+  {"heading":"Financial Performance","type":"text","content":"Revenue reached $4.2M in Q1 2026, representing 18% growth year-over-year and 5% ahead of plan."},
+  {"heading":"Key Metrics","type":"kpis","kpis":[{"label":"Revenue","value":"$4.2M","sub":"+18% YoY","context":"vs $4.0M plan"}]},
+  {"heading":"Risks & Mitigations","type":"table","headers":["Risk","Severity","Mitigation","Owner"],"rows":[["SMB churn","High","Retention programme launched","CS Team"]]},
+  {"heading":"Strategic Priorities","type":"bullets","bullets":["Accelerate enterprise pipeline","Resolve platform v2 delivery risk","Complete APAC hiring plan"]}
+],"footer":"Confidential — For internal use only"}}
 
-Always wrap JSON in <DOCUMENT>...</DOCUMENT> tags. Output ONLY valid JSON inside the tags — no comments, no trailing commas.`;
+Always wrap JSON in <DOCUMENT>...</DOCUMENT> tags. Output ONLY valid JSON inside the tags.`;
+
 
 
 // ══════════════════════════════════
@@ -1004,14 +1021,34 @@ async function pullFromSupabase() {
 }
 
 // ══════════════════════════════════
+// SESSION IDENTITY — prevents cross-session data bleed
+// Each browser session (incl. private windows) gets its own ID.
+// cfg (license/keys) is shared so re-activation isn't needed,
+// but conversations are namespaced per session.
+// ══════════════════════════════════
+function getSessionId() {
+  // sessionStorage is cleared when the tab/window closes — perfect for private sessions
+  let sid = sessionStorage.getItem('aide_session_id');
+  if (!sid) {
+    sid = 'sid_' + Date.now().toString(36) + '_' + Math.random().toString(36).slice(2,8);
+    sessionStorage.setItem('aide_session_id', sid);
+  }
+  return sid;
+}
+const SESSION_ID = getSessionId();
+const CONVS_KEY    = `aide_v2_convs_${SESSION_ID}`;
+const PROJECTS_KEY = `aide_v2_projects_${SESSION_ID}`;
+const LAST_KEY     = `aide_last_conv_${SESSION_ID}`;
+
+// ══════════════════════════════════
 // INIT
 // ══════════════════════════════════
 function init() {
   const saved = localStorage.getItem('aide_v2_cfg');
   if (saved) cfg = { ...cfg, ...JSON.parse(saved) };
-  const savedC = localStorage.getItem('aide_v2_convs');
+  const savedC = localStorage.getItem(CONVS_KEY);
   if (savedC) convs = JSON.parse(savedC);
-  const savedP = localStorage.getItem('aide_v2_projects');
+  const savedP = localStorage.getItem(PROJECTS_KEY);
   if (savedP) projects = JSON.parse(savedP);
 
   if (cfg.activated) {
@@ -1022,8 +1059,8 @@ function init() {
 }
 
 function saveCfg() { localStorage.setItem('aide_v2_cfg', JSON.stringify(cfg)); }
-function saveConvs() { localStorage.setItem('aide_v2_convs', JSON.stringify(convs)); schedulePush(); }
-function saveProjects() { localStorage.setItem('aide_v2_projects', JSON.stringify(projects)); schedulePush(); }
+function saveConvs() { localStorage.setItem(CONVS_KEY, JSON.stringify(convs)); schedulePush(); }
+function saveProjects() { localStorage.setItem(PROJECTS_KEY, JSON.stringify(projects)); schedulePush(); }
 
 // ══════════════════════════════════
 // ACTIVATION — MANAGED
@@ -1271,7 +1308,7 @@ function launchApp() {
 
   const keys = Object.keys(convs);
   if (keys.length) {
-    const last = localStorage.getItem('aide_last_conv');
+    const last = localStorage.getItem(LAST_KEY);
     loadConv(last && convs[last] ? last : keys[keys.length-1]);
   } else {
     newConv();
@@ -1310,81 +1347,153 @@ function getDefaultModel() {
   return avail[avail.length - 1];
 }
 
+// ── Model card picker ──────────────────────────────────────
+const MODEL_META = {
+  haiku:    { icon:'⚡', iconBg:'#E8F5E9', use:'Quick tasks, chat, drafts',   speed:[1,1,1], tierStyle:'background:#E8F5E9;color:#1D6A3E' },
+  sonnet:   { icon:'✦',  iconBg:'#EEF4FB', use:'Analysis, documents, code',   speed:[1,1,0], tierStyle:'background:#EEF4FB;color:#1A3A5C' },
+  opus:     { icon:'🔥', iconBg:'#FEF3D0', use:'Complex reasoning, research', speed:[1,0,0], tierStyle:'background:#FEF3D0;color:#92530A' },
+  'gpt-4o-mini':{ icon:'💬', iconBg:'#F0F0F0', use:'Fast GPT tasks',          speed:[1,1,1], tierStyle:'background:#F0F0F0;color:#444' },
+  'gpt-4o': { icon:'🤖', iconBg:'#E8F5E9', use:'GPT flagship model',          speed:[1,1,0], tierStyle:'background:#E8F5E9;color:#1D6A3E' },
+  'gemini-flash':{ icon:'♊', iconBg:'#EEF4FB', use:'Fast Gemini tasks',       speed:[1,1,1], tierStyle:'background:#EEF4FB;color:#1A3A5C' },
+  'gemini-pro':{ icon:'♊', iconBg:'#FEF3D0', use:'Gemini Pro reasoning',      speed:[1,1,0], tierStyle:'background:#FEF3D0;color:#92530A' },
+  'mistral-small':{ icon:'🌀', iconBg:'#F5F0FF', use:'Fast Mistral tasks',    speed:[1,1,1], tierStyle:'background:#F5F0FF;color:#6B3FA0' },
+  'mistral-large':{ icon:'🌀', iconBg:'#EDE5FF', use:'Mistral flagship',      speed:[1,0,0], tierStyle:'background:#EDE5FF;color:#6B3FA0' },
+  ollama:   { icon:'💻', iconBg:'#F0EFE9', use:'Offline · private · free',    speed:[1,1,0], tierStyle:'background:#F0EFE9;color:#5C5B55' },
+};
+
 function buildProvSwitch() {
-  const sw = document.getElementById('provSwitch');
+  const sw   = document.getElementById('provSwitch');
+  const cp   = document.getElementById('cardPicker');
+  const wrap = document.getElementById('modelPickerWrap');
 
   if (cfg.mode === 'managed' || cfg.mode === 'demo') {
-    // Show model picker dropdown
     const available = getAvailableModels();
-    const locked = getLockedModels();
-    const current = getModel(cfg.selectedModelId) || getDefaultModel();
+    const locked    = getLockedModels();
+    const cur       = getModel(cfg.selectedModelId) || getDefaultModel();
+    const isOllama  = cfg.selectedModelId === 'ollama';
+    const meta      = MODEL_META[cur.id] || MODEL_META.haiku;
 
-    const ollamaSelected = cfg.selectedModelId === 'ollama';
+    // Trigger button
+    sw.innerHTML = `<button class="model-btn" onclick="toggleCardPicker(event)">
+      <div class="mb-dot"></div>
+      <span class="mb-name">${isOllama ? (cfg.ollamaModel||'Ollama') : cur.label}</span>
+      ${cur.badge ? `<span class="mb-tier">${cur.badge === 'Best' ? '⭐' : cur.badge}</span>` : ''}
+      <span class="mb-arr">▾</span>
+    </button>`;
 
-    const options = [
-      ...available.map(m => `<option value="${m.id}" ${m.id===current.id && !ollamaSelected ?'selected':''}>${m.label}${m.badge?' · '+m.badge:''}</option>`),
-      locked.length ? `<optgroup label="── Upgrade to unlock ──">` : '',
-      ...locked.map(m => `<option value="${m.id}" disabled>${m.label} 🔒</option>`),
-      locked.length ? `</optgroup>` : '',
-      `<option value="ollama" ${ollamaSelected?'selected':''}>💻 Local (Ollama)</option>`,
-    ].join('');
+    // Card picker content
+    const speedDots = (arr) => arr.map(on => `<span class="${on?'on':''} ${on&&arr[0]&&arr[1]&&arr[2]?'g':''}"></span>`).join('');
 
-    const ollamaInput = ollamaSelected ? `
-      <input id="tbOllamaModel" value="${cfg.ollamaModel||'qwen2.5:14b'}"
-        title="Ollama model name"
-        onchange="cfg.ollamaModel=this.value;saveCfg();updateStatus()"
-        placeholder="model name"
-        style="margin-top:4px;font-family:'DM Mono',sans-serif;font-size:11px;padding:3px 7px;border:1px solid var(--border);
-        border-radius:var(--r-sm);background:var(--surface2);color:var(--text);outline:none;width:100%;box-sizing:border-box"/>` : '';
+    let html = available.map(m => {
+      const mm = MODEL_META[m.id] || {};
+      const active = m.id === cur.id && !isOllama;
+      return `<div class="cp-item ${active?'cp-active':''}" onclick="selectCardModel('${m.id}')">
+        <div class="cp-icon" style="background:${mm.iconBg||'#eee'}">${mm.icon||'·'}</div>
+        <div><div class="cp-name">${m.label}${m.badge?` <span style="font-size:9px;color:var(--gold)">${m.badge==='Best'?'⭐':m.badge}</span>`:''}</div><div class="cp-use">${mm.use||''}</div></div>
+        <div class="cp-right">
+          <div class="cp-speed">${speedDots(mm.speed||[1,0,0])}</div>
+          <div class="cp-tier" style="${mm.tierStyle||''}">${m.tier==='demo'?'Free':m.tier.charAt(0).toUpperCase()+m.tier.slice(1)}</div>
+        </div>
+      </div>`;
+    }).join('');
 
-    sw.innerHTML = `<div style="display:flex;flex-direction:column;min-width:150px">
-      <select id="modelSelect" onchange="onModelSelect(this)"
-        style="font-family:'DM Mono',sans-serif;font-size:11px;font-weight:500;padding:4px 8px;
-        border:1px solid var(--border);border-radius:var(--r-sm);background:var(--surface2);
-        color:var(--text);outline:none;cursor:pointer;">
-        ${options}
-      </select>${ollamaInput}
-    </div>`;
+    if (locked.length) {
+      html += `<div class="cp-divider"></div>`;
+      html += locked.map(m => {
+        const mm = MODEL_META[m.id] || {};
+        return `<div class="cp-item cp-locked" title="Upgrade to unlock">
+          <div class="cp-icon" style="background:${mm.iconBg||'#eee'}">${mm.icon||'·'}</div>
+          <div><div class="cp-name">${m.label}</div><div class="cp-use">${mm.use||''}</div></div>
+          <div class="cp-right">
+            <div class="cp-speed">${speedDots(mm.speed||[1,0,0])}</div>
+            <div class="cp-tier" style="background:#F0EFE9;color:#9C9B94">🔒 ${m.tier.charAt(0).toUpperCase()+m.tier.slice(1)}</div>
+          </div>
+        </div>`;
+      }).join('');
+    }
+
+    html += `<div class="cp-divider"></div>
+      <div class="cp-item ${isOllama?'cp-active':''}" onclick="selectCardModel('ollama')">
+        <div class="cp-icon" style="background:#F0EFE9">💻</div>
+        <div><div class="cp-name">Local (Ollama)</div><div class="cp-use">Offline · private · free</div></div>
+        <div class="cp-right">
+          <div class="cp-speed"><span class="on g"></span><span class="on g"></span><span></span></div>
+          <div class="cp-tier" style="background:#F0EFE9;color:#5C5B55">Local</div>
+        </div>
+      </div>
+      <div class="cp-ollama-row ${isOllama?'show':''}" id="cpOllamaRow">
+        <input id="cpOllamaInput" value="${cfg.ollamaModel||'qwen2.5:14b'}"
+          placeholder="model name e.g. qwen2.5:14b"
+          onchange="cfg.ollamaModel=this.value;saveCfg();updateStatus();buildProvSwitch()"
+          onclick="event.stopPropagation()" />
+      </div>`;
+
+    cp.innerHTML = html;
 
   } else {
-    // BYOK mode — show provider buttons
+    // BYOK mode — compact provider pill buttons in trigger, picker for model selection
     const provs = [];
-    if (cfg.claudeKey) provs.push({ id:'claude', label:'Claude' });
-    if (cfg.openaiKey) provs.push({ id:'openai', label:'GPT' });
-    if (cfg.geminiKey) provs.push({ id:'gemini', label:'Gemini' });
+    if (cfg.claudeKey)  provs.push({ id:'claude',  label:'Claude' });
+    if (cfg.openaiKey)  provs.push({ id:'openai',  label:'GPT' });
+    if (cfg.geminiKey)  provs.push({ id:'gemini',  label:'Gemini' });
     if (cfg.mistralKey) provs.push({ id:'mistral', label:'Mistral' });
     provs.push({ id:'ollama', label:'💻 Local' });
 
     const btns = provs.map(p =>
       `<button class="pb ${cfg.provider===p.id?'active':''}" onclick="setProvider('${p.id}',this)">${p.label}</button>`
     ).join('');
+    const ollamaExtra = cfg.provider === 'ollama'
+      ? `<input id="tbOllamaModel" value="${cfg.ollamaModel||'qwen2.5:14b'}"
+          onchange="cfg.ollamaModel=this.value;saveCfg();updateStatus()"
+          style="font-family:'DM Mono',sans-serif;font-size:11px;padding:3px 7px;border:1px solid var(--border);
+          border-radius:var(--r-sm);background:var(--surface2);color:var(--text);outline:none;width:120px"/>` : '';
 
-    // When Local is active, show inline model name input
-    const ollamaExtra = cfg.provider === 'ollama' ? `
-      <input id="tbOllamaModel" value="${cfg.ollamaModel||'qwen2.5:14b'}"
-        title="Ollama model name"
-        onchange="cfg.ollamaModel=this.value;saveCfg();updateStatus()"
-        style="font-family:'DM Mono',sans-serif;font-size:11px;padding:3px 7px;border:1px solid var(--border);
-        border-radius:var(--r-sm);background:var(--surface2);color:var(--text);outline:none;width:120px"/>` : '';
-
+    sw.className = 'prov-switch';
     sw.innerHTML = btns + ollamaExtra;
+    cp.innerHTML = '';
   }
 }
 const renderSwitcher = buildProvSwitch;
 
-function onModelSelect(sel) {
-  const val = sel.value;
-  cfg.selectedModelId = val;
-  cfg.provider = val === 'ollama' ? 'ollama' : (getModel(val)?.provider || cfg.provider);
+function toggleCardPicker(e) {
+  e.stopPropagation();
+  const cp   = document.getElementById('cardPicker');
+  const wrap = document.getElementById('modelPickerWrap');
+  const open = cp.classList.contains('show');
+  cp.classList.toggle('show', !open);
+  wrap.classList.toggle('open', !open);
+}
+
+function selectCardModel(id) {
+  cfg.selectedModelId = id;
+  cfg.provider = id === 'ollama' ? 'ollama' : (getModel(id)?.provider || 'claude');
   saveCfg();
-  renderSwitcher();
+  buildProvSwitch();
   updateStatus();
+  // Keep picker open if ollama (user needs to type model name)
+  if (id !== 'ollama') {
+    document.getElementById('cardPicker').classList.remove('show');
+    document.getElementById('modelPickerWrap').classList.remove('open');
+  }
+}
+
+// Close picker on outside click
+document.addEventListener('click', (e) => {
+  const wrap = document.getElementById('modelPickerWrap');
+  if (wrap && !wrap.contains(e.target)) {
+    document.getElementById('cardPicker')?.classList.remove('show');
+    wrap.classList.remove('open');
+  }
+});
+
+function onModelSelect(sel) {
+  selectCardModel(sel.value);
 }
 
 function setProvider(p, el) {
   cfg.provider = p;
   saveCfg();
-  renderSwitcher(); // re-render so ollama model input shows/hides
+  renderSwitcher();
   updateStatus();
 }
 
@@ -1793,14 +1902,14 @@ function newConv() {
   const id = 'c'+Date.now();
   convs[id] = {id, title:'New conversation', messages:[], createdAt:Date.now()};
   curConv = id;
-  localStorage.setItem('aide_last_conv', id);
+  localStorage.setItem(LAST_KEY, id);
   saveConvs(); renderConvList(); renderMessages(); renderArtifacts();
 }
 
 function loadConv(id) {
   if (!convs[id]) return;
   curConv = id;
-  localStorage.setItem('aide_last_conv', id);
+  localStorage.setItem(LAST_KEY, id);
   renderConvList(); renderProjList(); renderMessages(); renderArtifacts();
 }
 
@@ -2810,7 +2919,7 @@ async function flushSyncQueue() {
 // Hook into saveConvs to queue when offline
 const _origSaveConvs = saveConvs;
 window.saveConvs = function() {
-  localStorage.setItem('aide_v2_convs', JSON.stringify(convs));
+  localStorage.setItem(CONVS_KEY, JSON.stringify(convs));
   if (isOnline) {
     schedulePush();
   } else {
