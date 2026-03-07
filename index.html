@@ -1448,6 +1448,21 @@ async function pullFromSupabase() {
     const decrypted = await decrypt(rows[0].data, encPassword);
     const remote = JSON.parse(decrypted);
 
+    // Always restore API keys from remote (fixes cross-device key loss)
+    if (remote.cfgKeys) {
+      ['claudeKey','openrouterKey','openaiKey','geminiKey','mistralKey','ollamaUrl','ollamaModel'].forEach(k => {
+        if (remote.cfgKeys[k]) cfg[k] = remote.cfgKeys[k];
+      });
+      saveCfg();
+    }
+    // Always re-apply lifetime for passkey users after pull
+    if (typeof loadPasskeys === 'function' && loadPasskeys().length > 0) {
+      cfg.mode = 'byok';
+      cfg.licenseData = { plan: 'lifetime', customer: currentUser?.name || 'User' };
+      cfg.activated = true;
+      saveCfg();
+    }
+
     // Merge: remote wins for conversations updated more recently
     let changed = false;
     Object.entries(remote.convs || {}).forEach(([id, remoteConv]) => {
@@ -1464,7 +1479,6 @@ async function pullFromSupabase() {
     if (changed) {
       saveConvs(); saveProjects();
       renderConvList(); renderProjList();
-      // Reload current conv if it changed
       if (curConv && convs[curConv]) renderMessages();
     }
   } catch(e) {
@@ -1529,19 +1543,46 @@ async function checkAuthSession() {
 }
 
 function loadUserData() {
+  // 1. Load global settings first (API keys only — shared across all devices)
+  const globalSaved = localStorage.getItem('aide_cfg_global');
+  if (globalSaved) {
+    try {
+      const g = JSON.parse(globalSaved);
+      // Only restore keys, never restore provider/model (those are per-device)
+      const KEY_FIELDS = ['claudeKey','openrouterKey','openaiKey','geminiKey','mistralKey','ollamaUrl','ollamaModel'];
+      KEY_FIELDS.forEach(k => { if (g[k]) cfg[k] = g[k]; });
+    } catch(e) {}
+  }
+  // 2. Load per-user cfg (conversations, mode, preferences)
   const k = KEYS();
   const saved = localStorage.getItem(k.cfg);
-  if (saved) cfg = { ...cfg, ...JSON.parse(saved) };
+  if (saved) {
+    try { cfg = { ...cfg, ...JSON.parse(saved) }; } catch(e) {}
+  }
   const savedC = localStorage.getItem(k.convs);
-  if (savedC) convs = JSON.parse(savedC);
+  if (savedC) { try { convs = JSON.parse(savedC); } catch(e) {} }
   const savedP = localStorage.getItem(k.projects);
-  if (savedP) projects = JSON.parse(savedP);
-  // Always ensure passkey users have lifetime plan
+  if (savedP) { try { projects = JSON.parse(savedP); } catch(e) {} }
+  // 3. Always ensure passkey users have lifetime plan
   if (loadPasskeys().length > 0) {
     cfg.mode = 'byok';
     cfg.licenseData = { plan: 'lifetime', customer: currentUser?.name || 'User' };
     cfg.activated = true;
   }
+}
+
+// Save API keys to global (cross-device) storage — keys only, not model/provider preferences
+function saveGlobalKeys() {
+  const keys = {
+    claudeKey:     cfg.claudeKey,
+    openrouterKey: cfg.openrouterKey,
+    openaiKey:     cfg.openaiKey,
+    geminiKey:     cfg.geminiKey,
+    mistralKey:    cfg.mistralKey,
+    ollamaUrl:     cfg.ollamaUrl,
+    ollamaModel:   cfg.ollamaModel,
+  };
+  localStorage.setItem('aide_cfg_global', JSON.stringify(keys));
 }
 
 function showAuthScreen() {
@@ -2041,8 +2082,9 @@ function launchApp() {
     badge.className = 'license-badge managed';
     badge.textContent = '✦ ' + (cfg.licenseData?.plan||'managed').charAt(0).toUpperCase() + (cfg.licenseData?.plan||'managed').slice(1);
   } else if (cfg.mode === 'byok') {
-    badge.className = 'license-badge byok';
-    badge.textContent = '🔑 BYOK';
+    const _plan = cfg.licenseData?.plan || '';
+    badge.className = 'license-badge ' + (_plan === 'lifetime' ? 'managed' : 'byok');
+    badge.textContent = _plan === 'lifetime' ? '✦ Lifetime' : '🔑 BYOK';
   } else {
     badge.className = 'license-badge';
     badge.style.background = '#fef3e2';
@@ -2917,14 +2959,16 @@ async function sendMsg() {
     let raw='';
     const currentModelId = cfg.selectedModelId || 'haiku';
     const currentModel   = getModel(currentModelId);
-    const currentProvider = currentModelId === 'ollama' ? 'ollama' : (currentModel?.provider || cfg.provider || 'anthropic');
+    // Ollama wins if either the selectedModelId is 'ollama' OR provider is explicitly 'ollama'
+    const isOllamaSelected = currentModelId === 'ollama' || cfg.provider === 'ollama';
+    const currentProvider  = isOllamaSelected ? 'ollama'
+      : (currentModel?.provider || cfg.provider || 'anthropic');
 
-    if (currentProvider === 'ollama' || currentModelId === 'ollama') {
+    if (isOllamaSelected) {
       raw = await callOllama(history, msgContent, systemPrompt);
     } else if (currentProvider === 'openrouter') {
+      if (!cfg.openrouterKey) throw new Error('No OpenRouter key. Add it in ⚙ Settings.');
       raw = await _callOpenRouter(cfg.openrouterKey, currentModel.apiModel, history, msgContent, systemPrompt);
-    } else if (cfg.mode === 'managed' || cfg.mode === 'demo') {
-      raw = await callManaged(history, msgContent, systemPrompt);
     } else if (currentProvider === 'anthropic') {
       raw = await callClaude(history, msgContent, systemPrompt);
     } else if (currentProvider === 'openai') {
@@ -2934,7 +2978,7 @@ async function sendMsg() {
     } else if (currentProvider === 'mistral') {
       raw = await callMistral(history, msgContent, systemPrompt);
     } else {
-      raw = await callOllama(history, msgContent, systemPrompt);
+      raw = await callClaude(history, msgContent, systemPrompt);
     }
 
     // Clear attachments after send
@@ -3050,7 +3094,7 @@ async function _callOpenRouter(key, model, history, content, systemPrompt) {
 
 async function callClaude(history, content, systemPrompt) {
   const key = PRODUCT_CONFIG.ANTHROPIC_KEY || cfg.claudeKey;
-  if (!key) throw new Error('No Claude API key. Open ⚙ Settings and add your Anthropic key.');
+  if (!key) throw new Error('No Anthropic key. Open ⚙ Settings → Claude API key.');
   if (cfg.webSearch) {
     return await callAnthropicWithSearch(key, cfg.claudeModel, history, content, systemPrompt);
   }
@@ -3635,7 +3679,25 @@ async function downloadDoc() {
 
 function toggleModeTooltip(e) {
   e.stopPropagation();
-  document.getElementById('modeTooltip').classList.toggle('show');
+  const tt   = document.getElementById('modeTooltip');
+  const rect = e.currentTarget.getBoundingClientRect();
+  // Default: open to the right, top-aligned with button
+  let left = rect.right + 10;
+  let top  = rect.top;
+  tt.style.left = left + 'px';
+  tt.style.top  = top + 'px';
+  tt.classList.toggle('show');
+  if (tt.classList.contains('show')) {
+    requestAnimationFrame(() => {
+      const tr = tt.getBoundingClientRect();
+      // If goes off right edge, flip to left of button
+      if (tr.right > window.innerWidth - 8) left = rect.left - tr.width - 10;
+      // Clamp bottom — never push top above button
+      if (tr.bottom > window.innerHeight - 8) top = Math.max(rect.top, window.innerHeight - tr.height - 8);
+      tt.style.left = left + 'px';
+      tt.style.top  = top + 'px';
+    });
+  }
 }
 document.addEventListener('click', () => {
   document.getElementById('modeTooltip')?.classList.remove('show');
