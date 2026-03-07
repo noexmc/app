@@ -1327,7 +1327,7 @@ async function passkeySetup() {
     persistSession();
     launchApp();
   } catch(e) {
-    if (btn) btn.textContent = 'Register with Face ID / Touch ID';
+    if (btn) { btn.innerHTML = btn.innerHTML.replace('Waiting for Face ID…', 'Register with Face ID / Touch ID'); }
     if (err) err.textContent = e.name === 'NotAllowedError' ? 'Cancelled. Try again.' : (e.message || 'Registration failed.');
   }
 }
@@ -1756,9 +1756,10 @@ async function logout() {
   currentUser = null;
   convs = {}; projects = {}; curConv = null;
   cfg.activated = false;
+  cfg.mode = null;
   document.getElementById('app').classList.remove('active');
   showAuthScreen();
-  setAuthView('login');
+  setAuthView(hasPasskeys() ? 'login' : 'setup');
 }
 
 function tryDemoFromAuth() {
@@ -1834,8 +1835,6 @@ function launchApp() {
     } else {
       userRow.style.display = 'none';
     }
-  } else {
-    userRow.style.display = 'none';
   }
 
   const keys = Object.keys(convs);
@@ -3413,37 +3412,6 @@ function setupMobileUI() {
 }
 
 window.addEventListener('resize', setupMobileUI);
-
-function toggleArtifactsPanel() {
-  document.getElementById('artifactsPanel').classList.toggle('hidden');
-}
-
-function closePreview() {
-  document.getElementById('previewPanel').classList.add('hidden');
-  document.getElementById('pvDl').style.display='none';
-  curDoc=null;
-}
-
-function renderArtifacts() {
-  const conv = convs[curConv];
-  const list = document.getElementById('artList');
-  if (!conv) { list.innerHTML='<div class="art-empty">Files you create will appear here.</div>'; return; }
-  const docs = conv.messages.filter(m=>m.doc).map(m=>m.doc);
-  if (!docs.length) { list.innerHTML='<div class="art-empty">Files you create will appear here — Excel, PowerPoint, Word docs.</div>'; return; }
-  const icons={excel:'📊',ppt:'📑',word:'📄'};
-  const types={excel:'Excel spreadsheet',ppt:'PowerPoint',word:'Word document'};
-  list.innerHTML = [...docs].reverse().map(doc => {
-    const encoded=encodeURIComponent(JSON.stringify(doc));
-    return `<div class="art-item" onclick="openDoc('${encoded}')">
-      <div class="art-icon">${icons[doc.type]||'📎'}</div>
-      <div class="art-info">
-        <div class="art-name">${esc(doc.filename)}</div>
-        <div class="art-meta">${types[doc.type]||'File'}</div>
-      </div>
-      <div class="art-dl">Open →</div>
-    </div>`;
-  }).join('');
-}
 
 function branchFromMsg(btn) {
   const ts = btn.dataset.ts;
