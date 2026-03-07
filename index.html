@@ -795,8 +795,21 @@ body{font-family:'DM Sans',sans-serif;background:var(--bg);color:var(--text);hei
       <div class="sg"><div class="sl">OpenAI API key</div><input class="si" id="sOpenAIKey" type="password" placeholder="sk-..." /></div>
       <div class="sg"><div class="sl">Gemini API key</div><input class="si" id="sGeminiKey" type="password" placeholder="AIza..." /></div>
       <div class="sg"><div class="sl">Mistral API key</div><input class="si" id="sMistralKey" type="password" placeholder="..." /></div>
+      <div class="sg">
+        <div class="sl" style="display:flex;align-items:center;gap:6px">OpenRouter key <span style="font-size:9px;background:#E8F0FF;color:#1A4D8F;padding:1px 5px;border-radius:8px;font-weight:600">300+ models</span></div>
+        <input class="si" id="sOpenRouterKey" type="password" placeholder="sk-or-v1-..." />
+        <div style="font-size:10.5px;color:var(--text-3);margin-top:4px">Claude, GPT-4o, Gemini, DeepSeek, Llama, Grok and more. <a href="https://openrouter.ai/keys" target="_blank" style="color:var(--green)">Get key →</a></div>
+      </div>
       <div class="sg"><div class="sl">Tavily Search key</div><input class="si" id="sBraveKey" type="password" placeholder="tvly-..." /><div style="font-size:11px;color:var(--text-3);margin-top:4px">Free at <a href="https://tavily.com" target="_blank" style="color:var(--blue)">tavily.com</a> · 1,000 searches/month free</div></div>
-      <div class="sg"><div class="sl">Ollama URL</div><input class="si" id="sOllamaUrl" /><input class="si" id="sOllamaModel" placeholder="Model" style="margin-top:6px"/></div>
+      <div class="sg">
+        <div class="sl">Ollama (local AI)</div>
+        <input class="si" id="sOllamaUrl" placeholder="http://localhost:11434" />
+        <input class="si" id="sOllamaModel" placeholder="Model e.g. qwen2.5:14b" style="margin-top:6px"/>
+        <div style="font-size:10.5px;color:var(--text-3);margin-top:6px;line-height:1.5">
+          To allow browser access, run Ollama with:<br>
+          <code style="font-size:10px;background:var(--surface2);padding:2px 5px;border-radius:3px;display:inline-block;margin-top:3px">OLLAMA_ORIGINS=https://noexmc.github.io ollama serve</code>
+        </div>
+      </div>
       <div class="sg"><div class="sl">License key</div><input class="si" id="sLicenseKey" type="text" /></div>
       <div class="sg">
         <div class="sl">Conversations</div>
@@ -851,6 +864,17 @@ const PRODUCT_CONFIG = {
     { id:'opus',      label:'Opus 4.6',        badge:'🔥 Top',   provider:'anthropic', apiModel:'claude-opus-4-6',            tier:'lifetime' },
     { id:'gpt4o',     label:'GPT-4o',          badge:'',         provider:'openai',    apiModel:'gpt-4o',                     tier:'lifetime' },
     { id:'mistral-l', label:'Mistral Large',   badge:'',         provider:'mistral',   apiModel:'mistral-large-latest',       tier:'lifetime' },
+    // OpenRouter models — unlocked when openrouterKey is set
+    { id:'or-sonnet',  label:'Claude Sonnet',   badge:'',         provider:'openrouter', apiModel:'anthropic/claude-sonnet-4-5',          tier:'byok' },
+    { id:'or-opus',    label:'Claude Opus',     badge:'🔥 Top',   provider:'openrouter', apiModel:'anthropic/claude-opus-4-5',            tier:'byok' },
+    { id:'or-gpt4o',   label:'GPT-4o',          badge:'',         provider:'openrouter', apiModel:'openai/gpt-4o',                        tier:'byok' },
+    { id:'or-o3',      label:'o3 mini',         badge:'🧠 Reason', provider:'openrouter', apiModel:'openai/o3-mini',                      tier:'byok' },
+    { id:'or-gemini',  label:'Gemini 2.0 Pro',  badge:'',         provider:'openrouter', apiModel:'google/gemini-2.0-pro-exp-02-05',      tier:'byok' },
+    { id:'or-deep',    label:'DeepSeek R1',     badge:'🧠 Reason', provider:'openrouter', apiModel:'deepseek/deepseek-r1',                tier:'byok' },
+    { id:'or-llama',   label:'Llama 3.3 70B',   badge:'',         provider:'openrouter', apiModel:'meta-llama/llama-3.3-70b-instruct',   tier:'byok' },
+    { id:'or-qwen',    label:'Qwen 2.5 72B',    badge:'',         provider:'openrouter', apiModel:'qwen/qwen-2.5-72b-instruct',          tier:'byok' },
+    { id:'or-mistral', label:'Mistral Large 2',  badge:'',         provider:'openrouter', apiModel:'mistralai/mistral-large-2411',        tier:'byok' },
+    { id:'or-grok',    label:'Grok 2',           badge:'',         provider:'openrouter', apiModel:'x-ai/grok-2-1212',                   tier:'byok' },
   ],
 
   // ── PLAN → MAX TIER ──
@@ -1079,6 +1103,7 @@ let cfg = {
   selectedModelId: 'haiku',
   activeMode: 'executive',  // which MODES preset is active
   claudeKey: '', claudeModel: 'claude-sonnet-4-6',
+  openrouterKey: '',
   openaiKey: '', openaiModel: 'gpt-4o',
   geminiKey: '', mistralKey: '',
   braveKey: '',
@@ -1613,7 +1638,7 @@ async function passkeySetup() {
     currentUser = { id: userId, name: name, email: name };
     loadUserData();
     cfg.activated = true;
-    cfg.mode = cfg.mode || 'byok';
+    cfg.mode = cfg.mode || (PRODUCT_CONFIG.ANTHROPIC_KEY ? 'managed' : 'byok');
     saveCfg();
     launchApp();
 
@@ -1663,6 +1688,7 @@ async function passkeySignIn() {
     currentUser = { id: match.userId, name: match.name, email: match.name };
     loadUserData();
     cfg.activated = true;
+    cfg.mode = cfg.mode || (PRODUCT_CONFIG.ANTHROPIC_KEY ? 'managed' : 'byok');
     saveCfg();
     launchApp();
 
@@ -1855,13 +1881,20 @@ function tierRank(tier) {
 function getAvailableModels() {
   const planTier = getPlanTier();
   const planRank = tierRank(planTier);
-  return PRODUCT_CONFIG.MODELS.filter(m => tierRank(m.tier) <= planRank);
+  const base = PRODUCT_CONFIG.MODELS.filter(m => m.provider !== 'openrouter' && tierRank(m.tier) <= planRank);
+  if (cfg.openrouterKey) {
+    const orModels = PRODUCT_CONFIG.MODELS.filter(m => m.provider === 'openrouter');
+    return [...base, ...orModels];
+  }
+  return base;
 }
 
 function getLockedModels() {
   const planTier = getPlanTier();
   const planRank = tierRank(planTier);
-  return PRODUCT_CONFIG.MODELS.filter(m => tierRank(m.tier) > planRank);
+  const baseLocked = PRODUCT_CONFIG.MODELS.filter(m => m.provider !== 'openrouter' && tierRank(m.tier) > planRank);
+  if (!cfg.openrouterKey) return baseLocked;
+  return baseLocked;
 }
 
 function getModel(id) {
@@ -1885,7 +1918,17 @@ const MODEL_META = {
   'gemini-pro':{ icon:'♊', iconBg:'#FEF3D0', use:'Gemini Pro reasoning',      speed:[1,1,0], tierStyle:'background:#FEF3D0;color:#92530A' },
   'mistral-small':{ icon:'🌀', iconBg:'#F5F0FF', use:'Fast Mistral tasks',    speed:[1,1,1], tierStyle:'background:#F5F0FF;color:#6B3FA0' },
   'mistral-large':{ icon:'🌀', iconBg:'#EDE5FF', use:'Mistral flagship',      speed:[1,0,0], tierStyle:'background:#EDE5FF;color:#6B3FA0' },
-  ollama:   { icon:'💻', iconBg:'#F0EFE9', use:'Offline · private · free',    speed:[1,1,0], tierStyle:'background:#F0EFE9;color:#5C5B55' },
+  ollama:      { icon:'💻', iconBg:'#F0EFE9', use:'Offline · private · free',       speed:[1,1,0], tierStyle:'background:#F0EFE9;color:#5C5B55' },
+  'or-sonnet':  { icon:'✦',  iconBg:'#EEF4FB', use:'Claude Sonnet via OpenRouter',   speed:[1,1,0], tierStyle:'background:#EEF4FB;color:#1A3A5C' },
+  'or-opus':    { icon:'🔥', iconBg:'#FEF3D0', use:'Claude Opus via OpenRouter',     speed:[1,0,0], tierStyle:'background:#FEF3D0;color:#92530A' },
+  'or-gpt4o':   { icon:'🤖', iconBg:'#E8F5E9', use:'OpenAI GPT-4o',                 speed:[1,1,0], tierStyle:'background:#E8F5E9;color:#1D6A3E' },
+  'or-o3':      { icon:'🧠', iconBg:'#EDE5FF', use:'OpenAI o3 mini — deep reasoning',speed:[1,0,0], tierStyle:'background:#EDE5FF;color:#6B3FA0' },
+  'or-gemini':  { icon:'♊', iconBg:'#EEF4FB', use:'Google Gemini 2.0 Pro',          speed:[1,1,0], tierStyle:'background:#EEF4FB;color:#1A3A5C' },
+  'or-deep':    { icon:'🐋', iconBg:'#E8F0FF', use:'DeepSeek R1 — best open reasoning',speed:[1,0,0], tierStyle:'background:#E8F0FF;color:#1A4D8F' },
+  'or-llama':   { icon:'🦙', iconBg:'#F0F7E6', use:'Meta Llama 3.3 70B',            speed:[1,1,0], tierStyle:'background:#F0F7E6;color:#3A6B1A' },
+  'or-qwen':    { icon:'🔮', iconBg:'#F5F0FF', use:'Qwen 2.5 72B — multilingual',   speed:[1,1,0], tierStyle:'background:#F5F0FF;color:#6B3FA0' },
+  'or-mistral': { icon:'🌀', iconBg:'#EDE5FF', use:'Mistral Large 2',               speed:[1,1,0], tierStyle:'background:#EDE5FF;color:#6B3FA0' },
+  'or-grok':    { icon:'𝕏',  iconBg:'#F0F0F0', use:'xAI Grok 2',                   speed:[1,1,0], tierStyle:'background:#F0F0F0;color:#333' },
 };
 
 function buildProvSwitch() {
@@ -2620,21 +2663,23 @@ async function sendMsg() {
     const systemPrompt = getActivePrompt();
 
     let raw='';
-    // Read current selection directly from DOM as source of truth
-    const modelSelectEl = document.getElementById('modelSelect');
-    const currentModelId = modelSelectEl ? modelSelectEl.value : cfg.selectedModelId;
-    const useOllama = currentModelId === 'ollama' || cfg.provider === 'ollama';
-    if (useOllama) {
+    const currentModelId = cfg.selectedModelId || 'haiku';
+    const currentModel   = getModel(currentModelId);
+    const currentProvider = currentModelId === 'ollama' ? 'ollama' : (currentModel?.provider || cfg.provider || 'anthropic');
+
+    if (currentProvider === 'ollama' || currentModelId === 'ollama') {
       raw = await callOllama(history, msgContent, systemPrompt);
-    } else if (cfg.mode==='managed' || cfg.mode==='demo') {
+    } else if (currentProvider === 'openrouter') {
+      raw = await _callOpenRouter(cfg.openrouterKey, currentModel.apiModel, history, msgContent, systemPrompt);
+    } else if (cfg.mode === 'managed' || cfg.mode === 'demo') {
       raw = await callManaged(history, msgContent, systemPrompt);
-    } else if (cfg.provider==='claude') {
+    } else if (currentProvider === 'anthropic') {
       raw = await callClaude(history, msgContent, systemPrompt);
-    } else if (cfg.provider==='openai') {
+    } else if (currentProvider === 'openai') {
       raw = await callOpenAI(history, msgContent, systemPrompt);
-    } else if (cfg.provider==='gemini') {
+    } else if (currentProvider === 'gemini') {
       raw = await callGemini(history, msgContent, systemPrompt);
-    } else if (cfg.provider==='mistral') {
+    } else if (currentProvider === 'mistral') {
       raw = await callMistral(history, msgContent, systemPrompt);
     } else {
       raw = await callOllama(history, msgContent, systemPrompt);
@@ -2713,19 +2758,54 @@ async function callManaged(history, content, systemPrompt) {
     const key = PRODUCT_CONFIG.MISTRAL_KEY || cfg.mistralKey;
     if (!key) throw new Error('Mistral not configured. Contact support.');
     return await _callMistral(key, model.apiModel, history, content, systemPrompt);
+  } else if (provider === 'openrouter') {
+    const key = cfg.openrouterKey;
+    if (!key) throw new Error('OpenRouter key not set. Open ⚙ Settings → OpenRouter Key.');
+    return await _callOpenRouter(key, model.apiModel, history, content, systemPrompt);
   }
   throw new Error('Unknown provider: ' + provider);
 }
 
+async function _callOpenRouter(key, model, history, content, systemPrompt) {
+  // OpenRouter uses OpenAI-compatible API
+  const messages = [
+    ...(systemPrompt ? [{role:'system', content: systemPrompt}] : []),
+    ...history,
+    {role:'user', content}
+  ];
+  const r = await fetch('https://openrouter.ai/api/v1/chat/completions', {
+    method: 'POST',
+    headers: {
+      'Content-Type': 'application/json',
+      'Authorization': 'Bearer ' + key,
+      'HTTP-Referer': window.location.origin,
+      'X-Title': 'Aide',
+    },
+    body: JSON.stringify({
+      model,
+      messages,
+      max_tokens: 4096,
+      stream: false,
+    })
+  });
+  if (!r.ok) {
+    const e = await r.json().catch(() => ({}));
+    throw new Error(e.error?.message || `OpenRouter error ${r.status}`);
+  }
+  const d = await r.json();
+  return d.choices?.[0]?.message?.content || '';
+}
+
 async function callClaude(history, content, systemPrompt) {
-  if (!cfg.claudeKey) throw new Error('No Claude API key. Open Settings to add one.');
+  const key = PRODUCT_CONFIG.ANTHROPIC_KEY || cfg.claudeKey;
+  if (!key) throw new Error('No Claude API key. Open ⚙ Settings and add your Anthropic key.');
   if (cfg.webSearch) {
-    return await callAnthropicWithSearch(cfg.claudeKey, cfg.claudeModel, history, content, systemPrompt);
+    return await callAnthropicWithSearch(key, cfg.claudeModel, history, content, systemPrompt);
   }
   const messages=[...history,{role:'user',content}];
   const r=await fetch('https://api.anthropic.com/v1/messages',{
     method:'POST',
-    headers:{'Content-Type':'application/json','x-api-key':cfg.claudeKey,'anthropic-version':'2023-06-01','anthropic-dangerous-direct-browser-access':'true'},
+    headers:{'Content-Type':'application/json','x-api-key':key,'anthropic-version':'2023-06-01','anthropic-dangerous-direct-browser-access':'true'},
     body:JSON.stringify({model:cfg.claudeModel,max_tokens:4096,system:systemPrompt,messages})
   });
   if (!r.ok){const e=await r.json();throw new Error(e.error?.message||`Claude error ${r.status}`);}
@@ -2787,15 +2867,47 @@ async function _callMistral(key, model, history, content, systemPrompt) {
 }
 
 async function callOllama(history, content, systemPrompt) {
-  const textContent = typeof content === 'string' ? content : content.find?.(p=>p.type==='text')?.text || '';
-  const messages=[{role:'system',content:systemPrompt},...history,{role:'user',content:textContent}];
-  const r=await fetch(`${cfg.ollamaUrl}/api/chat`,{
-    method:'POST',
-    headers:{'Content-Type':'application/json'},
-    body:JSON.stringify({model:cfg.ollamaModel,messages,stream:false})
-  });
-  if (!r.ok) throw new Error(`Ollama error ${r.status}. Is Ollama running?`);
-  const d=await r.json(); return d.message?.content||'';
+  const ollamaUrl   = (cfg.ollamaUrl  || 'http://localhost:11434').replace(/\/$/,'');
+  const ollamaModel = (cfg.ollamaModel || 'qwen2.5:14b').trim();
+
+  // GitHub Pages is HTTPS — direct calls to http://localhost are blocked by mixed-content policy.
+  // Solution: use the Ollama origin header trick and ensure OLLAMA_ORIGINS is set.
+  // We catch the TypeError (network fail) and give a clear message.
+  const textContent = typeof content === 'string' ? content
+    : content.find?.(p=>p.type==='text')?.text || JSON.stringify(content);
+
+  const messages = [
+    { role: 'system', content: systemPrompt },
+    ...history.map(m => ({ role: m.role, content: typeof m.content === 'string' ? m.content : (m.content?.find?.(p=>p.type==='text')?.text||'') })),
+    { role: 'user', content: textContent }
+  ];
+
+  let r;
+  try {
+    r = await fetch(`${ollamaUrl}/api/chat`, {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ model: ollamaModel, messages, stream: false })
+    });
+  } catch(netErr) {
+    // Mixed-content or network error — give actionable guidance
+    throw new Error(
+      'Cannot reach Ollama. Fix:\n\n' +
+      '1. Make sure Ollama is running (check menu bar)\n' +
+      '2. Run this in Terminal to allow browser access:\n' +
+      '   OLLAMA_ORIGINS=https://noexmc.github.io ollama serve\n' +
+      '3. Or set permanently: launchctl setenv OLLAMA_ORIGINS \'https://noexmc.github.io\'\n\n' +
+      'Then restart Ollama.'
+    );
+  }
+
+  if (!r.ok) {
+    const body = await r.text().catch(()=>'');
+    throw new Error(`Ollama error ${r.status}: ${body || 'Is the model pulled?'}`);
+  }
+
+  const d = await r.json();
+  return d.message?.content || '';
 }
 
 // ══════════════════════════════════
@@ -3354,7 +3466,8 @@ async function passkeyAddAnother() {
 function loadSettingsUI() {
   const pkRow = document.getElementById('passkeySettingsRow');
   if (pkRow && currentUser) pkRow.innerHTML = showPasskeySettingsRow ? showPasskeySettingsRow() : '';
-  document.getElementById('sClaudeKey').value=cfg.claudeKey;
+  document.getElementById('sClaudeKey').value=cfg.claudeKey || PRODUCT_CONFIG.ANTHROPIC_KEY;
+  document.getElementById('sOpenRouterKey').value=cfg.openrouterKey||'';
   document.getElementById('sOpenAIKey').value=cfg.openaiKey;
   document.getElementById('sGeminiKey').value=cfg.geminiKey||'';
   document.getElementById('sMistralKey').value=cfg.mistralKey||'';
@@ -3366,6 +3479,7 @@ function loadSettingsUI() {
 
 function saveSettings() {
   cfg.claudeKey=document.getElementById('sClaudeKey').value.trim();
+  cfg.openrouterKey=document.getElementById('sOpenRouterKey').value.trim();
   cfg.openaiKey=document.getElementById('sOpenAIKey').value.trim();
   cfg.geminiKey=document.getElementById('sGeminiKey').value.trim();
   cfg.mistralKey=document.getElementById('sMistralKey').value.trim();
