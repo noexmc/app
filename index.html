@@ -1,5 +1,5 @@
 <!DOCTYPE html>
-<!-- Aide v0.31 -->
+<!-- Aide v0.32 -->
 <html lang="en">
 <head>
 <meta charset="UTF-8">
@@ -448,7 +448,7 @@ body{font-family:'DM Sans',sans-serif;background:var(--bg);color:var(--text);hei
 .cp-om-input{width:100%;margin-top:6px;padding:5px 8px;border:1px solid var(--border);border-radius:5px;font-family:'DM Mono',monospace;font-size:11.5px;background:var(--bg);color:var(--text);outline:none}
 .cp-om-input:focus{border-color:var(--accent)}
 
-/* ── Role picker in topbar ─────────────────────────────── */
+
 .role-picker-wrap{position:relative;display:flex;align-items:center}
 .role-btn{display:flex;align-items:center;gap:5px;padding:4px 10px 4px 8px;border:1px solid var(--accent);border-radius:20px;background:var(--surface);cursor:pointer;font-family:'DM Sans',sans-serif;font-size:12.5px;font-weight:500;color:var(--text);transition:all .15s;white-space:nowrap;flex-shrink:0;min-width:100px}
 .role-btn:hover{border-color:var(--accent);background:var(--surface2)}
@@ -463,6 +463,37 @@ body{font-family:'DM Sans',sans-serif;background:var(--bg);color:var(--text);hei
 .rc-body{flex:1;min-width:0}
 .rc-name{font-size:13px;font-weight:600;color:var(--text);margin-bottom:2px}
 .rc-desc{font-size:11.5px;color:var(--text-2);line-height:1.45}
+
+/* ── Bottom-left model status bar ─── */
+.model-status-bar{display:flex;align-items:center;gap:5px;padding:6px 8px;margin-bottom:4px;border-radius:var(--r-sm);background:var(--surface2);border:1px solid var(--border)}
+.msb-dot{width:6px;height:6px;border-radius:50%;background:var(--green);flex-shrink:0}
+.msb-text{font-family:'DM Mono',monospace;font-size:10.5px;color:var(--text-2);font-weight:500;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+
+/* ── Role picker — match model card style ─── */
+.role-btn{display:flex;align-items:center;gap:6px;padding:5px 10px 5px 8px;background:var(--surface);border:1px solid var(--border);border-radius:var(--r-sm);cursor:pointer;font-family:'DM Sans',sans-serif;font-size:12px;font-weight:500;color:var(--text);transition:all .15s;white-space:nowrap;flex-shrink:0}
+.role-btn:hover,.role-picker-wrap.open .role-btn{border-color:var(--accent);box-shadow:0 0 0 2px rgba(26,58,92,.08)}
+.role-btn .rb-icon{font-size:13px;line-height:1}
+.role-btn .rb-arr{font-size:9px;color:var(--text-3);margin-left:2px}
+.role-dropdown{position:absolute;top:calc(100% + 6px);left:0;width:280px;background:var(--surface);border:1px solid var(--border);border-radius:10px;box-shadow:0 8px 28px rgba(0,0,0,0.13);z-index:9999;padding:6px;display:none}
+.role-dropdown.show{display:block;animation:cpIn .12s ease}
+.role-card{display:grid;grid-template-columns:30px 1fr;gap:8px;padding:8px 9px;border-radius:7px;cursor:pointer;transition:background .1s;align-items:center;border:1px solid transparent;margin-bottom:1px}
+.role-card:hover{background:var(--surface2)}
+.role-card.active{background:#EEF4FB;border-color:#D0E4F7}
+.rc-icon-wrap{width:30px;height:30px;border-radius:7px;display:flex;align-items:center;justify-content:center;font-size:14px;flex-shrink:0}
+.rc-body{flex:1;min-width:0}
+.rc-name{font-size:12px;font-weight:600;color:var(--text)}
+.rc-desc{font-size:10.5px;color:var(--text-3);margin-top:1px;line-height:1.4}
+
+/* ── Claude sub-model picker ─── */
+.cp-sub-models{display:none;border-left:2px solid var(--border);margin:0 0 4px 12px;padding:0}
+.cp-sub-models.show{display:block}
+.cp-sub-item{display:flex;align-items:center;gap:8px;padding:7px 10px;cursor:pointer;border-radius:var(--r-sm);transition:background .12s;margin:2px 0}
+.cp-sub-item:hover{background:var(--surface2)}
+.cp-sub-item.active{background:var(--surface2);outline:1.5px solid var(--accent)}
+.cp-sub-icon{width:26px;height:26px;border-radius:6px;display:flex;align-items:center;justify-content:center;font-size:12px;flex-shrink:0}
+.cp-sub-name{font-size:12px;font-weight:600;color:var(--text)}
+.cp-sub-desc{font-size:10.5px;color:var(--text-3);margin-top:1px;line-height:1.3}
+.cp-sub-badge{font-size:9px;font-weight:600;padding:1px 5px;border-radius:8px;margin-left:auto;flex-shrink:0}
 </style>
 </head>
 <body>
@@ -553,7 +584,7 @@ body{font-family:'DM Sans',sans-serif;background:var(--bg);color:var(--text);hei
 ════════════════════════════════ -->
 <div id="app" class="screen">
   <div class="topbar">
-    <div class="logo">Aide <span style="font-family:'DM Mono',monospace;font-size:10px;font-weight:400;color:var(--text-3);font-style:normal;letter-spacing:0;margin-left:2px">v0.31</span></div>
+    <div class="logo">Aide <span style="font-family:'DM Mono',monospace;font-size:10px;font-weight:400;color:var(--text-3);font-style:normal;letter-spacing:0;margin-left:2px">v0.32</span></div>
     <div class="tb-divider"></div>
     <!-- Role picker -->
     <div class="role-picker-wrap" id="rolePickerWrap">
@@ -563,11 +594,6 @@ body{font-family:'DM Sans',sans-serif;background:var(--bg);color:var(--text);hei
         <span class="rb-arr">▾</span>
       </button>
       <div class="role-dropdown" id="roleDropdown"></div>
-    </div>
-    <div class="tb-divider"></div>
-    <div class="status-pill">
-      <div class="sdot on" id="appDot"></div>
-      <div class="stext" id="appStatus">Ready</div>
     </div>
     <div class="topbar-right">
       <div class="model-picker-wrap" id="modelPickerWrap">
@@ -615,6 +641,7 @@ body{font-family:'DM Sans',sans-serif;background:var(--bg);color:var(--text);hei
           <div id="syncLabel" style="font-size:10px;color:var(--text-3);font-family:'DM Mono',monospace"></div>
         </div>
         <div class="license-badge" id="licenseBadge"></div>
+        <div class="model-status-bar" id="modelStatusBar"></div>
         <div class="user-row" id="userRow"></div>
       </div>
     </div>
@@ -700,6 +727,10 @@ body{font-family:'DM Sans',sans-serif;background:var(--bg);color:var(--text);hei
         <button class="btn-ghost-sm" onclick="exportConversations();toggleSettings()">↓ Export all conversations</button>
         <button class="btn-ghost-sm" style="margin-top:4px" onclick="importConversations()">↑ Import conversations</button>
       </div>
+
+      <!-- Changelog -->
+      <div class="sl" style="margin-top:16px;margin-bottom:8px">What's new</div>
+      <div id="changelogList" style="font-size:11.5px;color:var(--text-2);line-height:1.6;max-height:220px;overflow-y:auto"></div>
       <button class="btn-save" onclick="saveSettings()">Save settings</button>
       <button class="btn-ghost-sm" onclick="resetApp()">Sign out</button>
       <button class="btn-ghost-sm" style="color:var(--red);border-color:var(--red);margin-top:4px" onclick="nukeEverything()">⚠ Full reset — wipe all data</button>
@@ -708,6 +739,36 @@ body{font-family:'DM Sans',sans-serif;background:var(--bg);color:var(--text);hei
 </div>
 
 <script>
+// ══════════════════════════════════════════════════════════
+// CHANGELOG
+// ══════════════════════════════════════════════════════════
+const CHANGELOG = [
+  { version:'v0.32', date:'2026-03-07', changes:[
+    'Role picker restyled to match model card picker (icon tile + name + description)',
+    'Model picker: Claude sub-picker groups Haiku / Sonnet / Opus under collapsible header',
+    'Status pill removed from topbar',
+    'Active model indicator moved to bottom-left sidebar corner',
+  ]},
+  { version:'v0.31', date:'2026-03-07', changes:[
+    'Role picker moved to topbar — card dropdown with icon + description per role',
+    'Version number shown next to Aide logo',
+    'Versioned git commits with timestamp via deploy.sh',
+    'Branch function added — ⎇ Branch button on every assistant message',
+    'Sign Out button fixed (confirmLogout was missing)',
+    'Ollama: better CORS headers + clear error message with fix instructions',
+    'Excel: formula parsing fixed, 12 new number formats',
+    'Ollama model picker: card dropdown with 5 preset models + custom entry',
+  ]},
+  { version:'v0.30', date:'2026-03-07', changes:[
+    'Clean rebuild — eliminated duplicate checkAuthSession bug',
+    'Replaced Supabase auth with WebAuthn passkeys (Face ID / Touch ID)',
+    'Added Friends/Guest mode',
+    'Session persistence, full reset, sign out added',
+    'Deploy script for one-click GitHub Pages deployment',
+  ]},
+];
+
+
 // ══════════════════════════════════
 // CONFIG — SET THESE FOR YOUR PRODUCT
 // ══════════════════════════════════
@@ -1500,6 +1561,14 @@ const MODEL_META = {
 };
 
 
+
+function toggleClaudeSubModels(e) {
+  e.stopPropagation();
+  const panel = document.getElementById('cpClaudeSubModels');
+  if (!panel) return;
+  panel.classList.toggle('show');
+}
+
 function toggleOllamaModels(e) {
   e.stopPropagation();
   const panel = document.getElementById('cpOllamaModels');
@@ -1551,7 +1620,47 @@ function buildProvSwitch() {
     // Card picker content
     const speedDots = (arr) => arr.map(on => `<span class="${on?'on':''} ${on&&arr[0]&&arr[1]&&arr[2]?'g':''}"></span>`).join('');
 
-    let html = available.map(m => {
+    // Group models by provider
+    const claudeModels = available.filter(m => m.provider === 'claude');
+    const otherModels  = available.filter(m => m.provider !== 'claude');
+    const isClaudeActive = !isOllama && claudeModels.some(m => m.id === cur.id);
+    const claudeSubOpen = isClaudeActive;
+
+    // Claude grouped card
+    const activeClaudeModel = claudeModels.find(m => m.id === cur.id) || claudeModels[0];
+    const acm = activeClaudeModel ? (MODEL_META[activeClaudeModel.id]||{}) : {};
+
+    const claudeSubItems = claudeModels.map(m => {
+      const mm = MODEL_META[m.id] || {};
+      const subActive = m.id === cur.id && !isOllama;
+      const badges = { haiku:'Fast', sonnet:'Balanced', opus:'Powerful' };
+      const badgeStyle = { haiku:'background:#E8F5E9;color:#1D6A3E', sonnet:'background:#EEF4FB;color:#1A3A5C', opus:'background:#FEF3D0;color:#92530A' };
+      return `<div class="cp-sub-item ${subActive?'active':''}" onclick="selectCardModel('${m.id}');event.stopPropagation()">
+        <div class="cp-sub-icon" style="background:${mm.iconBg||'#eee'}">${mm.icon||'·'}</div>
+        <div style="flex:1;min-width:0">
+          <div style="display:flex;align-items:center;gap:6px">
+            <span class="cp-sub-name">${m.label}</span>
+            <span class="cp-sub-badge" style="${badgeStyle[m.id]||''}">${badges[m.id]||''}</span>
+          </div>
+          <div class="cp-sub-desc">${mm.use||''}</div>
+        </div>
+      </div>`;
+    }).join('');
+
+    let html = `<div class="cp-item ${isClaudeActive?'cp-active':''}" onclick="toggleClaudeSubModels(event)">
+      <div class="cp-icon" style="background:#EEF4FB">✦</div>
+      <div><div class="cp-name">Claude${isClaudeActive&&activeClaudeModel?` <span style="font-size:10px;color:var(--text-3);font-weight:400">· ${activeClaudeModel.label}</span>`:''}</div>
+      <div class="cp-use">${isClaudeActive&&acm.use ? acm.use : 'Anthropic · haiku / sonnet / opus'}</div></div>
+      <div class="cp-right">
+        <div class="cp-speed">${speedDots([1,1,0])}</div>
+        <div class="cp-tier" style="background:#EEF4FB;color:#1A3A5C">Claude</div>
+      </div>
+    </div>
+    <div class="cp-sub-models ${claudeSubOpen?'show':''}" id="cpClaudeSubModels">
+      ${claudeSubItems}
+    </div>`;
+
+    html += otherModels.map(m => {
       const mm = MODEL_META[m.id] || {};
       const active = m.id === cur.id && !isOllama;
       return `<div class="cp-item ${active?'cp-active':''}" onclick="selectCardModel('${m.id}')">
@@ -1682,6 +1791,15 @@ function setProvider(p, el) {
 }
 
 function updateStatus() {
+  // Update bottom-left model status bar
+  const msb = document.getElementById('modelStatusBar');
+  if (msb) {
+    const isOll = cfg.provider === 'ollama' || cfg.selectedModelId === 'ollama';
+    const m = getModel(cfg.selectedModelId);
+    const modelName = isOll ? (cfg.ollamaModel || 'Ollama') : (m?.label || cfg.selectedModelId);
+    const dot = isOll ? '💻' : (MODEL_META[cfg.selectedModelId]?.icon || '·');
+    msb.innerHTML = `<span class="msb-dot"></span><span class="msb-text">${dot} ${modelName}</span>`;
+  }
   const isOllama = cfg.provider === 'ollama' || cfg.selectedModelId === 'ollama';
   if (isOllama) {
     document.getElementById('appStatus').textContent = `💻 ${cfg.ollamaModel||'Ollama'}`;
@@ -1717,12 +1835,17 @@ function renderModeBar() {
   renderRolePicker();
 }
 
+const ROLE_ICON_BG = {
+  executive: '#FEF3D0', analyst: '#EEF4FB', coder: '#E8F5E9',
+  writer: '#FFF0F0', research: '#F5F0FF',
+};
+
 function renderRolePicker() {
   const dropdown = document.getElementById('roleDropdown');
   if (!dropdown) return;
   dropdown.innerHTML = MODES.map(m => `
     <div class="role-card ${cfg.activeMode===m.id?'active':''}" onclick="setMode('${m.id}')">
-      <div class="rc-icon">${m.icon}</div>
+      <div class="rc-icon-wrap" style="background:${ROLE_ICON_BG[m.id]||'#eee'}">${m.icon}</div>
       <div class="rc-body">
         <div class="rc-name">${m.label}</div>
         <div class="rc-desc">${ROLE_DESCRIPTIONS[m.id]||''}</div>
@@ -3047,6 +3170,15 @@ function loadSettingsUI() {
   document.getElementById('sOllamaUrl').value=cfg.ollamaUrl;
   document.getElementById('sOllamaModel').value=cfg.ollamaModel;
   document.getElementById('sLicenseKey').value=cfg.licenseKey||'';
+  // Render changelog
+  const cl = document.getElementById('changelogList');
+  if (cl && typeof CHANGELOG !== 'undefined') {
+    cl.innerHTML = CHANGELOG.map(v => `
+      <div style="margin-bottom:10px">
+        <div style="font-weight:600;color:var(--text);font-size:12px;margin-bottom:3px">${v.version} <span style="font-weight:400;color:var(--text-3)">${v.date}</span></div>
+        ${v.changes.map(ch => `<div style="display:flex;gap:5px;margin-bottom:1px"><span style="color:var(--text-3);flex-shrink:0">·</span><span>${ch}</span></div>`).join('')}
+      </div>`).join('');
+  }
 }
 
 function saveSettings() {
