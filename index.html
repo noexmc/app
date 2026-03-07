@@ -446,6 +446,22 @@ body{font-family:'DM Sans',sans-serif;background:var(--bg);color:var(--text);hei
 .cp-om-desc{font-size:11.5px;color:var(--text-2);line-height:1.4}
 .cp-om-input{width:100%;margin-top:6px;padding:5px 8px;border:1px solid var(--border);border-radius:5px;font-family:'DM Mono',monospace;font-size:11.5px;background:var(--bg);color:var(--text);outline:none}
 .cp-om-input:focus{border-color:var(--accent)}
+
+/* ── Role picker in topbar ─────────────────────────────── */
+.role-picker-wrap{position:relative;display:flex;align-items:center}
+.role-btn{display:flex;align-items:center;gap:5px;padding:4px 10px 4px 8px;border:1px solid var(--border);border-radius:20px;background:var(--surface);cursor:pointer;font-family:'DM Sans',sans-serif;font-size:12.5px;font-weight:500;color:var(--text);transition:all .15s;white-space:nowrap}
+.role-btn:hover{border-color:var(--accent);background:var(--surface2)}
+.role-btn .rb-icon{font-size:14px;line-height:1}
+.role-btn .rb-arr{font-size:9px;color:var(--text-3);margin-left:1px}
+.role-dropdown{position:fixed;z-index:9999;background:var(--surface);border:1px solid var(--border);border-radius:var(--r-lg);box-shadow:0 8px 32px rgba(0,0,0,0.14);width:300px;padding:6px;display:none}
+.role-dropdown.show{display:block}
+.role-card{display:flex;gap:10px;align-items:flex-start;padding:9px 10px;border-radius:var(--r);cursor:pointer;transition:background .12s}
+.role-card:hover{background:var(--surface2)}
+.role-card.active{background:var(--surface2);outline:1.5px solid var(--accent)}
+.rc-icon{font-size:20px;line-height:1;flex-shrink:0;margin-top:1px}
+.rc-body{flex:1;min-width:0}
+.rc-name{font-size:13px;font-weight:600;color:var(--text);margin-bottom:2px}
+.rc-desc{font-size:11.5px;color:var(--text-2);line-height:1.45}
 </style>
 </head>
 <body>
@@ -538,6 +554,16 @@ body{font-family:'DM Sans',sans-serif;background:var(--bg);color:var(--text);hei
   <div class="topbar">
     <div class="logo">Aide</div>
     <div class="tb-divider"></div>
+    <!-- Role picker -->
+    <div class="role-picker-wrap" id="rolePickerWrap">
+      <button class="role-btn" id="roleBtn" onclick="toggleRolePicker(event)">
+        <span class="rb-icon" id="roleBtnIcon">🎯</span>
+        <span id="roleBtnLabel">Executive</span>
+        <span class="rb-arr">▾</span>
+      </button>
+      <div class="role-dropdown" id="roleDropdown"></div>
+    </div>
+    <div class="tb-divider"></div>
     <div class="status-pill">
       <div class="sdot on" id="appDot"></div>
       <div class="stext" id="appStatus">Ready</div>
@@ -562,19 +588,7 @@ body{font-family:'DM Sans',sans-serif;background:var(--bg);color:var(--text);hei
         </button>
       </div>
 
-      <!-- Mode picker -->
-      <div class="mode-bar">
-        <select class="mode-select" id="modeSelect" onchange="setMode(this.value)"></select>
-        <div class="mode-help" onclick="toggleModeTooltip(event)">?
-          <div class="mode-tooltip" id="modeTooltip">
-            <b>🎯 Executive</b>Strategic, concise, boardroom-ready. Leads with key insight and business impact.
-            <b>📊 Analyst</b>Data-driven. Numbers first, structured sections, detailed Excel with formulas.
-            <b>💻 Coder</b>Production-ready code, full implementations, explains architectural decisions.
-            <b>✍️ Writer</b>Clear, precise prose. Matches your tone, proper document structure.
-            <b>🧠 Research</b>Comprehensive analysis, cites sources, distinguishes facts from opinion.
-          </div>
-        </div>
-      </div>
+
 
       <!-- Projects -->
       <div class="proj-section">
@@ -1689,21 +1703,59 @@ function updateStatus() {
 function toggleWS() {}
 
 // ══════════════════════════════════
-// MODES
-// ══════════════════════════════════
+// ── Role picker ─────────────────────────────────────────────
+const ROLE_DESCRIPTIONS = {
+  executive: 'Strategic and boardroom-ready. Leads with key insight and business impact. Concise, no jargon.',
+  analyst:   'Data-driven and rigorous. Numbers first, structured sections, detailed Excel with formulas.',
+  coder:     'Production-ready code, full implementations, explains architectural decisions clearly.',
+  writer:    'Clear, precise prose. Matches your tone exactly. Proper document structure for Word files.',
+  research:  'Comprehensive analysis, cites sources, distinguishes established facts from opinion.',
+};
+
 function renderModeBar() {
-  const sel = document.getElementById('modeSelect');
-  if (!sel) return;
-  sel.innerHTML = MODES.map(m =>
-    `<option value="${m.id}" ${cfg.activeMode===m.id?'selected':''}>${m.icon} ${m.label}</option>`
-  ).join('');
+  renderRolePicker();
+}
+
+function renderRolePicker() {
+  const dropdown = document.getElementById('roleDropdown');
+  if (!dropdown) return;
+  dropdown.innerHTML = MODES.map(m => `
+    <div class="role-card ${cfg.activeMode===m.id?'active':''}" onclick="setMode('${m.id}')">
+      <div class="rc-icon">${m.icon}</div>
+      <div class="rc-body">
+        <div class="rc-name">${m.label}</div>
+        <div class="rc-desc">${ROLE_DESCRIPTIONS[m.id]||''}</div>
+      </div>
+    </div>`).join('');
+  // Update button label
+  const active = MODES.find(m => m.id === cfg.activeMode) || MODES[0];
+  const btnIcon  = document.getElementById('roleBtnIcon');
+  const btnLabel = document.getElementById('roleBtnLabel');
+  if (btnIcon)  btnIcon.textContent  = active.icon;
+  if (btnLabel) btnLabel.textContent = active.label;
+}
+
+function toggleRolePicker(e) {
+  e.stopPropagation();
+  const dd = document.getElementById('roleDropdown');
+  if (!dd) return;
+  const isOpen = dd.classList.contains('show');
+  // Close all pickers first
+  document.querySelectorAll('.role-dropdown,.card-picker').forEach(el => el.classList.remove('show'));
+  if (!isOpen) {
+    const btn = document.getElementById('roleBtn');
+    const rect = btn.getBoundingClientRect();
+    dd.style.left = rect.left + 'px';
+    dd.style.top  = (rect.bottom + 6) + 'px';
+    dd.classList.add('show');
+  }
 }
 
 function setMode(id) {
   cfg.activeMode = id;
-  cfg.webSearch = true; // always on — Claude decides when to search
   saveCfg();
-  renderModeBar();
+  renderRolePicker();
+  document.getElementById('roleDropdown').classList.remove('show');
   const m = MODES.find(x=>x.id===id);
   document.getElementById('appStatus').textContent = m ? m.icon+' '+m.label : 'Ready';
 }
@@ -2943,21 +2995,8 @@ async function downloadDoc() {
   }
 }
 
-function toggleModeTooltip(e) {
-  e.stopPropagation();
-  const tt = document.getElementById('modeTooltip');
-  const rect = e.currentTarget.getBoundingClientRect();
-  tt.style.left = (rect.right + 10) + 'px';
-  tt.style.top  = Math.max(8, rect.top - 10) + 'px';
-  tt.classList.toggle('show');
-  // Clamp to viewport
-  setTimeout(() => {
-    const r2 = tt.getBoundingClientRect();
-    if (r2.right > window.innerWidth - 8) tt.style.left = (rect.left - r2.width - 10) + 'px';
-    if (r2.bottom > window.innerHeight - 8) tt.style.top = (window.innerHeight - r2.height - 8) + 'px';
-  }, 0);
-}
 document.addEventListener('click', () => {
+  document.getElementById('roleDropdown')?.classList.remove('show');
   document.getElementById('modeTooltip')?.classList.remove('show');
 });
 
