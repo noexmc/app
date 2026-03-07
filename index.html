@@ -982,6 +982,7 @@ body{font-family:'DM Sans',sans-serif;background:var(--bg);color:var(--text);hei
       <button class="btn-ghost-sm" style="width:auto;padding:5px 10px;font-size:12px;margin:0" onclick="toggleSettings()">Close</button>
     </div>
     <div class="drawer-body">
+      <div class="sg"><div class="sl">Display name</div><input class="si" id="sDisplayName" type="text" placeholder="Your name (e.g. Alex)" /><div style="font-size:11px;color:var(--text-3);margin-top:4px">Updates how you appear in the sidebar</div></div>
       <div class="sg"><div class="sl">Claude API key</div><input class="si" id="sClaudeKey" type="password" placeholder="sk-ant-..." /></div>
       <div class="sg"><div class="sl">OpenAI API key</div><input class="si" id="sOpenAIKey" type="password" placeholder="sk-..." /></div>
       <div class="sg"><div class="sl">Gemini API key</div><input class="si" id="sGeminiKey" type="password" placeholder="AIza..." /></div>
@@ -1523,434 +1524,6 @@ function init() {
 }
 
 async function checkAuthSession() {
-  // Try to restore Supabase auth session
-  const authToken = localStorage.getItem('aide_auth_token');
-  if (authToken) {
-    try {
-      const res = await fetch(`${PRODUCT_CONFIG.SUPABASE_URL}/auth/v1/user`, {
-        headers: {
-          'apikey': PRODUCT_CONFIG.SUPABASE_ANON_KEY,
-          'Authorization': 'Bearer ' + authToken
-        }
-      });
-      if (res.ok) {
-        const user = await res.json();
-        currentUser = { id: user.id, email: user.email, name: user.email.split('@')[0] };
-        loadUserData();
-        launchApp();
-        return;
-      }
-    } catch(e) {}
-    // Token invalid — clear it
-    localStorage.removeItem('aide_auth_token');
-  }
-  // No valid session — show auth screen
-  showAuthScreen();
-}
-
-function loadUserData() {
-  // 1. Load global settings first (API keys only — shared across all devices)
-  const globalSaved = localStorage.getItem('aide_cfg_global');
-  if (globalSaved) {
-    try {
-      const g = JSON.parse(globalSaved);
-      // Only restore keys, never restore provider/model (those are per-device)
-      const KEY_FIELDS = ['claudeKey','openrouterKey','openaiKey','geminiKey','mistralKey','ollamaUrl','ollamaModel'];
-      KEY_FIELDS.forEach(k => { if (g[k]) cfg[k] = g[k]; });
-    } catch(e) {}
-  }
-  // 2. Load per-user cfg (conversations, mode, preferences)
-  const k = KEYS();
-  const saved = localStorage.getItem(k.cfg);
-  if (saved) {
-    try { cfg = { ...cfg, ...JSON.parse(saved) }; } catch(e) {}
-  }
-  const savedC = localStorage.getItem(k.convs);
-  if (savedC) { try { convs = JSON.parse(savedC); } catch(e) {} }
-  const savedP = localStorage.getItem(k.projects);
-  if (savedP) { try { projects = JSON.parse(savedP); } catch(e) {} }
-  // 3. Always ensure passkey users have lifetime plan
-  if (loadPasskeys().length > 0) {
-    cfg.mode = 'byok';
-    cfg.licenseData = { plan: 'lifetime', customer: currentUser?.name || 'User' };
-    cfg.activated = true;
-  }
-}
-
-// Save API keys to global (cross-device) storage — keys only, not model/provider preferences
-function saveGlobalKeys() {
-  const keys = {
-    claudeKey:     cfg.claudeKey,
-    openrouterKey: cfg.openrouterKey,
-    openaiKey:     cfg.openaiKey,
-    geminiKey:     cfg.geminiKey,
-    mistralKey:    cfg.mistralKey,
-    ollamaUrl:     cfg.ollamaUrl,
-    ollamaModel:   cfg.ollamaModel,
-  };
-  localStorage.setItem('aide_cfg_global', JSON.stringify(keys));
-}
-
-function showAuthScreen() {
-  document.getElementById('activation').classList.remove('active');
-  document.getElementById('app').classList.remove('active');
-  document.getElementById('authScreen').classList.add('active');
-}
-
-function saveCfg() { localStorage.setItem(KEYS().cfg, JSON.stringify(cfg)); }
-function saveConvs() { localStorage.setItem(KEYS().convs, JSON.stringify(convs)); schedulePush(); }
-function saveProjects() { localStorage.setItem(KEYS().projects, JSON.stringify(projects)); schedulePush(); }
-
-// ══════════════════════════════════
-// ACTIVATION — MANAGED
-// ══════════════════════════════════
-let actTab = 'managed';
-
-function switchActTab(tab, el) {
-  actTab = tab;
-  document.querySelectorAll('.act-tab').forEach(t => t.classList.remove('active'));
-  el.classList.add('active');
-  document.getElementById('managedPane').classList.toggle('show', tab==='managed');
-  document.getElementById('byokPane').classList.toggle('show', tab==='byok');
-}
-
-function selectPlan(plan, el) {
-  selectedPlan = plan;
-  document.querySelectorAll('.plan-card').forEach(c => c.classList.remove('selected'));
-  el.classList.add('selected');
-}
-
-function formatLicenseInput(input) {
-  let v = input.value.toUpperCase().replace(/[^A-Z0-9]/g,'');
-  let parts = [];
-  for (let i = 0; i < v.length && parts.length < 4; i+=4) {
-    parts.push(v.substr(i,4));
-  }
-  input.value = parts.join('-');
-}
-
-function openCheckout(e) {
-  e.preventDefault();
-  window.open(PRODUCT_CONFIG.CHECKOUT_URL, '_blank');
-}
-
-async function activateLicense() {
-  const key = document.getElementById('licenseKeyInput').value.trim();
-  const result = document.getElementById('licenseResult');
-  const btn = document.getElementById('activateBtn');
-
-  if (!key || key.length < 10) {
-    result.className = 'act-result error';
-    result.textContent = 'Please enter your license key.';
-    return;
-  }
-
-  btn.disabled = true;
-  btn.textContent = 'Validating…';
-  result.className = 'act-result';
-
-  try {
-    // Demo key bypass
-    if (key === 'AIDE-DEMO-TEST-0001') {
-      cfg.mode = 'managed';
-      cfg.licenseKey = key;
-      cfg.licenseData = { plan:'pro', expires:'2030-12-31', customer:'Demo User' };
-      cfg.provider = 'claude';
-      cfg.activated = true;
-      saveCfg();
-      launchApp();
-      return;
-    }
-
-    // Fetch validation JSON from GitHub
-    const r = await fetch(PRODUCT_CONFIG.KEYS_VALIDATION_URL + '?t=' + Date.now(), {
-      signal: AbortSignal.timeout(8000)
-    });
-
-    if (!r.ok) throw new Error('Could not reach validation server. Check your internet connection.');
-
-    const data = await r.json();
-    const keyData = data.keys?.[key];
-
-    if (!keyData) {
-      result.className = 'act-result error';
-      result.textContent = '✕ Invalid license key. Check for typos or get one at aide.app';
-      return;
-    }
-
-    // Check expiry
-    if (keyData.expires !== '2030-12-31' && new Date(keyData.expires) < new Date()) {
-      result.className = 'act-result error';
-      result.textContent = `✕ This key expired on ${keyData.expires}. Please renew at aide.app`;
-      return;
-    }
-
-    // Valid!
-    cfg.mode = 'managed';
-    cfg.licenseKey = key;
-    cfg.licenseData = keyData;
-    cfg.provider = 'claude';
-    cfg.activated = true;
-    saveCfg();
-    launchApp();
-
-  } catch(e) {
-    if (e.name === 'TimeoutError') {
-      result.className = 'act-result error';
-      result.textContent = '✕ Validation timed out. Check your internet and try again.';
-    } else {
-      result.className = 'act-result error';
-      result.textContent = '✕ ' + e.message;
-    }
-  }
-
-  btn.disabled = false;
-  btn.textContent = 'Activate';
-}
-
-function tryDemo() {
-  cfg.mode = 'demo';
-  cfg.demoCount = 0;
-  cfg.licenseData = { plan:'demo', customer:'Demo' };
-  cfg.activated = true;
-  saveCfg();
-  launchApp();
-}
-
-// ══════════════════════════════════
-// ACTIVATION — BYOK
-// ══════════════════════════════════
-function selectBYOKProvider(p, el) {
-  byokProvider = p;
-  document.querySelectorAll('.bpr-btn').forEach(b => b.classList.remove('selected'));
-  el.classList.add('selected');
-  ['bpClaude','bpOpenAI','bpOllama','bpGemini','bpMistral'].forEach(id => {
-    document.getElementById(id).classList.remove('show');
-  });
-  const map = { claude:'bpClaude', openai:'bpOpenAI', ollama:'bpOllama', gemini:'bpGemini', mistral:'bpMistral' };
-  document.getElementById(map[p])?.classList.add('show');
-}
-
-async function activateBYOK() {
-  const result = document.getElementById('byokResult');
-  result.className = 'act-result';
-
-  try {
-    if (byokProvider === 'claude') {
-      const key = document.getElementById('claudeKeyBYOK').value.trim();
-      if (!key) throw new Error('Enter your Claude API key');
-      const r = await fetch('https://api.anthropic.com/v1/messages', {
-        method:'POST',
-        headers:{'Content-Type':'application/json','x-api-key':key,'anthropic-version':'2023-06-01','anthropic-dangerous-direct-browser-access':'true'},
-        body:JSON.stringify({model:'claude-haiku-4-5-20251001',max_tokens:5,messages:[{role:'user',content:'hi'}]})
-      });
-      if (!r.ok) { const e=await r.json(); throw new Error(e.error?.message||'Invalid key'); }
-      cfg.claudeKey = key;
-      cfg.claudeModel = document.getElementById('claudeModelBYOK').value;
-
-    } else if (byokProvider === 'openai') {
-      const key = document.getElementById('openaiKeyBYOK').value.trim();
-      if (!key) throw new Error('Enter your OpenAI API key');
-      const r = await fetch('https://api.openai.com/v1/chat/completions', {
-        method:'POST',
-        headers:{'Content-Type':'application/json','Authorization':'Bearer '+key},
-        body:JSON.stringify({model:'gpt-4o-mini',max_tokens:5,messages:[{role:'user',content:'hi'}]})
-      });
-      if (!r.ok) { const e=await r.json(); throw new Error(e.error?.message||'Invalid key'); }
-      cfg.openaiKey = key;
-      cfg.openaiModel = document.getElementById('openaiModelBYOK').value;
-
-    } else if (byokProvider === 'gemini') {
-      const key = document.getElementById('geminiKeyBYOK').value.trim();
-      if (!key) throw new Error('Enter your Gemini API key');
-      const model = document.getElementById('geminiModelBYOK').value;
-      const r = await fetch(`https://generativelanguage.googleapis.com/v1beta/models/${model}:generateContent?key=${key}`, {
-        method:'POST', headers:{'Content-Type':'application/json'},
-        body:JSON.stringify({contents:[{role:'user',parts:[{text:'hi'}]}],generationConfig:{maxOutputTokens:5}})
-      });
-      if (!r.ok) { const e=await r.json(); throw new Error(e.error?.message||'Invalid Gemini key'); }
-      cfg.geminiKey = key;
-
-    } else if (byokProvider === 'mistral') {
-      const key = document.getElementById('mistralKeyBYOK').value.trim();
-      if (!key) throw new Error('Enter your Mistral API key');
-      const model = document.getElementById('mistralModelBYOK').value;
-      const r = await fetch('https://api.mistral.ai/v1/chat/completions', {
-        method:'POST',
-        headers:{'Content-Type':'application/json','Authorization':'Bearer '+key},
-        body:JSON.stringify({model,max_tokens:5,messages:[{role:'user',content:'hi'}]})
-      });
-      if (!r.ok) { const e=await r.json(); throw new Error(e.error?.message||'Invalid Mistral key'); }
-      cfg.mistralKey = key;
-
-    } else {
-      const url = document.getElementById('ollamaUrlBYOK').value.trim();
-      const r = await fetch(`${url}/api/tags`, {signal:AbortSignal.timeout(4000)});
-      if (!r.ok) throw new Error('Cannot reach Ollama. Make sure it is running.');
-      cfg.ollamaUrl = url;
-      cfg.ollamaModel = document.getElementById('ollamaModelBYOK').value.trim();
-    }
-
-    cfg.mode = 'byok';
-    cfg.provider = byokProvider;
-    cfg.licenseData = { plan:'byok', customer:'Self-hosted' };
-    cfg.activated = true;
-    saveCfg();
-    launchApp();
-
-  } catch(e) {
-    result.className = 'act-result error';
-    result.textContent = '✕ ' + e.message;
-  }
-}
-
-
-// ══════════════════════════════════════════════════════════════════════
-// PASSKEY-ONLY AUTH — no email, no password
-// Works on: iPhone (Face ID), Mac (Touch ID), Windows Hello
-// ══════════════════════════════════════════════════════════════════════
-
-const PASSKEY_RP_NAME = 'Aide';
-// Domain: noexmc.github.io — rpId is intentionally omitted so browser auto-matches
-
-function b64url(buf) {
-  return btoa(String.fromCharCode(...new Uint8Array(buf)))
-    .replace(/\+/g,'-').replace(/\//g,'_').replace(/=+$/,'');
-}
-function b64urlDecode(s) {
-  s = (s||'').replace(/-/g,'+').replace(/_/g,'/');
-  while (s.length%4) s+='=';
-  return Uint8Array.from(atob(s), ch=>ch.charCodeAt(0));
-}
-function passkeySupported() {
-  return !!(window.PublicKeyCredential && navigator.credentials?.create);
-}
-// rpId intentionally omitted from all WebAuthn calls —
-// browser uses the current origin automatically, which always matches.
-
-// ── Load / save passkey store (localStorage) ─────────────────────────
-function loadPasskeys() {
-  try { return JSON.parse(localStorage.getItem('aide_passkeys')||'[]'); } catch(e) { return []; }
-}
-function savePasskeys(list) {
-  localStorage.setItem('aide_passkeys', JSON.stringify(list));
-}
-function hasPasskeys() { return loadPasskeys().length > 0; }
-
-// ── SETUP: first-time registration ───────────────────────────────────
-async function passkeySetup() {
-  if (!passkeySupported()) { setAuthView('fallback'); return; }
-  const name = (document.getElementById('setupName')?.value||'').trim() || 'User';
-  const err  = document.getElementById('setupError');
-  err.textContent = '';
-
-  // Generate a stable local user ID
-  const userId = 'aide_' + Date.now().toString(36) + '_' + Math.random().toString(36).slice(2,8);
-  const challenge = crypto.getRandomValues(new Uint8Array(32));
-
-  try {
-    document.getElementById('setupBtn').textContent = 'Waiting for Face ID…';
-    const cred = await navigator.credentials.create({ publicKey: {
-      challenge,
-      rp: { name: PASSKEY_RP_NAME },
-      user: {
-        id: new TextEncoder().encode(userId),
-        name: name,
-        displayName: name,
-      },
-      pubKeyCredParams: [
-        { type:'public-key', alg:-7   },  // ES256  (preferred)
-        { type:'public-key', alg:-257 },  // RS256  (fallback)
-      ],
-      authenticatorSelection: {
-        authenticatorAttachment: 'platform',
-        userVerification: 'required',
-        residentKey: 'required',
-      },
-      timeout: 60000,
-    }});
-
-    // Store credential
-    const stored = loadPasskeys();
-    stored.push({
-      credId:  b64url(cred.rawId),
-      userId:  userId,
-      name:    name,
-      created: Date.now(),
-    });
-    savePasskeys(stored);
-
-    // Log in immediately after registration
-    currentUser = { id: userId, name: name, email: name };
-    loadUserData();
-    cfg.activated = true;
-    cfg.mode = 'byok';
-    cfg.licenseData = { plan:'lifetime', customer: name };
-    saveCfg();
-    launchApp();
-
-  } catch(e) {
-    document.getElementById('setupBtn').textContent = 'Register with Face ID / Touch ID';
-    if (e.name === 'NotAllowedError') {
-      err.textContent = 'Registration cancelled. Try again.';
-    } else if (e.name === 'InvalidStateError') {
-      err.textContent = 'A passkey for this device already exists.';
-    } else {
-      err.textContent = e.message || 'Registration failed.';
-    }
-  }
-}
-
-// ── SIGN IN: authenticate with existing passkey ───────────────────────
-async function passkeySignIn() {
-  if (!passkeySupported()) { setAuthView('fallback'); return; }
-  const stored = loadPasskeys();
-  const err = document.getElementById('authError');
-  err.textContent = '';
-
-  if (!stored.length) {
-    err.textContent = 'No passkey on this device yet.';
-    setTimeout(() => setAuthView('setup'), 1200);
-    return;
-  }
-
-  const challenge = crypto.getRandomValues(new Uint8Array(32));
-  try {
-    const assertion = await navigator.credentials.get({ publicKey: {
-      challenge,
-      allowCredentials: stored.map(s => ({
-        type: 'public-key',
-        id: b64urlDecode(s.credId),
-        transports: ['internal', 'hybrid'],
-      })),
-      userVerification: 'required',
-      timeout: 60000,
-    }});
-
-    const credId = b64url(assertion.rawId);
-    const match  = stored.find(s => s.credId === credId);
-    if (!match) throw new Error('Passkey not recognised.');
-
-    // Restore or create user session
-    currentUser = { id: match.userId, name: match.name, email: match.name };
-    loadUserData();
-    cfg.activated = true;
-    cfg.mode = 'byok';
-    cfg.licenseData = cfg.licenseData || { plan:'lifetime', customer: match.name };
-    saveCfg();
-    launchApp();
-
-  } catch(e) {
-    if (e.name === 'NotAllowedError') {
-      err.textContent = 'Verification cancelled.';
-    } else {
-      err.textContent = e.message || 'Sign in failed.';
-    }
-  }
-}
-
-// ── checkAuthSession: called on app start ────────────────────────────
-async function checkAuthSession() {
   // If passkeys registered + active session in localStorage, restore silently
   const savedCfg = localStorage.getItem('aide_cfg_restore');
   if (savedCfg) {
@@ -1993,54 +1566,6 @@ function showAuthScreen() {
   document.getElementById('app').classList.remove('active');
   document.getElementById('authScreen').classList.add('active');
 }
-function tryDemoFromAuth() {
-  currentUser = { id: 'demo_' + Date.now(), name: 'Demo', email: 'demo' };
-  cfg.mode = 'demo'; cfg.activated = true; cfg.demoCount = 0;
-  saveCfg(); launchApp();
-}
-async function authSignIn() {}   // stub — no longer used
-async function authRegister() {} // stub
-async function authMagicLink() {}// stub
-
-// Persist session for silent restore
-function persistSession() {
-  if (currentUser && currentUser.email !== 'demo') {
-    localStorage.setItem('aide_cfg_restore', JSON.stringify({
-      userId: currentUser.id,
-      name:   currentUser.name,
-      activated: true,
-      savedAt: Date.now()
-    }));
-  }
-}
-
-function confirmLogout() {
-  if (confirm('Sign out? Your conversations are saved and will be here when you return.')) {
-    logout();
-  }
-}
-
-async function logout() {
-  // Revoke token server-side
-  const token = localStorage.getItem('aide_auth_token');
-  if (token) {
-    fetch(`${PRODUCT_CONFIG.SUPABASE_URL}/auth/v1/logout`, {
-      method: 'POST',
-      headers: { 'apikey': PRODUCT_CONFIG.SUPABASE_ANON_KEY, 'Authorization': 'Bearer ' + token }
-    }).catch(()=>{});
-  }
-  // Clear local session (keep cfg for re-login convenience)
-  localStorage.removeItem('aide_auth_token');
-  localStorage.removeItem('aide_cfg_restore');
-  currentUser = null;
-  convs = {}; projects = {}; curConv = null;
-  cfg.activated = false;
-  document.getElementById('app').classList.remove('active');
-  showAuthScreen();
-  if (hasPasskeys()) setAuthView('login');
-  else setAuthView('setup');
-}
-
 function tryDemoFromAuth() {
   currentUser = { id: 'demo_' + Date.now(), email: 'demo', name: 'Demo' };
   cfg.mode = 'demo';
@@ -2194,7 +1719,7 @@ function buildProvSwitch() {
   const cp   = document.getElementById('cardPicker');
   const wrap = document.getElementById('modelPickerWrap');
 
-  if (cfg.mode === 'managed' || cfg.mode === 'demo') {
+  if (true) { // always show card picker
     const available = getAvailableModels();
     const locked    = getLockedModels();
     const cur       = getModel(cfg.selectedModelId) || getDefaultModel();
@@ -3955,6 +3480,8 @@ async function passkeyAddAnother() {
 function loadSettingsUI() {
   const pkRow = document.getElementById('passkeySettingsRow');
   if (pkRow && currentUser) pkRow.innerHTML = showPasskeySettingsRow ? showPasskeySettingsRow() : '';
+  const nameEl = document.getElementById('sDisplayName');
+  if (nameEl) nameEl.value = currentUser?.name || '';
   document.getElementById('sClaudeKey').value=cfg.claudeKey || PRODUCT_CONFIG.ANTHROPIC_KEY;
   document.getElementById('sOpenRouterKey').value=cfg.openrouterKey||'';
   document.getElementById('sOpenAIKey').value=cfg.openaiKey;
@@ -3967,6 +3494,18 @@ function loadSettingsUI() {
 }
 
 function saveSettings() {
+  const newName = document.getElementById('sDisplayName')?.value.trim();
+  if (newName && currentUser) {
+    currentUser.name = newName;
+    // Update stored passkey entry too
+    const passkeys = loadPasskeys();
+    const pk = passkeys.find(p => p.userId === currentUser.id);
+    if (pk) { pk.name = newName; savePasskeys(passkeys); }
+    persistSession();
+    // Update sidebar
+    const userRow = document.getElementById('userRow');
+    if (userRow) userRow.querySelector('.user-email').textContent = '👤 ' + newName;
+  }
   cfg.claudeKey=document.getElementById('sClaudeKey').value.trim();
   cfg.openrouterKey=document.getElementById('sOpenRouterKey').value.trim();
   cfg.openaiKey=document.getElementById('sOpenAIKey').value.trim();
