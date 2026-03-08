@@ -1,0 +1,3694 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Chat with Strava — Performance Intelligence</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link href="https://fonts.googleapis.com/css2?family=Space+Mono:ital,wght@0,400;0,700;1,400&family=DM+Sans:wght@300;400;500;600;700&family=Bebas+Neue&display=swap" rel="stylesheet">
+<script src="https://cdnjs.cloudflare.com/ajax/libs/Chart.js/4.4.0/chart.umd.min.js"></script>
+<script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
+<style>
+@keyframes blink { 0%,100%{opacity:1} 50%{opacity:0} }
+@keyframes pulse { 0%,100%{opacity:1} 50%{opacity:0.4} }
+:root {
+  --bg-0: #080a0e;
+  --bg-1: #0f1218;
+  --bg-2: #161b24;
+  --bg-3: #1d2330;
+  --bg-4: #242c3c;
+  --bg-5: #2c3548;
+  --border: rgba(255,255,255,0.055);
+  --border-hi: rgba(255,255,255,0.11);
+  --orange: #fc4c02;
+  --orange-glow: rgba(252,76,2,0.2);
+  --orange-dim: rgba(252,76,2,0.1);
+  --cyan: #00c8f0;
+  --cyan-dim: rgba(0,200,240,0.1);
+  --green: #00e676;
+  --green-dim: rgba(0,230,118,0.1);
+  --yellow: #ffc107;
+  --yellow-dim: rgba(255,193,7,0.1);
+  --purple: #b388ff;
+  --purple-dim: rgba(179,136,255,0.1);
+  --red: #ff5252;
+  --text-0: #eef0f4;
+  --text-1: #9aa3b4;
+  --text-2: #525c70;
+  --text-3: #2e3545;
+  --mono: 'Space Mono', monospace;
+  --sans: 'DM Sans', sans-serif;
+  --display: 'Bebas Neue', sans-serif;
+  --r: 8px;
+  --r-lg: 12px;
+}
+* { margin:0; padding:0; box-sizing:border-box; }
+html, body { height:100%; overflow:hidden; }
+body {
+  background: var(--bg-0);
+  color: var(--text-0);
+  font-family: var(--sans);
+  font-size: 14px;
+  display: flex;
+  flex-direction: column;
+}
+/* noise */
+body::after {
+  content:''; position:fixed; inset:0; pointer-events:none; z-index:9999;
+  opacity:0.025;
+  background-image:url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='300' height='300'%3E%3Cfilter id='n'%3E%3CfeTurbulence type='fractalNoise' baseFrequency='0.9' numOctaves='4' stitchTiles='stitch'/%3E%3C/filter%3E%3Crect width='300' height='300' filter='url(%23n)'/%3E%3C/svg%3E");
+}
+
+/* ─── TOPBAR ─── */
+.topbar {
+  height:50px; flex-shrink:0;
+  background:var(--bg-1);
+  border-bottom:1px solid var(--border);
+  display:flex; align-items:center; padding:0 16px; gap:12px;
+  position:relative; z-index:20;
+}
+.logo { display:flex; align-items:center; gap:9px; }
+.logo-mark {
+  width:28px; height:28px; border-radius:7px;
+  background:var(--orange);
+  display:flex; align-items:center; justify-content:center;
+  font-size:13px; box-shadow:0 0 16px var(--orange-glow);
+}
+.logo-name { font-family:var(--display); font-size:20px; letter-spacing:1.5px; }
+.logo-name em { color:var(--orange); font-style:normal; }
+.topbar-div { width:1px; height:22px; background:var(--border-hi); margin:0 2px; }
+.athlete-chip {
+  display:flex; align-items:center; gap:7px;
+  background:var(--bg-3); border:1px solid var(--border-hi);
+  border-radius:20px; padding:3px 11px 3px 4px;
+  font-size:12px; color:var(--text-1); cursor:pointer;
+  transition:border-color .2s;
+}
+.athlete-chip:hover { border-color:var(--orange); }
+.ava {
+  width:22px; height:22px; border-radius:50%;
+  background:linear-gradient(135deg,var(--orange),#ff7043);
+  display:flex; align-items:center; justify-content:center;
+  font-size:10px; font-weight:700; color:#fff;
+}
+.topbar-right { margin-left:auto; display:flex; align-items:center; gap:8px; }
+.status-pill {
+  display:flex; align-items:center; gap:6px;
+  background:var(--bg-3); border:1px solid var(--border);
+  border-radius:20px; padding:4px 10px;
+  font-family:var(--mono); font-size:9px; color:var(--text-2);
+}
+.status-dot {
+  width:6px; height:6px; border-radius:50%;
+  background:var(--text-3); transition:all .4s;
+}
+.status-dot.live { background:var(--green); box-shadow:0 0 7px var(--green); animation:blink 2.5s infinite; }
+.status-dot.syncing { background:var(--yellow); box-shadow:0 0 7px var(--yellow); animation:blink .6s infinite; }
+.status-dot.error { background:var(--red); box-shadow:0 0 7px var(--red); }
+.status-dot.demo { background:var(--cyan); box-shadow:0 0 7px var(--cyan); }
+@keyframes blink { 0%,100%{opacity:1}50%{opacity:.4} }
+#streamsBtn { border-color:var(--cyan) !important; color:var(--cyan) !important; }
+#streamsBtn:hover { background:rgba(0,200,240,0.12) !important; }
+.tb-btn {
+  padding:5px 12px; border-radius:var(--r); border:1px solid var(--border-hi);
+  background:var(--bg-3); color:var(--text-1); font-family:var(--mono);
+  font-size:10px; cursor:pointer; transition:all .18s;
+  display:flex; align-items:center; gap:5px;
+}
+.tb-btn:hover { border-color:var(--cyan); color:var(--cyan); }
+.tb-btn.orange { border-color:var(--orange); color:var(--orange); background:var(--orange-dim); }
+.tb-btn.orange:hover { background:var(--orange-glow); }
+.sync-spin { display:inline-block; }
+.syncing .sync-spin { animation:spin .7s linear infinite; }
+@keyframes spin { to { transform:rotate(360deg); } }
+
+/* ─── LAYOUT ─── */
+.layout { display:flex; flex:1; overflow:hidden; }
+
+/* ─── SIDEBAR ─── */
+.sidebar {
+  width:52px; flex-shrink:0;
+  background:var(--bg-1); border-right:1px solid var(--border);
+  display:flex; flex-direction:column; align-items:center;
+  padding:12px 0; gap:3px;
+}
+.nav-btn {
+  width:38px; height:38px; border-radius:var(--r);
+  display:flex; align-items:center; justify-content:center;
+  cursor:pointer; font-size:16px; color:var(--text-3);
+  border:1px solid transparent; transition:all .18s;
+  position:relative;
+}
+.nav-btn:hover { color:var(--text-1); background:var(--bg-3); }
+.nav-btn.active { color:var(--orange); background:var(--orange-dim); border-color:rgba(252,76,2,.3); }
+.nav-btn .tip {
+  position:absolute; left:calc(100% + 8px);
+  background:var(--bg-4); border:1px solid var(--border-hi);
+  color:var(--text-0); padding:3px 8px; border-radius:5px;
+  font-size:10px; font-family:var(--mono); white-space:nowrap;
+  opacity:0; pointer-events:none; transition:opacity .15s; z-index:50;
+}
+.nav-btn:hover .tip { opacity:1; }
+.nav-sep { width:24px; height:1px; background:var(--border); margin:4px 0; }
+
+/* ─── DASHBOARD ─── */
+.dashboard {
+  flex:1; overflow-y:auto; padding:18px;
+  display:flex; flex-direction:column; gap:14px;
+  background:var(--bg-0);
+}
+.dashboard::-webkit-scrollbar { width:3px; }
+.dashboard::-webkit-scrollbar-thumb { background:var(--bg-4); border-radius:2px; }
+
+/* KPI */
+.kpi-row { display:grid; grid-template-columns:repeat(5,1fr); gap:10px; min-width:0; }
+.kpi-row .kpi { min-width:0; }
+@media (max-width: 1200px) { .kpi-row { grid-template-columns: repeat(3,1fr); } }
+.kpi {
+  background:var(--bg-1); border:1px solid var(--border);
+  border-radius:var(--r-lg); padding:13px 15px;
+  position:relative; overflow:hidden; transition:border-color .2s;
+}
+.kpi:hover { border-color:var(--border-hi); }
+.kpi::before {
+  content:''; position:absolute; top:0; left:0; right:0; height:2px;
+  background:var(--c, var(--orange)); opacity:.7;
+}
+.kpi-lbl { font-family:var(--mono); font-size:8.5px; text-transform:uppercase; letter-spacing:1.5px; color:var(--text-2); margin-bottom:7px; }
+.kpi-val { font-family:var(--display); font-size:30px; line-height:1; color:var(--text-0); }
+.kpi-unit { font-size:12px; color:var(--text-2); margin-left:1px; }
+.kpi-delta { font-family:var(--mono); font-size:9px; margin-top:5px; color:var(--text-2); }
+.kpi-delta.up { color:var(--green); }
+.kpi-delta.dn { color:var(--red); }
+
+/* Section */
+.sec-hdr { display:flex; align-items:center; gap:9px; }
+.sec-title { font-family:var(--display); font-size:17px; letter-spacing:.5px; flex-shrink:0; }
+.sec-tag {
+  font-family:var(--mono); font-size:8.5px; padding:2px 7px;
+  background:var(--bg-3); border-radius:10px; color:var(--text-2);
+  letter-spacing:.8px; flex-shrink:0;
+}
+.sec-line { flex:1; height:1px; background:var(--border); }
+
+/* Charts */
+.charts-row { display:grid; grid-template-columns:2fr 1fr; gap:10px; }
+.chart-card {
+  background:var(--bg-1); border:1px solid var(--border);
+  border-radius:var(--r-lg); padding:14px;
+  position:relative;
+}
+.chart-lbl {
+  font-family:var(--mono); font-size:9px; text-transform:uppercase;
+  letter-spacing:1.2px; color:var(--text-2); margin-bottom:12px;
+  display:flex; align-items:center; gap:7px;
+}
+.chart-dot { width:5px; height:5px; border-radius:50%; background:var(--c,var(--orange)); }
+
+/* Chart insight tooltip */
+.chart-info-btn {
+  margin-left:auto; width:16px; height:16px; border-radius:50%;
+  background:var(--bg-4); border:1px solid var(--border-hi);
+  color:var(--text-2); font-size:9px; font-family:var(--mono);
+  display:flex; align-items:center; justify-content:center;
+  cursor:pointer; flex-shrink:0; transition:all .15s;
+  position:relative; z-index:10;
+}
+.chart-info-btn:hover { background:var(--bg-5); color:var(--text-0); border-color:var(--cyan); }
+.chart-insight-panel {
+  display:none; position:absolute; top:36px; right:10px; z-index:200;
+  width:310px; max-width:calc(100vw - 40px);
+  background:var(--bg-3); border:1px solid var(--border-hi);
+  border-radius:var(--r-lg); padding:14px 16px 12px;
+  box-shadow:0 8px 32px rgba(0,0,0,0.7);
+  font-family:var(--sans); font-size:12px; line-height:1.6; color:var(--text-1);
+  pointer-events:none;
+}
+.chart-info-btn.active + .chart-insight-panel { display:block; pointer-events:auto; }
+.ci-close {
+  position:absolute; top:8px; right:10px;
+  font-size:14px; color:var(--text-2); cursor:pointer; line-height:1;
+  background:none; border:none; padding:2px 4px;
+}
+.ci-close:hover { color:var(--text-0); }
+.ci-coach {
+  border-top:1px solid var(--border); padding-top:8px; margin-top:6px;
+  font-size:11px; color:var(--cyan); font-style:italic; line-height:1.5;
+}
+.ci-coach-lbl {
+  font-family:var(--mono); font-size:8px; letter-spacing:1px;
+  color:var(--text-2); text-transform:uppercase; margin-bottom:3px;
+  font-style:normal;
+}
+.chart-insight-panel .ci-title {
+  font-family:var(--mono); font-size:9px; letter-spacing:1px;
+  color:var(--cyan); text-transform:uppercase; margin-bottom:8px;
+}
+.chart-insight-panel .ci-what { margin-bottom:8px; color:var(--text-0); }
+.chart-insight-panel .ci-improve {
+  border-top:1px solid var(--border); padding-top:8px; margin-top:4px;
+}
+.chart-insight-panel .ci-improve-lbl {
+  font-family:var(--mono); font-size:8px; letter-spacing:1px;
+  color:var(--green); text-transform:uppercase; margin-bottom:4px;
+}
+.chart-insight-panel .ci-zones {
+  display:grid; grid-template-columns:1fr 1fr; gap:4px 10px;
+  margin:6px 0; font-size:11px;
+}
+.chart-insight-panel .ci-zone-row { display:flex; justify-content:space-between; }
+.chart-insight-panel .ci-zone-val { font-family:var(--mono); color:var(--text-0); }
+
+/* Insights */
+.insights-row { display:grid; grid-template-columns:repeat(3,1fr); gap:10px; }
+.insight {
+  background:var(--bg-1); border:1px solid var(--border); border-radius:var(--r-lg);
+  padding:13px 14px; display:flex; gap:11px; align-items:flex-start;
+  transition:border-color .18s, transform .18s; cursor:default;
+}
+.insight:hover { border-color:var(--border-hi); transform:translateY(-1px); }
+.ins-ico {
+  width:32px; height:32px; border-radius:7px;
+  display:flex; align-items:center; justify-content:center;
+  font-size:14px; flex-shrink:0;
+}
+.ins-title { font-size:11.5px; font-weight:600; color:var(--text-0); margin-bottom:3px; }
+.ins-text { font-size:11px; color:var(--text-1); line-height:1.55; }
+.ins-badge {
+  display:inline-block; margin-top:5px;
+  font-family:var(--mono); font-size:8px; padding:2px 6px;
+  border-radius:4px; letter-spacing:.5px;
+}
+
+/* Bottom row */
+.bottom-row { display:grid; grid-template-columns:1fr 1fr 1fr; gap:10px; }
+.activity-list { display:flex; flex-direction:column; gap:5px; max-height:200px; overflow-y:auto; }
+.act-row {
+  display:grid; grid-template-columns:24px 1fr auto;
+  gap:8px; align-items:center;
+  padding:7px 9px; background:var(--bg-2); border-radius:6px;
+  border:1px solid transparent; cursor:pointer; transition:all .15s;
+}
+.act-row:hover { background:var(--bg-3); border-color:var(--border-hi); }
+.act-ico { font-size:14px; text-align:center; }
+.act-name { font-size:11.5px; font-weight:500; color:var(--text-0); white-space:nowrap; overflow:hidden; text-overflow:ellipsis; }
+.act-meta { font-family:var(--mono); font-size:9px; color:var(--text-2); }
+.act-stat { text-align:right; }
+.act-val { font-family:var(--mono); font-size:10.5px; color:var(--text-0); }
+
+/* Empty state */
+.empty-state {
+  display:flex; flex-direction:column; align-items:center; justify-content:center;
+  gap:12px; padding:48px; color:var(--text-2); text-align:center;
+}
+.empty-icon { font-size:36px; opacity:.4; }
+.empty-title { font-family:var(--display); font-size:20px; color:var(--text-2); }
+.empty-sub { font-size:12px; font-family:var(--mono); line-height:1.7; }
+
+/* ─── CHAT PANEL ─── */
+.chat {
+  width:370px; flex-shrink:0;
+  background:var(--bg-1); border-left:1px solid var(--border);
+  display:flex; flex-direction:column;
+}
+.chat-hdr {
+  padding:12px 14px; border-bottom:1px solid var(--border);
+  display:flex; align-items:center; gap:9px; flex-shrink:0;
+}
+.chat-ai-ava {
+  width:30px; height:30px; border-radius:7px;
+  background:var(--bg-3); border:1px solid var(--border-hi);
+  display:flex; align-items:center; justify-content:center;
+  font-size:14px; position:relative;
+}
+.chat-ai-ava::after {
+  content:''; position:absolute; bottom:-2px; right:-2px;
+  width:7px; height:7px; border-radius:50%; background:var(--green);
+  border:2px solid var(--bg-1); box-shadow:0 0 5px var(--green);
+}
+.chat-hdr-title { font-size:12.5px; font-weight:600; color:var(--text-0); }
+.chat-hdr-sub { font-family:var(--mono); font-size:8.5px; color:var(--text-2); margin-top:1px; }
+
+.ctx-bar {
+  padding:7px 10px; background:var(--bg-2);
+  border-bottom:1px solid var(--border);
+  display:flex; align-items:center; gap:5px; flex-wrap:wrap; flex-shrink:0;
+}
+.ctx-tag {
+  font-family:var(--mono); font-size:8.5px; padding:2px 7px;
+  background:var(--bg-4); border:1px solid var(--border);
+  border-radius:10px; color:var(--text-2);
+  transition:all .2s;
+}
+.ctx-tag.on { border-color:rgba(252,76,2,.4); color:var(--orange); background:var(--orange-dim); }
+
+.chat-msgs {
+  flex:1; overflow-y:auto; padding:14px 12px;
+  display:flex; flex-direction:column; gap:13px;
+}
+.chat-msgs::-webkit-scrollbar { width:2px; }
+.chat-msgs::-webkit-scrollbar-thumb { background:var(--bg-5); }
+
+.msg { display:flex; gap:7px; align-items:flex-start; animation:fadeUp .22s ease-out; }
+@keyframes fadeUp { from{opacity:0;transform:translateY(5px)} }
+.msg.user { flex-direction:row-reverse; }
+.msg-ava {
+  width:24px; height:24px; border-radius:6px; flex-shrink:0;
+  background:var(--bg-3); border:1px solid var(--border-hi);
+  display:flex; align-items:center; justify-content:center; font-size:11px;
+}
+.msg-body { max-width:270px; }
+.bubble {
+  padding:9px 11px; border-radius:9px;
+  font-size:12.5px; line-height:1.58;
+}
+.msg.ai .bubble {
+  background:var(--bg-2); border:1px solid var(--border);
+  color:var(--text-0); border-top-left-radius:3px;
+}
+.msg.user .bubble {
+  background:linear-gradient(135deg,#fc4c02,#d93b00);
+  color:#fff; border-top-right-radius:3px;
+  box-shadow:0 2px 10px rgba(252,76,2,.28);
+}
+.msg-time { font-family:var(--mono); font-size:8px; color:var(--text-3); margin-top:3px; }
+.msg.user .msg-time { text-align:right; }
+
+.typing {
+  display:flex; gap:3px; align-items:center;
+  padding:10px 12px; background:var(--bg-2); border:1px solid var(--border);
+  border-radius:9px; border-top-left-radius:3px; width:fit-content;
+}
+.t-dot {
+  width:5px; height:5px; border-radius:50%; background:var(--text-2);
+  animation:tb 1.1s infinite;
+}
+.t-dot:nth-child(2){animation-delay:.18s}
+.t-dot:nth-child(3){animation-delay:.36s}
+@keyframes tb { 0%,60%,100%{transform:translateY(0)}30%{transform:translateY(-4px)} }
+
+.prompts-box { padding:8px 10px; border-top:1px solid var(--border); flex-shrink:0; }
+.prompts-lbl { font-family:var(--mono); font-size:8px; color:var(--text-3); margin-bottom:4px; }
+.p-chips { display:flex; flex-direction:column; gap:4px; }
+.p-chip {
+  padding:5px 9px; background:var(--bg-2); border:1px solid var(--border);
+  border-radius:5px; cursor:pointer; font-size:11px; color:var(--text-1);
+  transition:all .14s; white-space:nowrap; overflow:hidden; text-overflow:ellipsis;
+}
+.p-chip:hover { border-color:rgba(252,76,2,.4); color:var(--text-0); background:var(--orange-dim); }
+
+.chat-input-wrap { padding:10px; border-top:1px solid var(--border); flex-shrink:0; }
+.input-box {
+  display:flex; align-items:flex-end; gap:7px;
+  background:var(--bg-2); border:1px solid var(--border-hi);
+  border-radius:var(--r-lg); padding:7px 9px;
+  transition:border-color .2s;
+}
+.input-box:focus-within { border-color:rgba(252,76,2,.45); }
+.chat-ta {
+  flex:1; background:transparent; border:none; outline:none;
+  color:var(--text-0); font-family:var(--sans); font-size:12.5px;
+  resize:none; min-height:19px; max-height:90px; line-height:1.45;
+}
+.chat-ta::placeholder { color:var(--text-3); }
+.send-btn {
+  width:30px; height:30px; border-radius:6px; background:var(--orange);
+  border:none; cursor:pointer; display:flex; align-items:center;
+  justify-content:center; color:#fff; font-size:13px; flex-shrink:0;
+  transition:all .14s;
+}
+.send-btn:hover { background:#d93b00; transform:scale(1.06); }
+.send-btn:disabled { background:var(--bg-4); color:var(--text-3); transform:none; cursor:not-allowed; }
+
+/* ─── MODALS ─── */
+.overlay {
+  position:fixed; inset:0; background:rgba(8,10,14,.92);
+  backdrop-filter:blur(14px);
+  display:flex; align-items:center; justify-content:center;
+  z-index:100;
+}
+.modal {
+  background:var(--bg-1); border:1px solid var(--border-hi);
+  border-radius:16px; padding:36px; width:460px;
+  position:relative; overflow:hidden;
+}
+.modal::before {
+  content:''; position:absolute; top:0; left:50%; transform:translateX(-50%);
+  width:180px; height:1px;
+  background:linear-gradient(90deg,transparent,var(--orange),transparent);
+}
+.modal-logo { font-family:var(--display); font-size:36px; letter-spacing:2px; margin-bottom:4px; }
+.modal-logo em { color:var(--orange); font-style:normal; }
+.modal-tag { font-family:var(--mono); font-size:10px; color:var(--text-2); margin-bottom:28px; }
+.feature-list { display:flex; flex-direction:column; gap:9px; margin-bottom:26px; }
+.feature { display:flex; gap:10px; align-items:flex-start; font-size:12.5px; color:var(--text-1); }
+.feat-ico { color:var(--orange); font-size:14px; flex-shrink:0; margin-top:1px; }
+.cta-btn {
+  width:100%; padding:13px;
+  background:var(--orange); border:none; border-radius:var(--r-lg);
+  color:#fff; font-family:var(--display); font-size:18px;
+  letter-spacing:1px; cursor:pointer; transition:all .2s;
+  display:flex; align-items:center; justify-content:center; gap:7px;
+}
+.cta-btn:hover { background:#d93b00; transform:translateY(-1px); box-shadow:0 8px 22px rgba(252,76,2,.35); }
+.demo-btn {
+  margin-top:9px; width:100%; padding:10px;
+  background:transparent; border:1px solid var(--border-hi);
+  border-radius:var(--r-lg); color:var(--text-1);
+  font-family:var(--mono); font-size:10px; cursor:pointer; transition:all .18s;
+}
+.demo-btn:hover { border-color:var(--cyan); color:var(--cyan); background:var(--cyan-dim); }
+
+/* Settings */
+.settings-modal { width:500px; }
+.s-title { font-family:var(--display); font-size:22px; margin-bottom:4px; }
+.s-sub { font-family:var(--mono); font-size:9px; color:var(--text-2); margin-bottom:22px; }
+.s-section { font-family:var(--mono); font-size:9px; text-transform:uppercase; letter-spacing:1.5px; color:var(--orange); margin:16px 0 10px; display:flex; align-items:center; gap:8px; }
+.s-section::after { content:''; flex:1; height:1px; background:var(--orange-dim); }
+.f-lbl { font-family:var(--mono); font-size:9px; color:var(--text-2); margin-bottom:5px; letter-spacing:.8px; }
+.f-inp {
+  width:100%; padding:9px 11px;
+  background:var(--bg-3); border:1px solid var(--border-hi);
+  border-radius:var(--r); color:var(--text-0);
+  font-family:var(--mono); font-size:11px; outline:none; margin-bottom:11px;
+  transition:border-color .2s;
+}
+.f-inp:focus { border-color:rgba(252,76,2,.5); }
+.f-help { font-size:10.5px; color:var(--text-2); margin-top:-7px; margin-bottom:11px; line-height:1.5; }
+.f-help a { color:var(--cyan); text-decoration:none; }
+.f-help a:hover { text-decoration:underline; }
+.s-actions { display:flex; gap:8px; margin-top:10px; }
+.btn-p {
+  flex:1; padding:9px; background:var(--orange); border:none;
+  border-radius:var(--r); color:#fff; font-family:var(--display);
+  font-size:15px; cursor:pointer; transition:background .18s;
+}
+.btn-p:hover { background:#d93b00; }
+.btn-s {
+  padding:9px 16px; background:transparent; border:1px solid var(--border-hi);
+  border-radius:var(--r); color:var(--text-1); font-family:var(--mono);
+  font-size:10px; cursor:pointer; transition:all .18s;
+}
+.btn-s:hover { border-color:var(--text-1); color:var(--text-0); }
+.save-status { font-family:var(--mono); font-size:10px; padding:6px 10px; border-radius:5px; display:none; }
+.save-status.ok { background:var(--green-dim); color:var(--green); display:block; }
+.save-status.err { background:rgba(255,82,82,.1); color:var(--red); display:block; }
+
+/* sync progress */
+.sync-bar-wrap {
+  background:var(--bg-2); border:1px solid var(--border);
+  border-radius:var(--r); padding:12px 14px; margin-top:6px;
+  display:none;
+}
+.sync-bar-wrap.visible { display:block; }
+.sync-bar-lbl { font-family:var(--mono); font-size:9px; color:var(--text-1); margin-bottom:7px; }
+.sync-bar-track { height:3px; background:var(--bg-4); border-radius:2px; overflow:hidden; }
+.sync-bar-fill { height:100%; background:var(--orange); border-radius:2px; transition:width .3s; width:0%; }
+.sync-log { font-family:var(--mono); font-size:9px; color:var(--text-2); margin-top:8px; line-height:1.9; max-height:180px; overflow-y:auto; border-top:1px solid var(--border); padding-top:8px; }
+</style>
+</head>
+<body>
+
+<!-- ══ WELCOME OVERLAY ══ -->
+<div class="overlay" id="welcomeOverlay">
+  <div class="modal">
+    <div class="modal-logo">CHAT WITH <em>STRAVA</em></div>
+    <div class="modal-tag">// PERFORMANCE INTELLIGENCE PLATFORM · POWERED BY CLAUDE AI</div>
+    <div class="feature-list">
+      <div class="feature"><span class="feat-ico">⚡</span><span><strong>Full activity history</strong> — synced once, stored in Supabase, incrementally updated</span></div>
+      <div class="feature"><span class="feat-ico">🧠</span><span><strong>AI performance coach</strong> — ask Claude about power trends, race readiness, recovery</span></div>
+      <div class="feature"><span class="feat-ico">📊</span><span><strong>Rich dashboard</strong> — power, HR, cadence, TSS, weekly load, correlations</span></div>
+      <div class="feature"><span class="feat-ico">💾</span><span><strong>Persistent storage</strong> — your data lives in Supabase, never re-pulled from scratch</span></div>
+    </div>
+    <button class="cta-btn" onclick="showSettings()">⚙ &nbsp;CONFIGURE & CONNECT</button>
+    <button class="demo-btn" onclick="loadDemo()">→ &nbsp;EXPLORE WITH DEMO DATA &nbsp;(no setup needed)</button>
+  </div>
+</div>
+
+<!-- ══ SETTINGS OVERLAY ══ -->
+<div class="overlay" id="settingsOverlay" style="display:none">
+  <div class="modal settings-modal">
+    <div class="s-title">CONFIGURATION</div>
+    <div class="s-sub">// All keys are stored only in your browser's localStorage — never sent to any third party</div>
+
+    <div class="s-section">Supabase</div>
+    <div class="f-lbl">PROJECT URL</div>
+    <input class="f-inp" id="cfgSupabaseUrl" placeholder="https://xxxx.supabase.co" type="text">
+    <div class="f-lbl">ANON PUBLIC KEY</div>
+    <input class="f-inp" id="cfgSupabaseKey" placeholder="eyJhbGciOiJIUzI1NiIs..." type="password">
+    <div class="f-help">Find both in your Supabase project → Settings → API. The anon key is safe to use in the browser.</div>
+    <div class="f-help" style="margin-top:6px;color:var(--orange)">
+      ⚠ Run this SQL in Supabase SQL Editor to enable streams storage:<br>
+      <code style="font-size:9px;color:var(--text-1)">CREATE TABLE IF NOT EXISTS activity_streams (activity_id TEXT PRIMARY KEY, metrics JSONB, created_at TIMESTAMPTZ DEFAULT NOW());</code>
+    </div>
+
+    <div class="s-section">Strava</div>
+    <div class="f-lbl">STRAVA CLIENT ID <span style="color:var(--text-3);font-size:9px">(needed to generate token URL)</span></div>
+    <input class="f-inp" id="cfgStravaClientId" placeholder="e.g. 12345" type="text" oninput="updateOauthUrl()">
+    <div class="f-lbl">ACCESS TOKEN</div>
+    <input class="f-inp" id="cfgStravaToken" placeholder="Paste access_token from OAuth exchange" type="password">
+    <div class="f-help" id="oauthHelp">
+      Enter your Client ID above, then use the button below to open the Strava authorization page.
+      Make sure to request <strong style="color:var(--orange)">activity:read_all</strong> scope — this was likely the cause of your error.
+    </div>
+    <div style="display:flex;gap:8px;margin-bottom:14px;flex-wrap:wrap">
+      <button class="btn-s" id="oauthBtn" onclick="openOAuth()" style="flex:1;font-size:10px;padding:8px">
+        🔗 Step 1: Open Strava Authorization
+      </button>
+      <button class="btn-s" onclick="showTokenExchange()" style="flex:1;font-size:10px;padding:8px">
+        🔑 Step 2: Exchange Code for Token
+      </button>
+    </div>
+    <div id="tokenExchangeBox" style="display:none;margin-bottom:14px">
+      <div class="f-lbl">AUTHORIZATION CODE (from redirect URL)</div>
+      <input class="f-inp" id="cfgAuthCode" placeholder="Paste the code= value from the redirect URL">
+      <div class="f-lbl">CLIENT SECRET</div>
+      <input class="f-inp" id="cfgStravaSecret" placeholder="From strava.com/settings/api" type="password">
+      <button class="btn-p" onclick="exchangeToken()" style="width:100%;font-size:14px;padding:9px">
+        ↺ GET ACCESS TOKEN
+      </button>
+      <div id="exchangeResult" style="margin-top:8px;font-family:var(--mono);font-size:10px;color:var(--text-1);word-break:break-all"></div>
+    </div>
+
+    <div class="s-section">Athlete Profile</div>
+    <div style="display:grid;grid-template-columns:1fr 1fr;gap:10px">
+      <div>
+        <div class="f-lbl">BODY WEIGHT (kg)</div>
+        <input class="f-inp" id="cfgWeight" placeholder="e.g. 74" type="number" step="0.1">
+      </div>
+      <div>
+        <div class="f-lbl">RESTING HR (bpm) <span style="color:var(--text-3);font-size:9px">— for VO2Max accuracy</span></div>
+        <input class="f-inp" id="cfgHRrest" placeholder="e.g. 42" type="number" step="1">
+      </div>
+    </div>
+    <div class="f-lbl" style="margin-top:6px">MAX HR (bpm) <span style="color:var(--text-3);font-size:9px">— if known; else auto-detected from your data</span></div>
+    <input class="f-inp" id="cfgHRmax" placeholder="e.g. 188" type="number" step="1">
+
+    <div class="s-section">Claude AI</div>
+    <div class="f-lbl">ANTHROPIC API KEY</div>
+    <input class="f-inp" id="cfgAnthropicKey" placeholder="sk-ant-api03-..." type="password">
+    <div class="f-help">Get your key from <a href="https://console.anthropic.com/keys" target="_blank">console.anthropic.com/keys</a></div>
+
+    <div id="saveStatus" class="save-status"></div>
+
+    <div class="s-actions">
+      <button class="btn-s" onclick="closeSettings()">Cancel</button>
+      <button class="btn-p" onclick="saveConfig()">SAVE & CONNECT</button>
+    </div>
+  </div>
+</div>
+
+<!-- ══ TOPBAR ══ -->
+<div class="topbar">
+  <div class="logo">
+    <div class="logo-mark">⚡</div>
+    <div class="logo-name">CHAT WITH <em>STRAVA</em></div>
+  </div>
+  <div class="topbar-div"></div>
+  <div class="athlete-chip" onclick="showSettings()">
+    <div class="ava" id="topAva">?</div>
+    <span id="topName">Not connected</span>
+  </div>
+  <div class="topbar-right">
+    <div class="status-pill">
+      <div class="status-dot" id="statusDot"></div>
+      <span id="statusTxt">OFFLINE</span>
+    </div>
+    <button class="tb-btn" id="streamsBtn" onclick="triggerStreamsSync()" title="Pull second-by-second data for last 12 weeks">⚡ STREAMS</button>
+    <button class="tb-btn" id="syncBtn" onclick="triggerSync()">
+      <span class="sync-spin" id="syncSpin">↻</span> SYNC
+    </button>
+    <button class="tb-btn" onclick="forceFullSync()" title="Re-fetch all from Strava">↺ FULL RESYNC</button>
+    <button class="tb-btn orange" onclick="showSettings()">⚙ SETTINGS</button>
+  </div>
+</div>
+
+<!-- ══ LAYOUT ══ -->
+<div class="layout">
+
+  <!-- sidebar -->
+  <div class="sidebar">
+    <div class="nav-btn active" id="nav-dash" onclick="switchTab('dash')">📊<div class="tip">Dashboard</div></div>
+    <div class="nav-btn" id="nav-acts" onclick="switchTab('acts')">🏃<div class="tip">Activities</div></div>
+    <div class="nav-btn" id="nav-power" onclick="switchTab('power')">⚡<div class="tip">Power</div></div>
+    <div class="nav-btn" id="nav-trends" onclick="switchTab('trends')">📈<div class="tip">Trends</div></div>
+    <div class="nav-btn" id="nav-race" onclick="switchTab('race')">🏆<div class="tip">Race Prep</div></div>
+    <div class="nav-sep"></div>
+    <div class="nav-btn" id="nav-settings" onclick="showSettings()">⚙<div class="tip">Settings</div></div>
+  </div>
+
+  <!-- dashboard -->
+  <div class="dashboard" id="dashboardPane">
+
+    <!-- sync progress bar -->
+    <div class="sync-bar-wrap" id="syncBarWrap">
+      <div class="sync-bar-lbl" id="syncBarLbl">Syncing activities...</div>
+      <div class="sync-bar-track"><div class="sync-bar-fill" id="syncBarFill"></div></div>
+      <div class="sync-log" id="syncLog"></div>
+    </div>
+
+    <!-- kpis -->
+    <div class="kpi-row" id="kpiRow">
+      <div class="kpi" style="--c:var(--orange)"><div class="kpi-lbl">Total Activities</div><div class="kpi-val" id="k0">—</div><div class="kpi-delta" id="k0d"> </div></div>
+      <div class="kpi" style="--c:var(--cyan)"><div class="kpi-lbl">Total Distance</div><div class="kpi-val" id="k1">—<span class="kpi-unit">km</span></div><div class="kpi-delta" id="k1d"> </div></div>
+      <div class="kpi" style="--c:var(--green)"><div class="kpi-lbl">Elevation</div><div class="kpi-val" id="k2">—<span class="kpi-unit">m</span></div><div class="kpi-delta" id="k2d"> </div></div>
+      <div class="kpi" style="--c:var(--yellow)"><div class="kpi-lbl">Est. FTP</div><div class="kpi-val" id="k3">—<span class="kpi-unit">W</span></div><div class="kpi-delta" id="k3d"> </div></div>
+      <div class="kpi" style="--c:var(--purple)"><div class="kpi-lbl">Avg HR (rides)</div><div class="kpi-val" id="k4">—<span class="kpi-unit">bpm</span></div><div class="kpi-delta" id="k4d"> </div></div>
+    </div>
+
+    <!-- executive ai summary -->
+    <div id="execSummarySection" style="margin-bottom:20px">
+      <div class="sec-hdr" style="margin-bottom:10px">
+        <div class="sec-title">COACH ANALYSIS</div>
+        <div class="sec-tag">AI-POWERED · BASED ON YOUR DATA</div>
+        <div class="sec-line"></div>
+      </div>
+      <div id="execSummary" style="background:var(--bg-1);border:1px solid var(--border-hi);border-radius:var(--r-lg);padding:18px 20px;border-left:3px solid var(--orange);font-size:13px;line-height:1.75;color:var(--text-1);position:relative">
+        <div style="color:var(--text-2); font-family:var(--mono); font-size:9px">
+          ↻ Sync your data to generate a personalised coaching analysis
+        </div>
+      </div>
+    </div>
+
+    <!-- main charts -->
+    <div>
+      <div class="sec-hdr" style="margin-bottom:10px">
+        <div class="sec-title">PERFORMANCE TIMELINE</div>
+        <div class="sec-tag">LAST 90 DAYS</div>
+        <div class="sec-line"></div>
+      </div>
+      <div class="charts-row">
+        <div class="chart-card">
+          <div class="chart-lbl"><div class="chart-dot" style="--c:var(--orange)"></div>POWER · HR · CADENCE</div>
+          <div style="position:relative;height:210px"><canvas id="cPerf"></canvas></div>
+        </div>
+        <div class="chart-card">
+          <div class="chart-lbl"><div class="chart-dot" style="--c:var(--cyan)"></div>SPORT MIX</div>
+          <div style="position:relative;height:210px;display:flex;align-items:center;justify-content:center"><canvas id="cSport" style="max-height:200px"></canvas></div>
+        </div>
+      </div>
+    </div>
+
+    <!-- insights -->
+    <div>
+      <div class="sec-hdr" style="margin-bottom:10px">
+        <div class="sec-title">COACH INSIGHTS</div>
+        <div class="sec-tag">AUTO-GENERATED</div>
+        <div class="sec-line"></div>
+      </div>
+      <div class="insights-row" id="insightsRow"></div>
+    </div>
+
+    <!-- progression charts row 1 -->
+    <div>
+      <div class="sec-hdr" style="margin-bottom:10px">
+        <div class="sec-title">MONTHLY PROGRESSION</div>
+        <div class="sec-tag">AVG PER RIDE · OUTLIERS REMOVED</div>
+        <div class="sec-line"></div>
+      </div>
+      <!-- Power + HR + Cadence triple overlay -->
+      <div class="chart-card" style="margin-bottom:10px">
+        <div class="chart-lbl">
+          <div class="chart-dot" style="--c:var(--orange)"></div>
+          AVG POWER (W) &nbsp;·&nbsp;
+          <span style="color:var(--purple)">▪ AVG HR (bpm)</span> &nbsp;·&nbsp;
+          <span style="color:var(--cyan)">▪ AVG CADENCE (rpm)</span>
+          &nbsp;<span style="color:var(--text-3);font-size:8px">— monthly avg per ride, spikes filtered</span>
+        </div>
+        <div style="position:relative;height:200px"><canvas id="cTriple"></canvas></div>
+      </div>
+      <!-- Weekly distance + TSS side by side -->
+      <div class="bottom-row">
+        <div class="chart-card">
+          <div class="chart-lbl"><div class="chart-dot" style="--c:var(--green)"></div>WEEKLY DISTANCE (km)</div>
+          <div style="position:relative;height:130px"><canvas id="cWeekly"></canvas></div>
+        </div>
+        <div class="chart-card">
+          <div class="chart-lbl"><div class="chart-dot" style="--c:var(--yellow)"></div>TRAINING LOAD (TSS est.)</div>
+          <div style="position:relative;height:130px"><canvas id="cTSS"></canvas></div>
+        </div>
+        <div class="chart-card">
+          <div class="chart-lbl"><div class="chart-dot" style="--c:var(--purple)"></div>RECENT ACTIVITIES</div>
+          <div class="activity-list" id="actList"></div>
+        </div>
+      </div>
+    </div>
+
+    <!-- streams-derived metrics row -->
+    <div id="streamsSection" style="display:none">
+      <div class="sec-hdr" style="margin-bottom:10px">
+        <div class="sec-title">POWER CURVE & HR ZONES</div>
+        <div class="sec-tag" id="streamsSectionTag">FROM SECOND-BY-SECOND STREAMS</div>
+        <div class="sec-line"></div>
+      </div>
+      <div class="charts-row" style="margin-bottom:10px">
+        <div class="chart-card" style="flex:2">
+          <div class="chart-lbl"><div class="chart-dot" style="--c:var(--orange)"></div>POWER DURATION CURVE (best efforts across all streams)</div>
+          <div style="position:relative;height:200px"><canvas id="cPDC"></canvas></div>
+        </div>
+        <div class="chart-card" style="flex:1">
+          <div class="chart-lbl"><div class="chart-dot" style="--c:var(--purple)"></div>HR ZONE DISTRIBUTION (%)</div>
+          <div style="position:relative;height:200px"><canvas id="cHRZones"></canvas></div>
+        </div>
+      </div>
+      <div class="charts-row">
+        <div class="chart-card">
+          <div class="chart-lbl"><div class="chart-dot" style="--c:var(--yellow)"></div>VARIABILITY INDEX TREND (NP/AP ratio)</div>
+          <div style="position:relative;height:160px"><canvas id="cVI"></canvas></div>
+        </div>
+        <div class="chart-card">
+          <div class="chart-lbl"><div class="chart-dot" style="--c:var(--green)"></div>AEROBIC DECOUPLING % (HR drift)</div>
+          <div style="position:relative;height:160px"><canvas id="cDecouple"></canvas></div>
+        </div>
+        <div class="chart-card">
+          <div class="chart-lbl"><div class="chart-dot" style="--c:var(--cyan)"></div>PEAK 5-MIN POWER TREND</div>
+          <div style="position:relative;height:160px"><canvas id="cP5mTrend"></canvas></div>
+        </div>
+      </div>
+    </div>
+
+    <!-- progression charts row 2 -->
+    <div>
+      <div class="sec-hdr" style="margin-bottom:10px">
+        <div class="sec-title">AEROBIC EFFICIENCY & VOLUME</div>
+        <div class="sec-line"></div>
+      </div>
+      <div class="bottom-row">
+        <div class="chart-card">
+          <div class="chart-lbl"><div class="chart-dot" style="--c:var(--purple)"></div>W/BPM RATIO (aerobic efficiency)</div>
+          <div style="position:relative;height:140px"><canvas id="cWperBPM"></canvas></div>
+        </div>
+        <div class="chart-card">
+          <div class="chart-lbl"><div class="chart-dot" style="--c:var(--orange)"></div>MONTHLY ELEVATION (m)</div>
+          <div style="position:relative;height:140px"><canvas id="cMonthElevDash"></canvas></div>
+        </div>
+        <div class="chart-card">
+          <div class="chart-lbl"><div class="chart-dot" style="--c:var(--cyan)"></div>AVG RIDE DURATION (min)</div>
+          <div style="position:relative;height:140px"><canvas id="cDuration"></canvas></div>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <!-- ══ ACTIVITIES PANE ══ -->
+  <div class="dashboard" id="actsPane" style="display:none">
+    <div class="sec-hdr" style="margin-bottom:14px">
+      <div class="sec-title">ALL ACTIVITIES</div>
+      <div class="sec-tag" id="actsCount">—</div>
+      <div class="sec-line"></div>
+      <input id="actsSearch" placeholder="🔍 search name or type..." style="background:var(--bg-3);border:1px solid var(--border-hi);border-radius:var(--r);padding:5px 10px;color:var(--text-0);font-family:var(--mono);font-size:11px;outline:none;width:200px" oninput="filterActs(this.value)">
+    </div>
+    <div id="actsTable"></div>
+  </div>
+
+  <!-- ══ POWER PANE ══ -->
+  <div class="dashboard" id="powerPane" style="display:none">
+    <div class="sec-hdr" style="margin-bottom:14px">
+      <div class="sec-title">POWER ANALYSIS</div>
+      <div class="sec-line"></div>
+    </div>
+    <div class="kpi-row" style="grid-template-columns:repeat(4,1fr)">
+      <div class="kpi" style="--c:var(--orange)"><div class="kpi-lbl">Est. FTP</div><div class="kpi-val" id="pFTP">—<span class="kpi-unit">W</span></div><div class="kpi-delta">95% of best NP</div></div>
+      <div class="kpi" style="--c:var(--cyan)"><div class="kpi-lbl">Best 20min Power</div><div class="kpi-val" id="pBest20">—<span class="kpi-unit">W</span></div><div class="kpi-delta" id="pBest20d"> </div></div>
+      <div class="kpi" style="="--c:var(--green)"><div class="kpi-lbl">Avg Cadence</div><div class="kpi-val" id="pCad">—<span class="kpi-unit">rpm</span></div><div class="kpi-delta" id="pCadD"> </div></div>
+      <div class="kpi" style="--c:var(--yellow)"><div class="kpi-lbl">Avg W/kg</div><div class="kpi-val" id="pWkg">—</div><div class="kpi-delta">at 74kg</div></div>
+    </div>
+    <div style="margin-top:14px">
+      <div class="sec-hdr" style="margin-bottom:10px"><div class="sec-title">NP DISTRIBUTION</div><div class="sec-line"></div></div>
+      <div class="charts-row">
+        <div class="chart-card">
+          <div class="chart-lbl"><div class="chart-dot" style="--c:var(--orange)"></div>NORMALIZED POWER OVER TIME</div>
+          <div style="position:relative;height:220px"><canvas id="cPowerTime"></canvas></div>
+        </div>
+        <div class="chart-card">
+          <div class="chart-lbl"><div class="chart-dot" style="--c:var(--cyan)"></div>POWER vs HR CORRELATION</div>
+          <div style="position:relative;height:220px"><canvas id="cPowerHR"></canvas></div>
+        </div>
+      </div>
+    </div>
+    <div style="margin-top:14px">
+      <div class="sec-hdr" style="margin-bottom:10px"><div class="sec-title">CADENCE DISTRIBUTION</div><div class="sec-line"></div></div>
+      <div class="chart-card">
+        <div class="chart-lbl"><div class="chart-dot" style="--c:var(--cyan)"></div>CADENCE OVER TIME</div>
+        <div style="position:relative;height:180px"><canvas id="cCadTime"></canvas></div>
+      </div>
+    </div>
+  </div>
+
+  <!-- ══ TRENDS PANE ══ -->
+  <div class="dashboard" id="trendsPane" style="display:none">
+    <div class="sec-hdr" style="margin-bottom:14px">
+      <div class="sec-title">TRAINING TRENDS</div>
+      <div class="sec-line"></div>
+    </div>
+    <div class="charts-row" style="margin-bottom:14px">
+      <div class="chart-card">
+        <div class="chart-lbl"><div class="chart-dot" style="--c:var(--green)"></div>MONTHLY DISTANCE (km)</div>
+        <div style="position:relative;height:220px"><canvas id="cMonthDist"></canvas></div>
+      </div>
+      <div class="chart-card">
+        <div class="chart-lbl"><div class="chart-dot" style="--c:var(--yellow)"></div>MONTHLY ELEVATION (m)</div>
+        <div style="position:relative;height:220px"><canvas id="cMonthElev"></canvas></div>
+      </div>
+    </div>
+    <div class="charts-row">
+      <div class="chart-card">
+        <div class="chart-lbl"><div class="chart-dot" style="--c:var(--orange)"></div>ROLLING 4-WEEK TSS</div>
+        <div style="position:relative;height:200px"><canvas id="cRollingTSS"></canvas></div>
+      </div>
+      <div class="chart-card">
+        <div class="chart-lbl"><div class="chart-dot" style="--c:var(--purple)"></div>HR EFFICIENCY TREND (W/BPM)</div>
+        <div style="position:relative;height:200px"><canvas id="cHReff"></canvas></div>
+      </div>
+    </div>
+  </div>
+
+  <!-- ══ RACE PREP PANE ══ -->
+  <div class="dashboard" id="racePane" style="display:none">
+
+    <!-- VO2Max banner -->
+    <div style="display:grid;grid-template-columns:1fr 1fr 1fr;gap:10px;margin-bottom:4px">
+      <div class="kpi" style="--c:var(--cyan)">
+        <div class="kpi-lbl">EST. VO2MAX (Firstbeat)</div>
+        <div class="kpi-val" id="rVO2fb">—<span class="kpi-unit">ml/kg/min</span></div>
+        <div class="kpi-delta" id="rVO2fbSub">from HR + power</div>
+      </div>
+      <div class="kpi" style="--c:var(--green)">
+        <div class="kpi-lbl">EST. VO2MAX (VDOT)</div>
+        <div class="kpi-val" id="rVO2vd">—<span class="kpi-unit">ml/kg/min</span></div>
+        <div class="kpi-delta" id="rVO2vdSub">from best run pace</div>
+      </div>
+      <div class="kpi" style="--c:var(--orange)">
+        <div class="kpi-lbl">4-WEEK TREND</div>
+        <div class="kpi-val" id="rVO2trend">—</div>
+        <div class="kpi-delta" id="rVO2trendSub">trajectory</div>
+      </div>
+    </div>
+
+    <!-- VO2Max chart -->
+    <div class="chart-card" style="margin-bottom:10px">
+      <div class="chart-lbl">
+        <div class="chart-dot" style="--c:var(--cyan)"></div>
+        VO2MAX ESTIMATE OVER TIME &nbsp;·&nbsp;
+        <span style="color:var(--green)">▪ Firstbeat (rides)</span> &nbsp;·&nbsp;
+        <span style="color:var(--yellow)">▪ VDOT (runs)</span> &nbsp;·&nbsp;
+        <span style="color:var(--purple)">▪ 4-week projection</span>
+      </div>
+      <div style="position:relative;height:180px"><canvas id="cVO2"></canvas></div>
+    </div>
+
+    <!-- Race predictions -->
+    <div class="sec-hdr" style="margin-bottom:10px">
+      <div class="sec-title">RACE PREDICTIONS</div>
+      <div class="sec-tag">CURRENT FITNESS + 4-WEEK PROJECTION</div>
+      <div class="sec-line"></div>
+    </div>
+
+    <!-- Running predictions -->
+    <div style="margin-bottom:10px">
+      <div class="chart-lbl" style="margin-bottom:8px"><div class="chart-dot" style="--c:var(--green)"></div>RUNNING</div>
+      <div id="raceRunTable"></div>
+    </div>
+
+    <!-- Cycling predictions -->
+    <div style="margin-bottom:10px">
+      <div class="chart-lbl" style="margin-bottom:8px"><div class="chart-dot" style="--c:var(--orange)"></div>CYCLING</div>
+      <div id="raceCycleTable"></div>
+    </div>
+
+    <!-- Triathlon predictions -->
+    <div style="margin-bottom:10px">
+      <div class="chart-lbl" style="margin-bottom:8px"><div class="chart-dot" style="--c:var(--cyan)"></div>TRIATHLON</div>
+      <div id="raceTriTable"></div>
+    </div>
+
+    <!-- Fitness progression chart -->
+    <div class="sec-hdr" style="margin-bottom:10px;margin-top:4px">
+      <div class="sec-title">FITNESS TRAJECTORY</div>
+      <div class="sec-tag">LAST 12 WEEKS + 4-WEEK PROJECTION</div>
+      <div class="sec-line"></div>
+    </div>
+    <div class="charts-row">
+      <div class="chart-card">
+        <div class="chart-lbl"><div class="chart-dot" style="--c:var(--orange)"></div>WEEKLY TSS + PROJECTED LOAD</div>
+        <div style="position:relative;height:180px"><canvas id="cRaceTSS"></canvas></div>
+      </div>
+      <div class="chart-card">
+        <div class="chart-lbl"><div class="chart-dot" style="--c:var(--cyan)"></div>POWER PROGRESSION + PROJECTED FTP</div>
+        <div style="position:relative;height:180px"><canvas id="cRaceFTP"></canvas></div>
+      </div>
+    </div>
+
+    <div style="background:var(--bg-2);border:1px solid var(--border);border-radius:var(--r);padding:12px 14px;margin-top:10px;font-family:var(--mono);font-size:9px;color:var(--text-2);line-height:1.8">
+      ⚠ Predictions are estimates based on physiological models (Riegel formula, CP model, Firstbeat VO2Max).
+      Actual performance depends on race-day conditions, pacing, nutrition, and terrain.
+      Projection assumes current 4-week trend continues. Use as a guide, not a guarantee.
+    </div>
+  </div>
+
+  <!-- chat -->
+  <div class="chat">
+    <div class="chat-hdr">
+      <div class="chat-ai-ava">🧠</div>
+      <div>
+        <div class="chat-hdr-title">Performance Coach AI</div>
+        <div class="chat-hdr-sub" id="chatSub">// AWAITING DATA</div>
+      </div>
+    </div>
+    <div class="ctx-bar" id="ctxBar">
+      <div class="ctx-tag" id="ctxN">0 activities</div>
+      <div class="ctx-tag" id="ctxD">no range</div>
+      <div class="ctx-tag" id="ctxS">—</div>
+      <div class="ctx-tag" id="ctxDB">no db</div>
+    </div>
+    <div class="chat-msgs" id="chatMsgs">
+      <div class="msg ai">
+        <div class="msg-ava">🧠</div>
+        <div class="msg-body">
+          <div class="bubble">Hey! I'm your AI performance coach.<br><br>Connect your Strava data (or try demo mode) and I'll analyze everything — power trends, HR zones, TSS load, race readiness, cadence, and more.<br><br>Ask me anything 💪</div>
+          <div class="msg-time">just now</div>
+        </div>
+      </div>
+    </div>
+    <div class="prompts-box" id="promptsBox">
+      <div class="prompts-lbl">QUICK QUESTIONS</div>
+      <div class="p-chips" id="pChips">
+        <div class="p-chip" onclick="ask(this.textContent)">Am I ready to race this weekend?</div>
+        <div class="p-chip" onclick="ask(this.textContent)">What's my power trend last 4 weeks?</div>
+        <div class="p-chip" onclick="ask(this.textContent)">Where should I focus training next?</div>
+      </div>
+    </div>
+    <div class="chat-input-wrap">
+      <div class="input-box">
+        <textarea class="chat-ta" id="chatIn" placeholder="Ask your coach..." rows="1"
+          onkeydown="chatKey(event)" oninput="autoH(this)"></textarea>
+        <button class="send-btn" id="sendBtn" onclick="sendMsg()">➤</button>
+      </div>
+    </div>
+  </div>
+
+</div>
+
+<script>
+// ═══════════════════════════════════════════════════════
+// CONFIG & STATE
+// ═══════════════════════════════════════════════════════
+const CFG_KEY = 'cws_config_v1';
+
+let cfg = { supabaseUrl:'', supabaseKey:'', stravaToken:'', anthropicKey:'' };
+let db = null; // supabase client
+let S = {
+  activities: [],
+  streamMetrics: {},   // activityId → pre-aggregated metrics from streams
+  athlete: null,
+  connected: false,
+  dbConnected: false,
+  isDemo: false,
+  isSending: false,
+  chatHistory: [],
+  charts: {}
+};
+const STREAMS_WEEKS = 12; // how many weeks back to pull detailed streams
+
+// ─── load saved config ───
+function loadCfg() {
+  try {
+    const saved = localStorage.getItem(CFG_KEY);
+    if (saved) cfg = { ...cfg, ...JSON.parse(saved) };
+  } catch(e) {}
+}
+
+function saveCfgToStorage() {
+  localStorage.setItem(CFG_KEY, JSON.stringify(cfg));
+}
+
+// ═══════════════════════════════════════════════════════
+// SUPABASE
+// ═══════════════════════════════════════════════════════
+async function initSupabase() {
+  if (!cfg.supabaseUrl || !cfg.supabaseKey) return false;
+  try {
+    db = supabase.createClient(cfg.supabaseUrl, cfg.supabaseKey);
+    // test connection
+    const { error } = await db.from('activities').select('id').limit(1);
+    if (error && error.code !== 'PGRST116') {
+      // table doesn't exist yet — that's OK, we'll create it
+      if (error.message.includes('does not exist')) {
+        setStatus('DB: table missing — run the SQL setup', 'error');
+        return false;
+      }
+      throw error;
+    }
+    S.dbConnected = true;
+    document.getElementById('ctxDB').textContent = '✓ supabase';
+    document.getElementById('ctxDB').classList.add('on');
+    return true;
+  } catch(e) {
+    console.error('Supabase init error:', e);
+    S.dbConnected = false;
+    return false;
+  }
+}
+
+async function getLatestActivityDate() {
+  if (!db) return null;
+  const { data, error } = await db
+    .from('activities')
+    .select('start_date')
+    .order('start_date', { ascending: false })
+    .limit(1);
+  if (error || !data?.length) return null;
+  return data[0].start_date;
+}
+
+async function upsertActivities(acts) {
+  if (!db || !acts.length) return;
+  const rows = acts.map(a => ({
+    id: String(a.id),
+    athlete_id: a.athlete?.id ? String(a.athlete.id) : (S.athlete?.id ? String(S.athlete.id) : 'unknown'),
+    name: a.name,
+    type: a.type,
+    sport_type: a.sport_type || a.type,
+    start_date: a.start_date,
+    distance: a.distance || 0,
+    moving_time: a.moving_time || 0,
+    elapsed_time: a.elapsed_time || 0,
+    total_elevation_gain: a.total_elevation_gain || 0,
+    average_watts: a.average_watts || null,
+    weighted_average_watts: a.weighted_average_watts || null,
+    max_watts: a.max_watts || null,
+    average_heartrate: a.average_heartrate || null,
+    max_heartrate: a.max_heartrate || null,
+    average_cadence: a.average_cadence || null,
+    kilojoules: a.kilojoules || null,
+    suffer_score: a.suffer_score || null,
+    raw: a
+  }));
+  const { error } = await db.from('activities').upsert(rows, { onConflict: 'id' });
+  if (error) console.error('Upsert error:', error);
+}
+
+async function loadAllFromDB() {
+  if (!db) return [];
+  const { data, error } = await db
+    .from('activities')
+    .select('*')
+    .order('start_date', { ascending: false });
+  if (error) { console.error(error); return []; }
+  // reconstruct activity objects from stored data
+  return (data || []).map(r => r.raw || r);
+}
+
+// ─── Streams: check which activities need streams fetched ──
+async function getActivitiesNeedingStreams(activityIds) {
+  if (!db) return activityIds;
+  const { data, error } = await db
+    .from('activity_streams')
+    .select('activity_id')
+    .in('activity_id', activityIds.map(String));
+  if (error) return activityIds;
+  const done = new Set((data||[]).map(r=>r.activity_id));
+  return activityIds.filter(id => !done.has(String(id)));
+}
+
+async function upsertStreamMetrics(activityId, metrics) {
+  if (!db) return;
+  const { error } = await db.from('activity_streams').upsert({
+    activity_id: String(activityId),
+    metrics: metrics
+  }, { onConflict: 'activity_id' });
+  if (error) console.error('Stream upsert error:', error);
+}
+
+async function loadStreamMetricsFromDB(activityIds) {
+  if (!db) return {};
+  const { data, error } = await db
+    .from('activity_streams')
+    .select('activity_id, metrics')
+    .in('activity_id', activityIds.map(String));
+  if (error) return {};
+  const out = {};
+  (data||[]).forEach(r => { out[r.activity_id] = r.metrics; });
+  return out;
+}
+
+// ─── Process raw streams into compact metrics object ────
+function processStreams(actId, streams) {
+  const get = key => streams.find(s=>s.type===key)?.data || [];
+  const watts   = get('watts');
+  const hr      = get('heartrate');
+  const cad     = get('cadence');
+  const vel     = get('velocity_smooth');
+  const alt     = get('altitude');
+  const dist    = get('distance');
+  const time    = get('time');
+
+  const mean  = arr => arr.length ? arr.reduce((a,b)=>a+b,0)/arr.length : null;
+  const max   = arr => arr.length ? Math.max(...arr) : null;
+  const pctAt = (arr, p) => { if (!arr.length) return null; const s=[...arr].sort((a,b)=>a-b); return s[Math.floor(s.length*p)]; };
+
+  // Power curve peaks at standard durations
+  function peakPower(secs) {
+    if (!watts.length || watts.length < secs) return null;
+    let best = 0;
+    for (let i=0; i<=watts.length-secs; i++) {
+      const slice = watts.slice(i, i+secs);
+      const avg = slice.reduce((a,b)=>a+b,0)/secs;
+      if (avg > best) best = avg;
+    }
+    return best > 0 ? Math.round(best) : null;
+  }
+
+  // HR zone distribution (5 zones relative to LTHR 174)
+  const lthr = 174;
+  function hrZones(hrArr) {
+    if (!hrArr.length) return null;
+    const zones = [0,0,0,0,0];
+    hrArr.forEach(h => {
+      const pct = h/lthr;
+      if      (pct < 0.81) zones[0]++;
+      else if (pct < 0.90) zones[1]++;
+      else if (pct < 0.95) zones[2]++;
+      else if (pct < 1.00) zones[3]++;
+      else                  zones[4]++;
+    });
+    const total = hrArr.length;
+    return zones.map(z => +(z/total*100).toFixed(1));
+  }
+
+  // Aerobic decoupling: compare first/second half HR drift vs power
+  function decoupling(wArr, hArr) {
+    if (!wArr.length || !hArr.length || wArr.length < 60) return null;
+    const mid = Math.floor(Math.min(wArr.length, hArr.length)/2);
+    const w1=mean(wArr.slice(0,mid)), w2=mean(wArr.slice(mid));
+    const h1=mean(hArr.slice(0,mid)), h2=mean(hArr.slice(mid));
+    if (!w1||!w2||!h1||!h2) return null;
+    const ef1=w1/h1, ef2=w2/h2;
+    return +((ef1-ef2)/ef1*100).toFixed(1); // positive = aerobic drift
+  }
+
+  // Variability index
+  const np = watts.length >= 30 ? (() => {
+    const roll30 = [];
+    for (let i=29; i<watts.length; i++) {
+      const avg = watts.slice(i-29,i+1).reduce((a,b)=>a+b,0)/30;
+      roll30.push(avg);
+    }
+    return Math.pow(roll30.reduce((s,v)=>s+Math.pow(v,4),0)/roll30.length, 0.25);
+  })() : null;
+
+  const avgW = mean(watts.filter(v=>v>0));
+  const vi   = (np && avgW) ? +(np/avgW).toFixed(3) : null;
+
+  return {
+    activity_id:  actId,
+    // Power curve
+    p5s:    peakPower(5),
+    p30s:   peakPower(30),
+    p1m:    peakPower(60),
+    p5m:    peakPower(300),
+    p10m:   peakPower(600),
+    p20m:   peakPower(1200),
+    p30m:   peakPower(1800),
+    // HR
+    avg_hr:   mean(hr) ? +mean(hr).toFixed(1) : null,
+    max_hr:   max(hr),
+    hr_zones: hrZones(hr),
+    // Cadence
+    avg_cad:  mean(cad.filter(v=>v>0)) ? +mean(cad.filter(v=>v>0)).toFixed(1) : null,
+    max_cad:  max(cad),
+    // Normalised power & VI
+    np:       np ? Math.round(np) : null,
+    vi:       vi,
+    // Aerobic decoupling
+    decoupling: decoupling(watts, hr),
+    // Elevation gain from alt stream
+    elev_gain: alt.length > 1 ? Math.round(alt.reduce((gain,v,i)=> i>0&&v>alt[i-1] ? gain+(v-alt[i-1]) : gain, 0)) : null,
+    // Speed
+    avg_speed_kph: mean(vel) ? +(mean(vel)*3.6).toFixed(1) : null,
+    max_speed_kph: max(vel) ? +(max(vel)*3.6).toFixed(1) : null,
+    // Data quality
+    n_samples: time.length,
+    has_power: watts.length > 0,
+    has_hr:    hr.length > 0,
+    has_cad:   cad.length > 0,
+  };
+}
+
+// ─── Main streams sync ────────────────────────────────────
+async function triggerStreamsSync() {
+  if (!cfg.stravaToken) { showSettings(); return; }
+  const btn = document.getElementById('streamsBtn');
+  btn.textContent = '⏳ SYNCING...';
+  btn.disabled = true;
+  showSyncBar(true);
+  document.getElementById('syncLog').innerHTML = '';
+
+  try {
+    // Only activities within STREAMS_WEEKS
+    const cutoff = Date.now() - STREAMS_WEEKS * 7 * 86400000;
+    const recentActs = S.activities.filter(a => new Date(a.start_date).getTime() > cutoff);
+    const recentIds  = recentActs.map(a => String(a.id));
+
+    setSyncLog(`⚡ Streams sync: ${recentActs.length} activities in last ${STREAMS_WEEKS} weeks`);
+
+    // Find which need fetching
+    const dbOk = S.dbConnected;
+    let needed = recentIds;
+    if (dbOk) {
+      needed = await getActivitiesNeedingStreams(recentIds);
+      setSyncLog(`   ${recentIds.length - needed.length} already cached, ${needed.length} need fetching`);
+    }
+
+    if (!needed.length) {
+      // Load cached
+      S.streamMetrics = await loadStreamMetricsFromDB(recentIds);
+      setSyncLog(`✅ All streams already cached — loaded ${Object.keys(S.streamMetrics).length} activities`);
+      renderDashboard();
+      return;
+    }
+
+    const STREAM_TYPES = 'time,distance,watts,heartrate,cadence,velocity_smooth,altitude';
+    let done = 0, errors = 0;
+
+    for (const actId of needed) {
+      setSyncBar(Math.round((done/needed.length)*100));
+      setSyncLog(`   [${done+1}/${needed.length}] Fetching streams for activity ${actId}...`);
+
+      // Rate limiting: Strava allows 100 req/15min — add small delay
+      if (done > 0 && done % 20 === 0) {
+        setSyncLog(`   ⏳ Rate limit pause (15s)...`);
+        await new Promise(r => setTimeout(r, 15000));
+      } else if (done > 0) {
+        await new Promise(r => setTimeout(r, 300)); // 300ms between requests
+      }
+
+      try {
+        const res = await fetch(
+          `https://www.strava.com/api/v3/activities/${actId}/streams?keys=${STREAM_TYPES}&key_by_type=true`,
+          { headers: { Authorization: `Bearer ${cfg.stravaToken}` } }
+        );
+        if (res.status === 404) { done++; continue; } // activity may have no streams
+        if (!res.ok) throw new Error(`HTTP ${res.status}`);
+
+        const streamsObj = await res.json();
+        // API returns {type: {data:[], original_size:N, resolution:'high', series_type:'distance'}}
+        const streamsArr = Object.entries(streamsObj).map(([type, s]) => ({ type, data: s.data || [] }));
+        const metrics = processStreams(actId, streamsArr);
+
+        S.streamMetrics[actId] = metrics;
+        if (dbOk) await upsertStreamMetrics(actId, metrics);
+        done++;
+      } catch(e) {
+        setSyncLog(`   ⚠ Activity ${actId} stream error: ${e.message}`);
+        errors++;
+        done++;
+      }
+    }
+
+    // Also load any already-cached ones
+    if (dbOk) {
+      const cached = await loadStreamMetricsFromDB(recentIds);
+      S.streamMetrics = { ...cached, ...S.streamMetrics };
+    }
+
+    setSyncBar(100);
+    setSyncLog(`✅ Streams sync done. ${done} fetched, ${errors} errors. ${Object.keys(S.streamMetrics).length} total activities with metrics.`);
+    renderDashboard();
+
+  } catch(e) {
+    setSyncLog(`❌ Streams sync failed: ${e.message}`);
+  } finally {
+    btn.textContent = '⚡ STREAMS';
+    btn.disabled = false;
+    setTimeout(() => showSyncBar(false), 5000);
+  }
+}
+
+// ═══════════════════════════════════════════════════════
+// STRAVA SYNC
+// ═══════════════════════════════════════════════════════
+async function triggerSync(forceFullResync = false) {
+  if (!cfg.stravaToken) { showSettings(); return; }
+
+  const btn = document.getElementById('syncBtn');
+  btn.classList.add('syncing');
+  setStatus('SYNCING', 'syncing');
+  showSyncBar(true);
+  document.getElementById('syncLog').innerHTML = ''; // clear previous log
+
+  try {
+    // ── STEP 1: Test Strava token ──────────────────────────────
+    setSyncLog('① Testing Strava connection...');
+    const ares = await fetch('https://www.strava.com/api/v3/athlete', {
+      headers: { Authorization: `Bearer ${cfg.stravaToken}` }
+    });
+
+    if (!ares.ok) {
+      const errBody = await ares.text();
+      setSyncLog(`   ❌ Strava returned HTTP ${ares.status}: ${errBody}`);
+      if (ares.status === 401) throw new Error(`Strava token is invalid or expired (401). Go to ⚙ Settings and paste a fresh access token.`);
+      if (ares.status === 403) throw new Error(`Strava token lacks activity:read_all scope (403). Re-authorise with the full scope URL in the setup guide.`);
+      throw new Error(`Strava API error ${ares.status}: ${errBody}`);
+    }
+
+    S.athlete = await ares.json();
+    setSyncLog(`   ✓ Authenticated as ${S.athlete.firstname} ${S.athlete.lastname} (ID: ${S.athlete.id})`);
+    updateAthleteUI();
+    setSyncBar(15);
+
+    // ── STEP 2: Init Supabase ──────────────────────────────────
+    setSyncLog('② Connecting to Supabase...');
+    const dbOk = await initSupabase();
+    setSyncLog(dbOk ? `   ✓ Supabase connected` : `   ⚠ Supabase not connected — will fetch from Strava only (no persistence)`);
+    setSyncBar(25);
+
+    // ── STEP 3: Determine sync window ─────────────────────────
+    let afterParam = '';
+    let latestDate = null;
+
+    if (dbOk && !forceFullResync) {
+      latestDate = await getLatestActivityDate();
+    }
+
+    if (forceFullResync) {
+      setSyncLog('③ Force full re-sync — fetching all activities from Strava...');
+    } else if (latestDate) {
+      const afterTs = Math.floor(new Date(latestDate).getTime() / 1000) + 1;
+      afterParam = `&after=${afterTs}`;
+      setSyncLog(`③ DB latest activity: ${new Date(latestDate).toDateString()}. Fetching only newer ones (after=${afterTs})...`);
+    } else {
+      setSyncLog('③ No existing DB data. Fetching full history from Strava...');
+    }
+    setSyncBar(30);
+
+    // ── STEP 4: Fetch from Strava (paginated) ──────────────────
+    let page = 1, newActs = [], consecutiveEmpty = 0;
+    const perPage = 100;
+
+    while (page <= 10) { // safety cap at 1000 activities
+      setSyncBar(30 + Math.min(50, page * 8));
+      setSyncLog(`   Page ${page}: GET /athlete/activities?per_page=${perPage}&page=${page}${afterParam}`);
+
+      const r = await fetch(
+        `https://www.strava.com/api/v3/athlete/activities?per_page=${perPage}&page=${page}${afterParam}`,
+        { headers: { Authorization: `Bearer ${cfg.stravaToken}` } }
+      );
+
+      setSyncLog(`   → HTTP ${r.status}`);
+
+      if (!r.ok) {
+        const errBody = await r.text();
+        setSyncLog(`   ❌ Error body: ${errBody}`);
+        // Detect scope error specifically
+        if (errBody.includes('activity:read_permission') || errBody.includes('read_permission')) {
+          throw new Error('SCOPE_MISSING');
+        }
+        if (r.status === 401) throw new Error('TOKEN_EXPIRED');
+        throw new Error(`Strava error ${r.status}: ${errBody}`);
+      }
+
+      const batch = await r.json();
+
+      // Check if Strava returned an error object instead of array
+      if (!Array.isArray(batch)) {
+        setSyncLog(`   ❌ Unexpected response (not an array): ${JSON.stringify(batch).substring(0, 200)}`);
+        throw new Error(`Strava returned unexpected data: ${JSON.stringify(batch).substring(0, 100)}`);
+      }
+
+      setSyncLog(`   → ${batch.length} activities returned`);
+
+      if (batch.length === 0) {
+        consecutiveEmpty++;
+        if (consecutiveEmpty >= 1) break; // done
+      } else {
+        consecutiveEmpty = 0;
+        newActs = newActs.concat(batch);
+        setSyncLog(`   Running total: ${newActs.length} new activities`);
+      }
+
+      if (batch.length < perPage) break; // last page
+      page++;
+    }
+
+    setSyncLog(`④ Total fetched from Strava: ${newActs.length} activities`);
+    setSyncBar(82);
+
+    // ── STEP 5: Save to Supabase ───────────────────────────────
+    if (newActs.length > 0 && dbOk) {
+      setSyncLog(`⑤ Saving ${newActs.length} activities to Supabase...`);
+      await upsertActivities(newActs);
+      setSyncLog(`   ✓ Saved.`);
+    } else if (newActs.length === 0 && dbOk) {
+      setSyncLog(`⑤ No new activities to save (DB is already up to date).`);
+    } else if (!dbOk) {
+      setSyncLog(`⑤ Skipping DB save (Supabase not connected).`);
+    }
+    setSyncBar(92);
+
+    // ── STEP 6: Load full history ──────────────────────────────
+    setSyncLog('⑥ Loading full history...');
+    if (dbOk) {
+      S.activities = await loadAllFromDB();
+      setSyncLog(`   ✓ Loaded ${S.activities.length} total activities from Supabase.`);
+    } else {
+      S.activities = newActs;
+      setSyncLog(`   ℹ Using ${S.activities.length} activities from this Strava fetch (no DB).`);
+    }
+
+    setSyncBar(100);
+    setSyncLog(`✅ Done. ${S.activities.length} total activities available.`);
+
+    S.connected = true;
+    setStatus('LIVE', 'live');
+
+    if (S.activities.length > 0) {
+      renderDashboard();
+    }
+
+    const newMsg = newActs.length > 0
+      ? `✅ Sync complete! **${newActs.length} new activities** pulled from Strava${dbOk ? ' and saved to Supabase' : ''}.\n\nTotal history: **${S.activities.length} activities**. Dashboard is ready — ask me anything!`
+      : dbOk && S.activities.length > 0
+        ? `✅ Already up to date! Loaded **${S.activities.length} activities** from Supabase. No new activities since last sync.\n\nAsk me anything about your training!`
+        : `⚠️ Sync completed but **0 activities were found**. Check the sync log on the dashboard. Most likely cause: the Strava token is missing the \`activity:read_all\` scope — try re-authorising using the full OAuth URL in the setup guide.`;
+
+    addMsg('ai', newMsg);
+    setTimeout(() => showSyncBar(false), 6000);
+
+  } catch(e) {
+    setSyncLog(`\n❌ SYNC FAILED: ${e.message}`);
+    setStatus('ERROR', 'error');
+
+    let userMsg = '';
+    if (e.message === 'SCOPE_MISSING') {
+      userMsg = `❌ **Your Strava token is missing the \`activity:read_all\` scope.**\n\nThis is the most common issue. Here's how to fix it:\n\n**Step 1** — Open this URL in your browser (replace YOUR_CLIENT_ID):\n\`\`\`\nhttps://www.strava.com/oauth/authorize?client_id=YOUR_CLIENT_ID&response_type=code&redirect_uri=http://localhost&approval_prompt=force&scope=read,activity:read_all\n\`\`\`\n\n**Step 2** — Click Authorize on Strava\n\n**Step 3** — Copy the \`code=\` value from the redirect URL\n\n**Step 4** — Exchange it for a token using:\n\`\`\`\nhttps://www.strava.com/oauth/token?client_id=YOUR_ID&client_secret=YOUR_SECRET&code=YOUR_CODE&grant_type=authorization_code\n\`\`\`\n\n**Step 5** — Copy the \`access_token\` value and paste it in ⚙ Settings`;
+    } else if (e.message === 'TOKEN_EXPIRED') {
+      userMsg = `❌ **Strava access token has expired** (they last 6 hours).\n\nRepeat the OAuth steps to get a fresh token, then paste it in ⚙ Settings.`;
+    } else {
+      userMsg = `⚠️ Sync failed: ${e.message}`;
+    }
+    addMsg('ai', userMsg);
+  }
+
+  btn.classList.remove('syncing');
+}
+
+// Force a full re-sync from scratch (ignores DB date)
+async function forceFullSync() {
+  if (confirm('This will re-fetch all activities from Strava, ignoring existing DB data. Continue?')) {
+    await triggerSync(true);
+  }
+}
+
+// ═══════════════════════════════════════════════════════
+// SETTINGS
+// ═══════════════════════════════════════════════════════
+function showSettings() {
+  document.getElementById('welcomeOverlay').style.display = 'none';
+  document.getElementById('settingsOverlay').style.display = 'flex';
+  document.getElementById('cfgSupabaseUrl').value = cfg.supabaseUrl;
+  document.getElementById('cfgSupabaseKey').value = cfg.supabaseKey;
+  document.getElementById('cfgStravaToken').value = cfg.stravaToken;
+  document.getElementById('cfgAnthropicKey').value = cfg.anthropicKey;
+  if (cfg.stravaClientId) document.getElementById('cfgStravaClientId').value = cfg.stravaClientId;
+  if (cfg.weight)  document.getElementById('cfgWeight').value  = cfg.weight;
+  if (cfg.hrRest)  document.getElementById('cfgHRrest').value  = cfg.hrRest;
+  if (cfg.hrMax)   document.getElementById('cfgHRmax').value   = cfg.hrMax;
+  document.getElementById('saveStatus').className = 'save-status';
+}
+
+function updateOauthUrl() {
+  const id = document.getElementById('cfgStravaClientId').value.trim();
+  cfg.stravaClientId = id;
+  const btn = document.getElementById('oauthBtn');
+  btn.textContent = id
+    ? `🔗 Step 1: Authorize on Strava (Client ID: ${id})`
+    : '🔗 Step 1: Open Strava Authorization';
+}
+
+function openOAuth() {
+  const id = document.getElementById('cfgStravaClientId').value.trim();
+  if (!id) {
+    alert('Enter your Strava Client ID first (the number from strava.com/settings/api)');
+    return;
+  }
+  const url = `https://www.strava.com/oauth/authorize?client_id=${id}&response_type=code&redirect_uri=http://localhost&approval_prompt=force&scope=read,activity:read_all`;
+  window.open(url, '_blank');
+  document.getElementById('oauthHelp').innerHTML = `
+    <strong style="color:var(--green)">✓ Strava auth page opened.</strong><br>
+    After clicking Authorize, you'll land on a <code>localhost</code> page that won't load — that's fine.<br>
+    Copy the <code>code=XXXX</code> value from the URL bar, then click Step 2 below.
+  `;
+}
+
+function showTokenExchange() {
+  document.getElementById('tokenExchangeBox').style.display = 'block';
+}
+
+async function exchangeToken() {
+  const clientId = document.getElementById('cfgStravaClientId').value.trim();
+  const clientSecret = document.getElementById('cfgStravaSecret').value.trim();
+  const code = document.getElementById('cfgAuthCode').value.trim();
+  const resultEl = document.getElementById('exchangeResult');
+
+  if (!clientId || !clientSecret || !code) {
+    resultEl.innerHTML = '<span style="color:var(--red)">⚠ Fill in Client ID, Client Secret, and the authorization code.</span>';
+    return;
+  }
+
+  resultEl.innerHTML = 'Exchanging code for token...';
+
+  try {
+    const res = await fetch(
+      `https://www.strava.com/oauth/token?client_id=${clientId}&client_secret=${clientSecret}&code=${code}&grant_type=authorization_code`,
+      { method: 'POST' }
+    );
+    const data = await res.json();
+
+    if (data.access_token) {
+      // Auto-fill the token field
+      document.getElementById('cfgStravaToken').value = data.access_token;
+      resultEl.innerHTML = `<span style="color:var(--green)">✅ Got token! Expires: ${new Date(data.expires_at * 1000).toLocaleString()}<br>Token has been auto-filled above. Click Save & Connect.</span>`;
+      // Save refresh token too for future use
+      cfg.stravaRefreshToken = data.refresh_token;
+      cfg.stravaClientId = clientId;
+      cfg.stravaTokenExpiry = data.expires_at;
+    } else {
+      resultEl.innerHTML = `<span style="color:var(--red)">❌ ${JSON.stringify(data)}</span>`;
+    }
+  } catch(e) {
+    resultEl.innerHTML = `<span style="color:var(--red)">❌ ${e.message}</span>`;
+  }
+}
+
+function closeSettings() {
+  document.getElementById('settingsOverlay').style.display = 'none';
+  if (!S.connected && !S.isDemo) document.getElementById('welcomeOverlay').style.display = 'flex';
+}
+
+async function saveConfig() {
+  cfg.supabaseUrl = document.getElementById('cfgSupabaseUrl').value.trim();
+  cfg.supabaseKey = document.getElementById('cfgSupabaseKey').value.trim();
+  cfg.stravaToken = document.getElementById('cfgStravaToken').value.trim();
+  cfg.stravaClientId = document.getElementById('cfgStravaClientId').value.trim();
+  cfg.weight = parseFloat(document.getElementById('cfgWeight').value) || 74;
+  cfg.hrRest = parseFloat(document.getElementById('cfgHRrest').value) || null;
+  cfg.hrMax  = parseFloat(document.getElementById('cfgHRmax').value)  || null;
+  cfg.anthropicKey = document.getElementById('cfgAnthropicKey').value.trim();
+
+  const st = document.getElementById('saveStatus');
+
+  if (!cfg.stravaToken) {
+    st.textContent = '⚠ Strava access token is required.';
+    st.className = 'save-status err'; return;
+  }
+
+  saveCfgToStorage();
+  st.textContent = '✓ Saved to browser storage.';
+  st.className = 'save-status ok';
+
+  setTimeout(() => {
+    document.getElementById('settingsOverlay').style.display = 'none';
+    triggerSync();
+  }, 600);
+}
+
+// ═══════════════════════════════════════════════════════
+// DEMO DATA
+// ═══════════════════════════════════════════════════════
+function loadDemo() {
+  document.getElementById('welcomeOverlay').style.display = 'none';
+  S.isDemo = true;
+  S.athlete = { firstname: 'Alex', lastname: 'K.', id: 9999 };
+  S.activities = genDemoActivities(130);
+  S.connected = true;
+  updateAthleteUI();
+  renderDashboard();
+  setStatus('DEMO', 'demo');
+  addMsg('ai', `Demo mode loaded with **${S.activities.length} simulated activities**.\n\n⚠️ Chat requires an Anthropic API key — add it via ⚙ Settings to activate AI coaching.`);
+}
+
+function genDemoActivities(n) {
+  const out = [];
+  const base = new Date(); base.setMonth(base.getMonth() - 7);
+  const types = ['Ride','Ride','Ride','Run','Run','VirtualRide'];
+  for (let i = 0; i < n; i++) {
+    const d = new Date(base); d.setDate(d.getDate() + Math.floor(i*1.6) + Math.floor(Math.random()*2));
+    const type = types[Math.floor(Math.random()*types.length)];
+    const isRide = type !== 'Run';
+    const ftp = 215 + i*0.28;
+    const np = ftp * (0.68 + Math.random()*0.48);
+    const dist = isRide ? 18000+Math.random()*65000 : 4000+Math.random()*16000;
+    const dur = dist / (isRide ? 7.8 : 3.4);
+    out.push({
+      id: i+1, name: isRide
+        ? ['Morning Ride','Faber Repeats','Endurance Ride','Tempo Intervals','Group Ride','Hill Repeats'][Math.floor(Math.random()*6)]
+        : ['Easy Run','Track Intervals','Long Run','Recovery Jog'][Math.floor(Math.random()*4)],
+      type, sport_type: type,
+      start_date: d.toISOString(),
+      distance: dist, moving_time: dur, elapsed_time: dur*1.06,
+      total_elevation_gain: isRide ? Math.random()*1400 : Math.random()*280,
+      average_watts: isRide ? np*0.91 : undefined,
+      weighted_average_watts: isRide ? np : undefined,
+      average_heartrate: 128+Math.random()*44,
+      max_heartrate: 162+Math.random()*22,
+      average_cadence: isRide ? 66+Math.random()*22 : 79+Math.random()*16,
+      kilojoules: isRide ? np*dur/1000 : undefined,
+      suffer_score: 25+Math.random()*160
+    });
+  }
+  return out.sort((a,b) => new Date(b.start_date)-new Date(a.start_date));
+}
+
+// ═══════════════════════════════════════════════════════
+// UI HELPERS
+// ═══════════════════════════════════════════════════════
+function setStatus(txt, cls) {
+  document.getElementById('statusTxt').textContent = txt;
+  const dot = document.getElementById('statusDot');
+  dot.className = 'status-dot ' + cls;
+}
+
+function updateAthleteUI() {
+  if (!S.athlete) return;
+  const full = `${S.athlete.firstname} ${S.athlete.lastname}`;
+  document.getElementById('topName').textContent = full;
+  document.getElementById('topAva').textContent = (S.athlete.firstname[0]+S.athlete.lastname[0]).toUpperCase();
+}
+
+function showSyncBar(visible) {
+  document.getElementById('syncBarWrap').classList.toggle('visible', visible);
+}
+function setSyncBar(pct) { document.getElementById('syncBarFill').style.width = pct+'%'; }
+function setSyncLog(msg) {
+  const el = document.getElementById('syncLog');
+  // colour-code lines
+  let coloured = msg;
+  if (msg.includes('❌')) coloured = `<span style="color:#ff5252">${msg}</span>`;
+  else if (msg.includes('✓') || msg.includes('✅')) coloured = `<span style="color:#00e676">${msg}</span>`;
+  else if (msg.includes('⚠')) coloured = `<span style="color:#ffc107">${msg}</span>`;
+  else if (msg.startsWith('   →')) coloured = `<span style="color:#525c70">${msg}</span>`;
+  el.innerHTML += coloured + '<br>';
+  el.scrollTop = el.scrollHeight;
+  document.getElementById('syncBarLbl').textContent = msg.replace(/[①②③④⑤⑥]/g,'').trim();
+}
+
+function switchTab(tab) {
+  ['dash','acts','power','trends','race'].forEach(t => {
+    document.getElementById('nav-'+t)?.classList.toggle('active', t===tab);
+    const paneId = t === 'dash' ? 'dashboardPane' : t+'Pane';
+    const pane = document.getElementById(paneId);
+    if (pane) pane.style.display = t === tab ? 'flex' : 'none';
+  });
+  if (S.activities.length) {
+    if (tab === 'acts')   renderActsPane();
+    if (tab === 'power')  renderPowerPane();
+    if (tab === 'trends') renderTrendsPane();
+    if (tab === 'race')   renderRacePane();
+  }
+}
+
+// ── byMonth helper ─────────────────────────────────────
+// groups activities by calendar month and computes per-field averages/sums
+// fields: array of { name, get, agg } where agg is 'avg' (default) or 'sum'
+function byMonth(acts, fields) {
+  const map = {};
+  acts.forEach(a => {
+    const d = new Date(a.start_date);
+    const key = `${d.getFullYear()}-${String(d.getMonth()+1).padStart(2,'0')}`;
+    if (!map[key]) { map[key] = { _count:0 }; fields.forEach(f=>{ map[key][f.name]=[]; }); }
+    map[key]._count++;
+    fields.forEach(f => {
+      const v = f.get(a);
+      if (v !== null && v !== undefined && !isNaN(v)) map[key][f.name].push(v);
+    });
+  });
+  const months = Object.keys(map).sort();
+  const label = k => k.slice(5)+'/'+k.slice(2,4);
+  return months.map(k => {
+    const row = { label: label(k), key: k };
+    fields.forEach(f => {
+      const vals = map[k][f.name];
+      if (!vals.length) { row[f.name] = null; return; }
+      if (f.agg === 'sum') { row[f.name] = vals.reduce((a,b)=>a+b,0); return; }
+      // default: average with IQR outlier removal
+      const sorted = [...vals].sort((a,b)=>a-b);
+      const q1 = sorted[Math.floor(sorted.length*0.25)];
+      const q3 = sorted[Math.floor(sorted.length*0.75)];
+      const fence = q3 + 1.5*(q3-q1);
+      const clean = sorted.filter(v=>v<=fence);
+      row[f.name] = clean.length ? clean.reduce((a,b)=>a+b,0)/clean.length : null;
+    });
+    return row;
+  });
+}
+
+// ── Chart defaults ──────────────────────────────────────
+function chartDefaults() {
+  return {
+    responsive: true,
+    maintainAspectRatio: false,
+    plugins: {
+      legend: { labels: { color: '#525c70', font: { size: 9, family: "'Space Mono', monospace" }, boxWidth: 10, padding: 12 } },
+      tooltip: { backgroundColor: 'rgba(15,18,24,.95)', titleColor: '#9aa3b4', bodyColor: '#eef0f4', borderColor: 'rgba(255,255,255,.08)', borderWidth: 1, padding: 10, cornerRadius: 6 }
+    },
+    scales: {
+      x: { grid: { display: false }, ticks: { color: '#525c70', font: { size: 9 }, maxTicksLimit: 10 } },
+      y: { grid: { color: 'rgba(255,255,255,.04)' }, ticks: { color: '#525c70', font: { size: 9 } } }
+    }
+  };
+}
+
+// ── Statistical helpers ─────────────────────────────────
+function mean(arr)   { return arr && arr.length ? arr.reduce((a,b)=>a+b,0)/arr.length : 0; }
+function median(arr) { if (!arr || !arr.length) return 0; const s=[...arr].sort((a,b)=>a-b); const m=Math.floor(s.length/2); return s.length%2?s[m]:(s[m-1]+s[m])/2; }
+
+function robustFTP(rides) {
+  const eligible = rides.filter(r =>
+    r.weighted_average_watts > 80 &&
+    r.weighted_average_watts < 600 &&
+    r.moving_time >= 1200
+  ).map(r => r.weighted_average_watts * 0.95);
+  if (!eligible.length) return null;
+  eligible.sort((a,b)=>a-b);
+  const q1 = eligible[Math.floor(eligible.length*0.25)];
+  const q3 = eligible[Math.floor(eligible.length*0.75)];
+  const fence = q3 + 1.5*(q3-q1);
+  const clean = eligible.filter(v=>v<=fence);
+  return clean.length ? +Math.max(...clean).toFixed(0) : null;
+}
+
+function setKPI(id, val, unit) {
+  const el = document.getElementById(id);
+  if (!el) return;
+  el.innerHTML = (val !== null && val !== undefined ? val : '—') +
+    (unit ? `<span class="kpi-unit">${unit}</span>` : '');
+}
+
+function calcConfidence(acts, dist, type) {
+  const relevant = type === 'ride'
+    ? acts.filter(a=>a.type==='Ride'||a.type==='VirtualRide')
+    : acts.filter(a=>a.type==='Run');
+  const nearby = relevant.filter(r => {
+    if (!dist) return true;
+    return r.distance >= dist * 0.6 && r.distance <= dist * 1.5;
+  });
+  if (nearby.length >= 10) return `<span style="color:var(--green)">HIGH</span>`;
+  if (nearby.length >= 4)  return `<span style="color:var(--yellow)">MED</span>`;
+  return `<span style="color:var(--red)">LOW</span>`;
+}
+
+function buildRaceTable(headers, rows, colors) {
+  const ths = headers.map((h,i)=>`<th style="color:${colors[i]||'var(--text-2)'}">${h}</th>`).join('');
+  const trs = rows.map(row =>
+    `<tr>${row.map((cell,i)=>`<td style="color:${colors[i]||'var(--text-1)'}">${cell}</td>`).join('')}</tr>`
+  ).join('');
+  return `<table class="race-table"><thead><tr>${ths}</tr></thead><tbody>${trs}</tbody></table>`;
+}
+
+// ── Main Dashboard Render ───────────────────────────────
+function renderDashboard() {
+  const acts  = S.activities;
+  const rides = acts.filter(a=>a.type==='Ride'||a.type==='VirtualRide');
+  const runs  = acts.filter(a=>a.type==='Run');
+  const wt    = cfg.weight || 74;
+  const now   = Date.now();
+  const w30   = 30*86400000;
+
+  // KPIs
+  const l30Acts  = acts.filter(a=>now-new Date(a.start_date)<w30);
+  const p30Acts  = acts.filter(a=>{ const ag=now-new Date(a.start_date); return ag>=w30&&ag<2*w30; });
+  setKPI('k0', acts.length);
+  const dDelta = l30Acts.length - p30Acts.length;
+  const el0d = document.getElementById('k0d');
+  if (el0d) el0d.innerHTML = `<span style="color:${dDelta>=0?'var(--green)':'var(--red)'}">${dDelta>=0?'▲':'▼'}${Math.abs(dDelta)}</span> vs prev 30d`;
+
+  const l30dist = l30Acts.reduce((s,a)=>s+(a.distance||0),0)/1000;
+  const p30dist = p30Acts.reduce((s,a)=>s+(a.distance||0),0)/1000;
+  setKPI('k1', Math.round(acts.reduce((s,a)=>s+(a.distance||0),0)/1000).toLocaleString(), 'km');
+  const distDelta = l30dist - p30dist;
+  const el1d = document.getElementById('k1d');
+  if (el1d) el1d.innerHTML = `<span style="color:${distDelta>=0?'var(--green)':'var(--red)'}">${distDelta>=0?'▲':'▼'}${Math.round(Math.abs(distDelta))}</span> km vs prev 30d`;
+
+  setKPI('k2', Math.round(acts.reduce((s,a)=>s+(a.total_elevation_gain||0),0)).toLocaleString(), 'm');
+  const ftp = robustFTP(rides);
+  setKPI('k3', ftp||'—', 'W');
+  const hrRides = rides.filter(r=>r.average_heartrate);
+  setKPI('k4', hrRides.length ? Math.round(mean(hrRides.map(r=>r.average_heartrate))) : '—', 'bpm');
+
+  // Power / HR / Cadence overlay chart
+  const sorted = [...rides].sort((a,b)=>new Date(a.start_date)-new Date(b.start_date)).slice(-70);
+  const labels = sorted.map(r=>new Date(r.start_date).toLocaleDateString('en',{month:'short',day:'numeric'}));
+  const ctx1 = document.getElementById('cPerf').getContext('2d');
+  if (S.charts.perf) S.charts.perf.destroy();
+  S.charts.perf = new Chart(ctx1, {
+    type:'line',
+    data:{ labels, datasets:[
+      { label:'NP (W)', data:sorted.map(r=>r.weighted_average_watts||r.average_watts), borderColor:'#fc4c02', backgroundColor:'rgba(252,76,2,0.06)', borderWidth:1.5, tension:.3, pointRadius:0, fill:true, yAxisID:'yP' },
+      { label:'Avg HR', data:sorted.map(r=>r.average_heartrate), borderColor:'#b388ff', backgroundColor:'transparent', borderWidth:1.5, tension:.3, pointRadius:0, yAxisID:'yH' },
+      { label:'Cadence', data:sorted.map(r=>r.average_cadence), borderColor:'#00c8f0', backgroundColor:'transparent', borderWidth:1.5, tension:.3, pointRadius:0, yAxisID:'yC' },
+    ]},
+    options:{ responsive:true, maintainAspectRatio:false, interaction:{mode:'index',intersect:false},
+      plugins:{ legend:{ labels:{ color:'#525c70', font:{size:9}, boxWidth:10 } }, tooltip:{ backgroundColor:'rgba(15,18,24,.95)', titleColor:'#9aa3b4', bodyColor:'#eef0f4', borderColor:'rgba(255,255,255,.08)', borderWidth:1 } },
+      scales:{ yP:{position:'left',grid:{color:'rgba(255,255,255,.04)'},ticks:{color:'#525c70',font:{size:9}}}, yH:{position:'right',grid:{display:false},ticks:{color:'#525c70',font:{size:9}}}, yC:{display:false}, x:{grid:{display:false},ticks:{color:'#525c70',font:{size:9},maxTicksLimit:8}} }
+    }
+  });
+
+  // Sport doughnut
+  const sportCounts = {};
+  acts.forEach(a=>{ sportCounts[a.type]=(sportCounts[a.type]||0)+1; });
+  const ctx2 = document.getElementById('cSport').getContext('2d');
+  if (S.charts.sport) S.charts.sport.destroy();
+  S.charts.sport = new Chart(ctx2, {
+    type:'doughnut',
+    data:{ labels:Object.keys(sportCounts), datasets:[{ data:Object.values(sportCounts), backgroundColor:['#fc4c02','#00c8f0','#ffc107','#b388ff','#00e676','#ff5252'], borderWidth:0, hoverOffset:4 }] },
+    options:{ responsive:true, maintainAspectRatio:false, plugins:{ legend:{ position:'right', labels:{ color:'#9aa3b4', font:{size:9}, boxWidth:10, padding:10 } } }, cutout:'68%' }
+  });
+
+  // Weekly distance
+  const weekDist = {};
+  acts.forEach(a=>{ const d=new Date(a.start_date); const ws=new Date(d); ws.setDate(d.getDate()-d.getDay()); const k=`${ws.getMonth()+1}/${ws.getDate()}`; weekDist[k]=(weekDist[k]||0)+(a.distance||0)/1000; });
+  const wkSorted = Object.entries(weekDist).slice(-14);
+  const ctx3 = document.getElementById('cWeekly').getContext('2d');
+  if (S.charts.weekly) S.charts.weekly.destroy();
+  S.charts.weekly = new Chart(ctx3, {
+    type:'bar',
+    data:{ labels:wkSorted.map(([k])=>k), datasets:[{ label:'km', data:wkSorted.map(([,v])=>+v.toFixed(1)), backgroundColor:'rgba(0,230,118,0.5)', borderColor:'#00e676', borderWidth:1 }] },
+    options:{ responsive:true, maintainAspectRatio:false, plugins:{ legend:{display:false} }, scales:{ y:{grid:{color:'rgba(255,255,255,.04)'},ticks:{color:'#525c70',font:{size:9}}}, x:{grid:{display:false},ticks:{color:'#525c70',font:{size:9}}} } }
+  });
+
+  // TSS
+  renderTSSChart(acts);
+
+  // Triple progression (monthly power/HR/cadence)
+  renderTripleProgression(rides);
+
+  // W/BPM
+  renderWperBPM(rides);
+
+  // Monthly elevation
+  renderMonthElevDash(acts);
+
+  // Duration
+  renderDurationChart(rides);
+
+  // Streams charts if data available
+  if (Object.keys(S.streamMetrics||{}).length > 0) {
+    renderStreamsCharts(rides);
+  }
+
+  // Activity list
+  renderActList(acts.slice(0,7));
+  renderInsights(acts, rides, runs);
+  updateCtxBar(acts);
+  updatePrompts(rides, runs);
+  setTimeout(injectInsightButtons, 50);
+  // Generate AI coaching summary (async, non-blocking)
+  generateExecSummary(acts, rides, runs);
+}
+
+function renderActsPane() {
+  const acts = S.activities;
+  document.getElementById('actsCount').textContent = acts.length + ' activities';
+  renderActsTable(acts);
+}
+
+function renderActsTable(acts) {
+  const icons = {Ride:'🚴',Run:'🏃',VirtualRide:'💻',Swim:'🏊',Walk:'🚶',Hike:'🥾'};
+  const rows = acts.map(a => {
+    const d = new Date(a.start_date);
+    const dist = ((a.distance||0)/1000).toFixed(1);
+    const dur = a.moving_time ? Math.floor(a.moving_time/3600)+'h '+(Math.floor((a.moving_time%3600)/60))+'m' : '—';
+    const np = a.weighted_average_watts ? Math.round(a.weighted_average_watts)+'W' : '—';
+    const hr = a.average_heartrate ? Math.round(a.average_heartrate)+'bpm' : '—';
+    const cad = a.average_cadence ? Math.round(a.average_cadence)+'rpm' : '—';
+    const elev = a.total_elevation_gain ? Math.round(a.total_elevation_gain)+'m' : '—';
+    return `<tr style="border-bottom:1px solid var(--border);transition:background .12s" onmouseover="this.style.background='var(--bg-3)'" onmouseout="this.style.background='transparent'">
+      <td style="padding:8px 10px;font-size:15px">${icons[a.type]||'🏅'}</td>
+      <td style="padding:8px 4px"><div style="font-size:12px;font-weight:500;color:var(--text-0)">${a.name}</div><div style="font-family:var(--mono);font-size:9px;color:var(--text-2)">${a.type}</div></td>
+      <td style="padding:8px 10px;font-family:var(--mono);font-size:10px;color:var(--text-1)">${d.toLocaleDateString()}</td>
+      <td style="padding:8px 10px;font-family:var(--mono);font-size:11px;color:var(--text-0)">${dist}<span style="color:var(--text-3)">km</span></td>
+      <td style="padding:8px 10px;font-family:var(--mono);font-size:11px;color:var(--text-1)">${dur}</td>
+      <td style="padding:8px 10px;font-family:var(--mono);font-size:11px;color:var(--orange)">${np}</td>
+      <td style="padding:8px 10px;font-family:var(--mono);font-size:11px;color:var(--purple)">${hr}</td>
+      <td style="padding:8px 10px;font-family:var(--mono);font-size:11px;color:var(--cyan)">${cad}</td>
+      <td style="padding:8px 10px;font-family:var(--mono);font-size:11px;color:var(--green)">${elev}</td>
+    </tr>`;
+  }).join('');
+
+  document.getElementById('actsTable').innerHTML = `
+    <table style="width:100%;border-collapse:collapse">
+      <thead>
+        <tr style="border-bottom:1px solid var(--border-hi)">
+          <th style="padding:6px 10px;font-family:var(--mono);font-size:9px;color:var(--text-2);text-align:left;letter-spacing:1px"> </th>
+          <th style="padding:6px 4px;font-family:var(--mono);font-size:9px;color:var(--text-2);text-align:left;letter-spacing:1px">NAME</th>
+          <th style="padding:6px 10px;font-family:var(--mono);font-size:9px;color:var(--text-2);text-align:left;letter-spacing:1px">DATE</th>
+          <th style="padding:6px 10px;font-family:var(--mono);font-size:9px;color:var(--text-2);text-align:left;letter-spacing:1px">DIST</th>
+          <th style="padding:6px 10px;font-family:var(--mono);font-size:9px;color:var(--text-2);text-align:left;letter-spacing:1px">TIME</th>
+          <th style="padding:6px 10px;font-family:var(--mono);font-size:9px;color:var(--orange);text-align:left;letter-spacing:1px">NP</th>
+          <th style="padding:6px 10px;font-family:var(--mono);font-size:9px;color:var(--purple);text-align:left;letter-spacing:1px">HR</th>
+          <th style="padding:6px 10px;font-family:var(--mono);font-size:9px;color:var(--cyan);text-align:left;letter-spacing:1px">CAD</th>
+          <th style="padding:6px 10px;font-family:var(--mono);font-size:9px;color:var(--green);text-align:left;letter-spacing:1px">ELEV</th>
+        </tr>
+      </thead>
+      <tbody>${rows}</tbody>
+    </table>`;
+}
+
+function filterActs(q) {
+  const lower = q.toLowerCase();
+  const filtered = S.activities.filter(a =>
+    a.name.toLowerCase().includes(lower) || a.type.toLowerCase().includes(lower)
+  );
+  document.getElementById('actsCount').textContent = filtered.length + ' activities';
+  renderActsTable(filtered);
+}
+
+function renderPowerPane() {
+  const rides = S.activities.filter(a => a.type==='Ride'||a.type==='VirtualRide');
+  const withNP = rides.filter(r => r.weighted_average_watts);
+  const withCad = rides.filter(r => r.average_cadence);
+
+  if (!withNP.length) {
+    document.getElementById('powerPane').innerHTML += '<div class="empty-state"><div class="empty-icon">⚡</div><div class="empty-title">No power data</div><div class="empty-sub">Power data requires a power meter on your rides.</div></div>';
+    return;
+  }
+
+  const bestNP = withNP.length ? Math.max(...withNP.map(r => r.weighted_average_watts)) : 0;
+  const estFTP = Math.round(bestNP * 0.95);
+  const avgCad = withCad.length ? withCad.reduce((s,r)=>s+r.average_cadence,0)/withCad.length : 0;
+  const wkg = (estFTP / 74).toFixed(2);
+
+  document.getElementById('pFTP').innerHTML = `${estFTP}<span class="kpi-unit">W</span>`;
+  document.getElementById('pBest20').innerHTML = `${Math.round(bestNP)}<span class="kpi-unit">W</span>`;
+  document.getElementById('pCad').innerHTML = `${Math.round(avgCad)}<span class="kpi-unit">rpm</span>`;
+  document.getElementById('pWkg').innerHTML = wkg;
+
+  // NP over time
+  const sorted = [...withNP].sort((a,b) => new Date(a.start_date)-new Date(b.start_date));
+  const labels = sorted.map(r => { const d=new Date(r.start_date); return `${d.getMonth()+1}/${d.getDate()}`; });
+
+  const ctx1 = document.getElementById('cPowerTime').getContext('2d');
+  if (S.charts.powerTime) S.charts.powerTime.destroy();
+  S.charts.powerTime = new Chart(ctx1, {
+    type:'line',
+    data:{ labels, datasets:[
+      { label:'NP (W)', data:sorted.map(r=>r.weighted_average_watts),
+        borderColor:'#fc4c02', backgroundColor:'rgba(252,76,2,0.07)',
+        borderWidth:2, fill:true, tension:.35, pointRadius:2 },
+      { label:'FTP line', data:sorted.map(()=>estFTP),
+        borderColor:'rgba(255,214,10,0.5)', borderDash:[6,4],
+        borderWidth:1.5, pointRadius:0 }
+    ]},
+    options:{ ...chartDefaults(), interaction:{mode:'index',intersect:false},
+      plugins:{ ...chartDefaults().plugins,
+        legend:{ display:true, position:'bottom', labels:{color:'#525c70',font:{family:'Space Mono',size:8},padding:10,boxWidth:12} }
+      },
+      scales:{
+        x:{ ticks:{color:'#2e3545',font:{family:'Space Mono',size:8},maxTicksLimit:12}, grid:{color:'rgba(255,255,255,.025)'} },
+        y:{ ticks:{color:'#fc4c02',font:{family:'Space Mono',size:8}}, grid:{color:'rgba(255,255,255,.025)'} }
+      }
+    }
+  });
+
+  // Power vs HR scatter
+  const scatter = withNP.filter(r=>r.average_heartrate).map(r=>({x:r.average_heartrate, y:r.weighted_average_watts}));
+  const ctx2 = document.getElementById('cPowerHR').getContext('2d');
+  if (S.charts.powerHR) S.charts.powerHR.destroy();
+  S.charts.powerHR = new Chart(ctx2, {
+    type:'scatter',
+    data:{ datasets:[{ label:'NP vs HR', data:scatter,
+      backgroundColor:'rgba(0,200,240,0.5)', borderColor:'var(--cyan)', pointRadius:4 }]},
+    options:{ ...chartDefaults(),
+      scales:{
+        x:{ title:{display:true,text:'Avg HR (bpm)',color:'#525c70',font:{family:'Space Mono',size:8}}, ticks:{color:'#2e3545',font:{family:'Space Mono',size:8}}, grid:{color:'rgba(255,255,255,.025)'} },
+        y:{ title:{display:true,text:'NP (W)',color:'#525c70',font:{family:'Space Mono',size:8}}, ticks:{color:'#fc4c02',font:{family:'Space Mono',size:8}}, grid:{color:'rgba(255,255,255,.025)'} }
+      }
+    }
+  });
+
+  // Cadence over time
+  if (withCad.length) {
+    const sortedCad = [...withCad].sort((a,b)=>new Date(a.start_date)-new Date(b.start_date));
+    const ctx3 = document.getElementById('cCadTime').getContext('2d');
+    if (S.charts.cadTime) S.charts.cadTime.destroy();
+    S.charts.cadTime = new Chart(ctx3, {
+      type:'line',
+      data:{ labels:sortedCad.map(r=>{ const d=new Date(r.start_date); return `${d.getMonth()+1}/${d.getDate()}`; }),
+        datasets:[{ label:'Cadence (rpm)', data:sortedCad.map(r=>r.average_cadence),
+          borderColor:'#00c8f0', backgroundColor:'rgba(0,200,240,0.07)',
+          borderWidth:2, fill:true, tension:.4, pointRadius:2 }]},
+      options:{ ...chartDefaults(),
+        scales:{
+          x:{ ticks:{color:'#2e3545',font:{family:'Space Mono',size:8},maxTicksLimit:12}, grid:{color:'rgba(255,255,255,.025)'} },
+          y:{ ticks:{color:'#00c8f0',font:{family:'Space Mono',size:8}}, grid:{color:'rgba(255,255,255,.025)'}, min:50 }
+        }
+      }
+    });
+  }
+  setTimeout(injectInsightButtons, 50);
+}
+
+function renderTrendsPane() {
+  const acts = S.activities;
+  // Group by month
+  const byMonth = {};
+  acts.forEach(a => {
+    const d = new Date(a.start_date);
+    const key = `${d.getFullYear()}-${String(d.getMonth()+1).padStart(2,'0')}`;
+    if (!byMonth[key]) byMonth[key] = { dist:0, elev:0, tss:0, count:0 };
+    byMonth[key].dist += (a.distance||0)/1000;
+    byMonth[key].elev += (a.total_elevation_gain||0);
+    byMonth[key].tss  += (a.suffer_score||a.moving_time/3600*45);
+    byMonth[key].count++;
+  });
+  const months = Object.keys(byMonth).sort().slice(-18);
+  const labels = months.map(m => { const [y,mo]=m.split('-'); return `${mo}/${y.slice(2)}`; });
+
+  const ctxMD = document.getElementById('cMonthDist').getContext('2d');
+  if (S.charts.mDist) S.charts.mDist.destroy();
+  S.charts.mDist = new Chart(ctxMD, {
+    type:'bar',
+    data:{ labels, datasets:[{ label:'Distance km', data:months.map(m=>Math.round(byMonth[m].dist)),
+      backgroundColor:'rgba(0,230,118,0.25)', borderColor:'#00e676', borderWidth:1, borderRadius:3 }]},
+    options:{ ...chartDefaults(),
+      scales:{ x:{ticks:{color:'#2e3545',font:{family:'Space Mono',size:8}},grid:{display:false}},
+               y:{ticks:{color:'#2e3545',font:{family:'Space Mono',size:8}},grid:{color:'rgba(255,255,255,.025)'}} }}
+  });
+
+  const ctxME = document.getElementById('cMonthElev').getContext('2d');
+  if (S.charts.mElev) S.charts.mElev.destroy();
+  S.charts.mElev = new Chart(ctxME, {
+    type:'bar',
+    data:{ labels, datasets:[{ label:'Elevation m', data:months.map(m=>Math.round(byMonth[m].elev)),
+      backgroundColor:'rgba(255,193,7,0.2)', borderColor:'#ffc107', borderWidth:1, borderRadius:3 }]},
+    options:{ ...chartDefaults(),
+      scales:{ x:{ticks:{color:'#2e3545',font:{family:'Space Mono',size:8}},grid:{display:false}},
+               y:{ticks:{color:'#2e3545',font:{family:'Space Mono',size:8}},grid:{color:'rgba(255,255,255,.025)'}} }}
+  });
+
+  // Rolling 4-week TSS
+  const weeks = {};
+  const now = Date.now();
+  acts.forEach(a => {
+    const w = Math.floor((now - new Date(a.start_date)) / (7*86400000));
+    if (w < 24) weeks[w] = (weeks[w]||0) + (a.suffer_score||a.moving_time/3600*45);
+  });
+  const wkLabels = Array.from({length:24},(_,i)=>i).reverse().map(w=>`-${w}w`);
+  const wkData = Array.from({length:24},(_,i)=>Math.round(weeks[i]||0)).reverse();
+
+  const ctxRT = document.getElementById('cRollingTSS').getContext('2d');
+  if (S.charts.rollingTSS) S.charts.rollingTSS.destroy();
+  S.charts.rollingTSS = new Chart(ctxRT, {
+    type:'line',
+    data:{ labels:wkLabels, datasets:[{ label:'Weekly TSS', data:wkData,
+      borderColor:'#fc4c02', backgroundColor:'rgba(252,76,2,0.08)',
+      borderWidth:2, fill:true, tension:.4, pointRadius:2 }]},
+    options:{ ...chartDefaults(),
+      scales:{ x:{ticks:{color:'#2e3545',font:{family:'Space Mono',size:8},maxTicksLimit:12},grid:{display:false}},
+               y:{ticks:{color:'#fc4c02',font:{family:'Space Mono',size:8}},grid:{color:'rgba(255,255,255,.025)'}} }}
+  });
+
+  // HR Efficiency per month
+  const rides = acts.filter(a=>(a.type==='Ride'||a.type==='VirtualRide')&&a.average_heartrate&&a.average_watts);
+  const effByMonth = {};
+  rides.forEach(r => {
+    const d = new Date(r.start_date);
+    const key = `${d.getFullYear()}-${String(d.getMonth()+1).padStart(2,'0')}`;
+    if (!effByMonth[key]) effByMonth[key] = [];
+    effByMonth[key].push(r.average_watts / r.average_heartrate);
+  });
+  const effMonths = Object.keys(effByMonth).sort().slice(-18);
+  const effLabels = effMonths.map(m => { const [y,mo]=m.split('-'); return `${mo}/${y.slice(2)}`; });
+  const effData = effMonths.map(m => {
+    const arr = effByMonth[m];
+    return arr && arr.length ? +(arr.reduce((s,v)=>s+v,0)/arr.length).toFixed(3) : null;
+  });
+
+  const ctxHR = document.getElementById('cHReff').getContext('2d');
+  if (S.charts.hrEff) S.charts.hrEff.destroy();
+  S.charts.hrEff = new Chart(ctxHR, {
+    type:'line',
+    data:{ labels:effLabels, datasets:[{ label:'W/BPM', data:effData,
+      borderColor:'#b388ff', backgroundColor:'rgba(179,136,255,0.08)',
+      borderWidth:2, fill:true, tension:.4, pointRadius:3, pointBackgroundColor:'#b388ff' }]},
+    options:{ ...chartDefaults(),
+      scales:{ x:{ticks:{color:'#2e3545',font:{family:'Space Mono',size:8}},grid:{display:false}},
+               y:{ticks:{color:'#b388ff',font:{family:'Space Mono',size:8}},grid:{color:'rgba(255,255,255,.025)'}} }}
+  });
+  setTimeout(injectInsightButtons, 50);
+}
+
+// ═══════════════════════════════════════════════════════
+// RACE PREP ENGINE
+// ═══════════════════════════════════════════════════════
+
+// ── VO2Max Estimates ────────────────────────────────────
+
+// ── VO2Max helpers ──────────────────────────────────────
+// Returns { lower, upper, mid } range in ml/kg/min
+// Lower: FTP-based power model (cyclists, corrected for trained efficiency)
+// Upper: Uth HR-ratio formula (HRmax/HRrest × 15.3) — most accurate with known HRrest
+function estimateVO2MaxRange(acts, weightKg) {
+  const wt     = weightKg || cfg.weight || 74;
+  const rides  = acts.filter ? acts.filter(a=>a.type==='Ride'||a.type==='VirtualRide') : acts;
+  const runs   = acts.filter ? acts.filter(a=>a.type==='Run') : [];
+
+  // Detect HRmax: use configured value, or detect from data
+  const hrVals = [...(rides||[]),...(runs||[])].filter(r=>r&&r.max_heartrate).map(r=>r.max_heartrate); const dataMaxHR = hrVals.length ? Math.max(0, ...hrVals) : 0;
+  const hrMax  = cfg.hrMax || (dataMaxHR > 150 ? dataMaxHR : null) || 188;
+  const hrRest = cfg.hrRest || 45; // conservative default
+
+  // ── Method 1: Uth (HR ratio) — accurate for athletes with known HRrest
+  const uth = +(15.3 * hrMax / hrRest).toFixed(1);
+
+  // ── Method 2: Power-based (cyclists)
+  // Use best sustained NP × efficiency correction
+  // Select rides ≥30min, IQR-clean, prefer high-HR efforts (>80% HRmax)
+  const eligible = rides.filter(r =>
+    r.weighted_average_watts > 80 && r.weighted_average_watts < 600 &&
+    r.moving_time >= 1800
+  );
+  let powerVO2 = null;
+  if (eligible.length) {
+    // 20-min equivalent power: for each ride, estimate P20m
+    // If ride > 60min: P20m ≈ NP / race_power_fraction(dur_min)  * 1.0 (NP represents sustained)
+    // Use FTP (robustFTP) as the anchor: P20m = FTP/0.95
+    const ftp = robustFTP(rides);
+    if (ftp) {
+      const p20m = ftp / 0.95; // 20-min power is ~5% above FTP
+      // Gross VO2 at 20-min effort (trained cyclist gross efficiency ≈ 23.5%)
+      const vo2_at_effort = 10.8 * p20m / wt + 7;
+      // At 20-min maximal effort, HR ≈ 97-100% HRmax → minimal extrapolation needed
+      // Correction for trained athlete efficiency (they do more work per O2)
+      // Add 15% correction factor (empirically validated for athletes with FTP>3 W/kg)
+      const efficiencyCorrection = wt > 0 && (ftp/wt) > 3.0 ? 1.15 : 1.08;
+      powerVO2 = +(vo2_at_effort * efficiencyCorrection).toFixed(1);
+    }
+  }
+
+  // ── Method 3: VDOT from best run (if available)
+  const vdot = estimateVO2MaxVDOT(runs);
+
+  // Combine: use available methods
+  const methods = [powerVO2, vdot].filter(v=>v!=null);
+  const lower   = methods.length ? Math.min(...methods) : null;
+  const upper   = uth;
+  const mid     = methods.length ? +((methods.reduce((a,b)=>a+b,0)/methods.length + upper) / 2).toFixed(1) : upper;
+
+  return { lower: lower ? +lower.toFixed(1) : null, upper, mid, uth, powerVO2, vdot };
+}
+
+// Legacy single-value wrapper (used in monthly series, returns midpoint)
+function estimateVO2MaxFirstbeat(rides, weightKg) {
+  const wt = weightKg || cfg.weight || 74;
+  const ftp = robustFTP(rides);
+  if (!ftp) return null;
+  const p20m = ftp / 0.95;
+  const hrMax  = cfg.hrMax || Math.max(0, ...rides.filter(r=>r.max_heartrate).map(r=>r.max_heartrate), 185);
+  const hrRest = cfg.hrRest || 45;
+  const vo2_effort = 10.8 * p20m / wt + 7;
+  const wkg = ftp / wt;
+  const correction = wkg > 3.0 ? 1.15 : 1.08;
+  return +(vo2_effort * correction).toFixed(1);
+}
+
+// Jack Daniels VDOT from best run pace (uses Daniels-Gilbert formula)
+function estimateVO2MaxVDOT(runs) {
+  const eligible = runs.filter(r => r.distance >= 3000 && r.moving_time > 600);
+  if (!eligible.length) return null;
+  // For each run: VDOT = (-4.6 + 0.182258*(v) + 0.000104*(v^2)) / (0.8 + 0.1894393*e^(-0.012778*t) + 0.2989558*e^(-0.1932605*t))
+  // v = speed in m/min, t = time in minutes
+  const vdots = eligible.map(r => {
+    const v = (r.distance / r.moving_time) * 60; // m/min
+    const t = r.moving_time / 60;                // minutes
+    const numerator   = -4.6 + 0.182258*v + 0.000104*v*v;
+    const denominator = 0.8 + 0.1894393*Math.exp(-0.012778*t) + 0.2989558*Math.exp(-0.1932605*t);
+    return numerator / denominator;
+  }).filter(v => v > 20 && v < 90).sort((a,b)=>b-a);
+  return vdots.length ? +vdots[0].toFixed(1) : null;
+}
+
+// Monthly VO2Max series for chart
+function vo2MaxSeries(acts, weightKg) {
+  const wt = weightKg || cfg.weight || 74;
+  const rides = acts.filter(a=>a.type==='Ride'||a.type==='VirtualRide');
+  const runs  = acts.filter(a=>a.type==='Run');
+  const monthMap = {};
+  acts.forEach(a => {
+    const d = new Date(a.start_date);
+    const key = `${d.getFullYear()}-${String(d.getMonth()+1).padStart(2,'0')}`;
+    if (!monthMap[key]) monthMap[key] = { rides:[], runs:[] };
+    if (a.type==='Ride'||a.type==='VirtualRide') monthMap[key].rides.push(a);
+    if (a.type==='Run') monthMap[key].runs.push(a);
+  });
+  const months = Object.keys(monthMap).sort();
+  return months.map(k => {
+    const label = k.slice(5)+'/'+k.slice(2,4);
+    const fb = estimateVO2MaxFirstbeat(monthMap[k].rides, wt);
+    const vd = estimateVO2MaxVDOT(monthMap[k].runs);
+    return { label, fb, vd };
+  });
+}
+
+// ── Projection (linear regression on last N weeks) ──────
+function linearRegression(ys) {
+  const n = ys.length;
+  if (n < 3) return null;
+  const xs = ys.map((_,i)=>i);
+  const xm = xs.reduce((a,b)=>a+b)/n;
+  const ym = ys.reduce((a,b)=>a+b)/n;
+  const num = xs.reduce((s,x,i)=>s+(x-xm)*(ys[i]-ym),0);
+  const den = xs.reduce((s,x)=>s+(x-xm)**2,0);
+  const slope = den ? num/den : 0;
+  const intercept = ym - slope*xm;
+  return { slope, intercept, project: weeks => intercept + slope*(n-1+weeks) };
+}
+
+// Project weekly TSS for next 4 weeks
+function projectTSS(acts) {
+  const now = Date.now();
+  const weeks = Array.from({length:16},(_,i)=>i); // last 16 weeks
+  const data = weeks.map(w => {
+    const start = now - (w+1)*7*86400000;
+    const end   = now - w*7*86400000;
+    const wActs = acts.filter(a=>{ const t=new Date(a.start_date).getTime(); return t>=start&&t<end; });
+    return wActs.reduce((s,a)=>s+((a.suffer_score||0)||(a.moving_time ? a.moving_time/3600*45 : 0)),0);
+  }).reverse();
+  const reg = linearRegression(data.slice(-8)); // use last 8 weeks for projection
+  return { historical: data, regression: reg };
+}
+
+// ── Race Time Predictions ────────────────────────────────
+
+// Riegel formula: T2 = T1 * (D2/D1)^1.06
+function riegelTime(refDist, refTime, targetDist) {
+  return refTime * Math.pow(targetDist / refDist, 1.06);
+}
+
+function fmtTime(secs) {
+  if (!secs || secs <= 0) return '—';
+  const h = Math.floor(secs/3600);
+  const m = Math.floor((secs%3600)/60);
+  const s = Math.round(secs%60);
+  if (h > 0) return `${h}:${String(m).padStart(2,'0')}:${String(s).padStart(2,'0')}`;
+  return `${m}:${String(s).padStart(2,'0')}`;
+}
+
+function fmtPace(secsPer1k) {
+  const m = Math.floor(secsPer1k/60);
+  const s = Math.round(secsPer1k%60);
+  return `${m}:${String(s).padStart(2,'0')}/km`;
+}
+
+// Best effort from runs at or near a distance (±20%)
+function bestRunEffort(runs, targetDist) {
+  const eligible = runs.filter(r => {
+    const ratio = r.distance / targetDist;
+    return ratio >= 0.8 && ratio <= 1.25 && r.moving_time > 0;
+  });
+  if (!eligible.length) return null;
+  // Normalise each to target distance using Riegel
+  const normalised = eligible.map(r => riegelTime(r.distance, r.moving_time, targetDist));
+  return normalised.length ? Math.min(...normalised) : null;
+}
+
+// Predict run times from best available effort
+function predictRunTimes(runs) {
+  const dists = [5000, 10000, 21097, 42195];
+  // Find the best reference effort across all distances
+  let refDist = null, refTime = null;
+  for (const d of [5000,10000,21097,42195]) {
+    const t = bestRunEffort(runs, d);
+    if (t && (!refTime || t/d < refTime/refDist)) { refDist = d; refTime = t; }
+  }
+  if (!refDist) return null;
+  return dists.map(d => ({
+    dist: d,
+    time: riegelTime(refDist, refTime, d),
+    pace: riegelTime(refDist, refTime, d) / (d/1000)
+  }));
+}
+
+// Martin 1998 cycling physics model + Allen-Coggan power-duration fractions
+function speedFromPower(powerW, riderKg) {
+  // P = 0.5 * rho * CdA * v^3  +  Crr * m * g * v  (flat road)
+  const CdA  = 0.32;   // road bike, hoods — typical trained rider
+  const rho  = 1.2;    // air density kg/m³ (sea level, 25°C)
+  const Crr  = 0.004;  // rolling resistance (good road tyres)
+  const m    = riderKg + 8; // rider + bike kg
+  const g    = 9.81;
+  // Binary search for v
+  let lo = 1.0, hi = 25.0;
+  for (let i = 0; i < 60; i++) {
+    const v = (lo + hi) / 2;
+    const P = 0.5 * rho * CdA * v*v*v + Crr * m * g * v;
+    if (P < powerW) lo = v; else hi = v;
+  }
+  return (lo + hi) / 2 * 3.6; // return kph
+}
+
+// Allen & Coggan empirical power-duration fractions for trained cyclists
+function racePowerFraction(durMin) {
+  if (durMin <= 30)  return Math.min(1.10, 1.05 + 0.05 * (30 - durMin) / 30);
+  if (durMin <= 60)  return 1.0 + 0.05 * (60 - durMin) / 60;
+  if (durMin <= 120) return 0.95 - 0.04 * (durMin - 60) / 60;   // 95% → 91%
+  if (durMin <= 180) return 0.91 - 0.04 * (durMin - 120) / 60;  // 91% → 87%
+  return Math.max(0.80, 0.87 - 0.025 * (durMin - 180) / 60);    // 87% → tapers
+}
+
+function predictCycleTimes(rides, weightKg) {
+  const wt  = weightKg || cfg.weight || 74;
+  const ftp = robustFTP(rides);
+  if (!ftp) return null;
+
+  const cycleRaces = [
+    { label: '50km',  dist: 50 },
+    { label: '90km',  dist: 90 },
+    { label: '120km', dist: 120 }
+  ];
+
+  return cycleRaces.map(race => {
+    // Iteratively solve: speed depends on power, power depends on duration, duration depends on speed
+    let durMin = race.dist / 38 * 60; // initial guess ~38kph
+    let speed, power;
+    for (let iter = 0; iter < 10; iter++) {
+      const frac = racePowerFraction(durMin);
+      power = ftp * frac;
+      speed = speedFromPower(power, wt);
+      durMin = race.dist / speed * 60;
+    }
+    return {
+      label: race.label,
+      dist:  race.dist,
+      power: Math.round(power),
+      frac:  +racePowerFraction(durMin).toFixed(2),
+      speed: +speed.toFixed(1),
+      time:  race.dist / speed * 3600
+    };
+  });
+}
+
+// Triathlon predictions (swim estimated 2min/100m, run/bike from models)
+function predictTriathlonTimes(rides, runs, weightKg) {
+  const wt = weightKg || cfg.weight || 74;
+  const ftp = robustFTP(rides);
+  const runPreds = predictRunTimes(runs);
+
+  const events = [
+    { label:'70.3 (Half Ironman)', swim:1900, bike:90,  run:21097, transT:300 },
+    { label:'Full Ironman',        swim:3800, bike:180, run:42195, transT:600 }
+  ];
+
+  return events.map(ev => {
+    // Swim: 2:00/100m for 70.3, 2:10/100m for full (fatigue)
+    const swimPace = ev.label.includes('Full') ? 130 : 120; // sec/100m
+    const swimTime = (ev.swim/100) * swimPace;
+
+    // Bike: triathlon power ~75-80% FTP (pacing for run)
+    const bikeFrac = ev.label.includes('Full') ? 0.70 : 0.78;
+    const bikePower = ftp ? ftp * bikeFrac : null;
+    // Use proper Martin 1998 physics (same as predictCycleTimes)
+    const bikeSpeed = bikePower ? speedFromPower(bikePower, wt) : 30;
+    const bikeTime = (ev.bike / bikeSpeed) * 3600;
+
+    // Run: triathlon run ~5-8% slower than standalone (fatigue factor)
+    const fatigue = ev.label.includes('Full') ? 1.10 : 1.06;
+    const runBase = runPreds ? runPreds.find(r=>Math.abs(r.dist-ev.run)<500)?.time : null;
+    const runTime = runBase ? runBase * fatigue : null;
+
+    const total = swimTime + bikeTime + (runTime||0) + ev.transT;
+
+    return {
+      label: ev.label, swimTime, bikeTime, runTime, transT: ev.transT, total,
+      bikePower, bikeSpeed: +bikeSpeed.toFixed(1),
+      hasRun: !!runTime, hasBike: !!bikePower
+    };
+  });
+}
+
+// ── Render Race Pane ─────────────────────────────────────
+function renderRacePane() {
+  const acts   = S.activities;
+  const rides  = acts.filter(a=>a.type==='Ride'||a.type==='VirtualRide');
+  const runs   = acts.filter(a=>a.type==='Run');
+  const wt     = cfg.weight || 74;
+  const now    = Date.now();
+  const w4     = 4*7*86400000;
+  const w8     = 8*7*86400000;
+
+  // Recent vs older for trend
+  const recentRides = rides.filter(r=>(now-new Date(r.start_date))<w4);
+  const olderRides  = rides.filter(r=>{ const ag=now-new Date(r.start_date); return ag>=w4&&ag<w8; });
+
+  // ── VO2Max ──────────────────────────────────────────────
+  const vo2range  = estimateVO2MaxRange(acts, wt);
+  const vo2rangeR = estimateVO2MaxRange(recentRides.concat(runs.filter(r=>(now-new Date(r.start_date))<w4)), wt);
+  const vo2rangeO = estimateVO2MaxRange(olderRides.concat(runs.filter(r=>{ const ag=now-new Date(r.start_date); return ag>=w4&&ag<w8; })), wt);
+
+  // Power-based card (lower bound, most conservative)
+  document.getElementById('rVO2fb').innerHTML =
+    (vo2range.powerVO2 ? vo2range.powerVO2 : '—') + '<span class="kpi-unit"> ml/kg/min</span>';
+  document.getElementById('rVO2fbSub').textContent = vo2range.powerVO2
+    ? `power model · range ${vo2range.lower||'?'} – ${vo2range.upper}` : 'need power + FTP data';
+
+  // VDOT card
+  document.getElementById('rVO2vd').innerHTML =
+    (vo2range.vdot ? vo2range.vdot : '—') + '<span class="kpi-unit"> ml/kg/min</span>';
+  document.getElementById('rVO2vdSub').textContent = vo2range.vdot
+    ? 'Jack Daniels VDOT · best run effort' : 'need run data';
+
+  // Trend card: show estimated range midpoint
+  const midR = vo2rangeR.mid, midO = vo2rangeO.mid;
+  if (midR && midO) {
+    const delta = (midR - midO).toFixed(1);
+    const up = delta >= 0;
+    document.getElementById('rVO2trend').innerHTML =
+      `<span style="color:${up?'var(--green)':'var(--red)'}">${up?'▲':'▼'} ${Math.abs(delta)}</span>`;
+    document.getElementById('rVO2trendSub').textContent = `${up?'improving':'declining'} vs prev 4w`;
+  }
+  // Set label for Firstbeat card to show method
+  document.querySelector('#rVO2fb').closest('.kpi').querySelector('.kpi-lbl').textContent =
+    'EST. VO2MAX (POWER MODEL)';
+
+  // ── VO2Max chart ────────────────────────────────────────
+  const series = vo2MaxSeries(acts, wt);
+  const fbData = series.map(s=>s.fb);
+  const vdData = series.map(s=>s.vd);
+  // Uth upper bound per month (using configured or detected HRmax/HRrest)
+  const _hrVals = (acts||[]).filter(a=>a&&a.max_heartrate).map(a=>a.max_heartrate); const hrMax = cfg.hrMax || (_hrVals.length ? Math.max(0,..._hrVals) : 185);
+  const hrRest = cfg.hrRest || 45;
+  const uthLine = series.map(()=> +(15.3 * hrMax / hrRest).toFixed(1));
+
+  // Project 4 months forward
+  const fbClean = fbData.filter(v=>v!=null);
+  const vdClean = vdData.filter(v=>v!=null);
+  const fbReg   = linearRegression(fbClean.slice(-6));
+  const vdReg   = linearRegression(vdClean.slice(-6));
+  const projLabels = ['+1m','+2m','+3m','+4m'];
+  const fbProj = fbReg ? projLabels.map((_,i)=>+(fbReg.project(i+1)).toFixed(1)) : [null,null,null,null];
+  const vdProj = vdReg ? projLabels.map((_,i)=>+(vdReg.project(i+1)).toFixed(1)) : [null,null,null,null];
+  const combinedProj = fbProj.map((f,i)=> {
+    const vs = [f, vdProj[i]].filter(v=>v!=null);
+    return vs.length ? +(vs.reduce((a,b)=>a+b)/vs.length).toFixed(1) : null;
+  });
+
+  const allLabels = [...series.map(s=>s.label), ...projLabels];
+
+  const ctx = document.getElementById('cVO2').getContext('2d');
+  if (S.charts.vo2) S.charts.vo2.destroy();
+  S.charts.vo2 = new Chart(ctx, {
+    type:'line',
+    data:{ labels: allLabels, datasets:[
+      { label:'Power model (lower est.)',
+        data:[...fbData,...Array(4).fill(null)],
+        borderColor:'#00c8f0', backgroundColor:'rgba(0,200,240,0.06)',
+        borderWidth:2, fill:false, tension:.4, pointRadius:3, spanGaps:true },
+      { label:'VDOT / run-based',
+        data:[...vdData,...Array(4).fill(null)],
+        borderColor:'#ffc107', backgroundColor:'transparent',
+        borderWidth:2, borderDash:[4,3], tension:.4, pointRadius:3, spanGaps:true },
+      { label:'Uth HR-ratio (upper est.)',
+        data:[...uthLine,...Array(4).fill(uthLine[uthLine.length-1])],
+        borderColor:'rgba(0,230,118,0.5)', backgroundColor:'rgba(0,230,118,0.04)',
+        borderWidth:1.5, borderDash:[6,4], fill:false, tension:0, pointRadius:0, spanGaps:true },
+      { label:'Projected (trend)',
+        data:[...Array(series.length-1).fill(null), combinedProj[0]!=null?(fbData[fbData.length-1]||vdData[vdData.length-1]):null, ...combinedProj],
+        borderColor:'#b388ff', backgroundColor:'rgba(179,136,255,0.07)',
+        borderWidth:1.5, borderDash:[3,3], fill:true, tension:.4, pointRadius:3, spanGaps:true }
+    ]},
+    options:{ ...chartDefaults(),
+      interaction:{mode:'index',intersect:false},
+      plugins:{ ...chartDefaults().plugins,
+        legend:{ display:true, position:'bottom',
+          labels:{color:'#525c70',font:{family:'Space Mono',size:8},padding:12,boxWidth:12} }
+      },
+      scales:{
+        x:{ ticks:{color:'#2e3545',font:{family:'Space Mono',size:8},maxTicksLimit:14}, grid:{color:'rgba(255,255,255,.02)'} },
+        y:{ ticks:{color:'#00c8f0',font:{family:'Space Mono',size:8}},
+            grid:{color:'rgba(255,255,255,.025)'},
+            title:{display:true,text:'ml/kg/min',color:'#525c70',font:{size:8}} }
+      }
+    }
+  });
+
+  // ── Race tables ─────────────────────────────────────────
+  const runPreds  = predictRunTimes(runs);
+  const cyclePreds= predictCycleTimes(rides, wt);
+  const triPreds  = predictTriathlonTimes(rides, runs, wt);
+
+  // Projection multiplier from linear regression on recent fitness
+  const recentNP = recentRides.filter(r=>r.weighted_average_watts).map(r=>r.weighted_average_watts);
+  const olderNP  = olderRides.filter(r=>r.weighted_average_watts).map(r=>r.weighted_average_watts);
+  const mean = arr => arr.length ? arr.reduce((a,b)=>a+b)/arr.length : null;
+  const npTrend = (mean(recentNP) && mean(olderNP)) ? mean(recentNP)/mean(olderNP) : 1.0;
+  // Project 4-week improvement: if power is trending +X%, times improve proportionally
+  const perfImprove4w = Math.max(0.96, Math.min(1.04, npTrend)); // cap at ±4%
+
+  // Run table
+  const runNames = ['5 km','10 km','Half Marathon','Full Marathon'];
+  const runDists = [5000,10000,21097,42195];
+  document.getElementById('raceRunTable').innerHTML = buildRaceTable(
+    ['EVENT','CURRENT EST.','PACE','4-WEEK PROJ.','PROJ. PACE','CONFIDENCE'],
+    runDists.map((d,i) => {
+      const t = runPreds ? runPreds.find(r=>r.dist===d)?.time : null;
+      const proj = t ? t / perfImprove4w : null;
+      const conf = calcConfidence(runs, d, 'run');
+      return [
+        runNames[i],
+        t ? fmtTime(t) : '—',
+        t ? fmtPace(t/(d/1000)) : '—',
+        proj ? fmtTime(proj) : '—',
+        proj ? fmtPace(proj/(d/1000)) : '—',
+        conf
+      ];
+    }),
+    ['','var(--green)','var(--text-2)','var(--yellow)','var(--text-2)','']
+  );
+
+  // Cycle table
+  const cycleNames = ['50 km','90 km','120 km'];
+  document.getElementById('raceCycleTable').innerHTML = buildRaceTable(
+    ['EVENT','CURRENT EST.','AVG SPEED','RACE POWER','% FTP','4-WEEK PROJ.','CONFIDENCE'],
+    (cyclePreds||[]).map((c,i) => {
+      const proj = fmtTime(c.time / perfImprove4w);
+      const conf = calcConfidence(rides, c.dist*1000, 'ride');
+      return [
+        cycleNames[i],
+        fmtTime(c.time),
+        c.speed+' kph',
+        c.power+' W',
+        Math.round(c.frac*100)+'%',
+        proj,
+        conf
+      ];
+    }),
+    ['','var(--orange)','var(--text-2)','var(--orange)','var(--text-2)','var(--yellow)','']
+  );
+
+  // Triathlon table
+  const triNames = ['70.3 Triathlon','Full Ironman'];
+  document.getElementById('raceTriTable').innerHTML = buildRaceTable(
+    ['EVENT','SWIM','BIKE','RUN','TOTAL','4-WEEK PROJ.','CONFIDENCE'],
+    (triPreds||[]).map((t,i) => {
+      const proj = fmtTime(t.total / perfImprove4w);
+      const conf = calcConfidence([...rides,...runs], 0, 'tri');
+      return [
+        triNames[i],
+        t.swimTime ? fmtTime(t.swimTime) : '—',
+        t.bikeTime ? fmtTime(t.bikeTime) : '—',
+        t.runTime  ? fmtTime(t.runTime)  : '—',
+        fmtTime(t.total),
+        proj,
+        conf
+      ];
+    }),
+    ['','var(--cyan)','var(--orange)','var(--green)','var(--text-0)','var(--yellow)','']
+  );
+
+  renderRaceTSSChart(acts);
+  renderRaceFTPChart(rides);
+  setTimeout(injectInsightButtons, 50);
+}
+
+function renderRaceTSSChart(acts) {
+  const { historical, regression } = projectTSS(acts);
+  const projLabels = ['+1w','+2w','+3w','+4w'];
+  const projData   = regression
+    ? projLabels.map((_,i) => Math.max(0, Math.round(regression.project(i+1))))
+    : [null,null,null,null];
+  const allLabels  = [...historical.map((_,i)=>`W-${16-i}`), ...projLabels];
+  const histBars   = [...historical.map(v=>Math.round(v)), null,null,null,null];
+  const projBars   = [...Array(16).fill(null), ...projData];
+
+  const ctx = document.getElementById('cRaceTSS')?.getContext('2d');
+  if (!ctx) return;
+  if (S.charts.raceTSS) S.charts.raceTSS.destroy();
+  S.charts.raceTSS = new Chart(ctx, {
+    type:'bar',
+    data:{ labels:allLabels, datasets:[
+      { label:'Historical TSS', data:histBars,
+        backgroundColor:'rgba(0,200,240,0.25)', borderColor:'#00c8f0', borderWidth:1, borderRadius:2 },
+      { label:'Projected TSS', data:projBars,
+        backgroundColor:'rgba(179,136,255,0.25)', borderColor:'#b388ff', borderWidth:1,
+        borderRadius:2, borderDash:[4,3] }
+    ]},
+    options:{ ...chartDefaults(),
+      plugins:{ ...chartDefaults().plugins, legend:{ display:true, position:'bottom',
+        labels:{ color:'#525c70', font:{size:8}, boxWidth:10 } } },
+      scales:{
+        x:{ stacked:false, grid:{display:false}, ticks:{color:'#2e3545',font:{size:8},maxTicksLimit:12} },
+        y:{ grid:{color:'rgba(255,255,255,.03)'}, ticks:{color:'#525c70',font:{size:9}} }
+      }
+    }
+  });
+}
+
+function renderRaceFTPChart(rides) {
+  // Monthly FTP estimates + 4-month projection
+  const months = byMonth(rides, [
+    { name:'np', get: r => r.weighted_average_watts && r.moving_time >= 1200
+        ? r.weighted_average_watts * 0.95 : null }
+  ]);
+  const labels  = months.map(m => m.label);
+  const ftpData = months.map(m => {
+    if (!m.np || !m.np.length) return null;
+    const sorted = [...m.np].sort((a,b)=>b-a);
+    // IQR clean then take 95th pct
+    const q3 = sorted[Math.floor(sorted.length*0.25)];
+    const q1 = sorted[Math.floor(sorted.length*0.75)];
+    const fence = q3 + 1.5*(q3-q1);
+    const clean = sorted.filter(v=>v<=fence);
+    return clean.length ? +clean[0].toFixed(0) : null;
+  });
+
+  // 4-month projection
+  const validFTP = ftpData.filter(v=>v!=null);
+  const reg = linearRegression(validFTP.slice(-6));
+  const projLabels = ['+1m','+2m','+3m','+4m'];
+  const lastVal = ftpData[ftpData.length-1];
+  const projData = reg
+    ? [lastVal, ...projLabels.map((_,i)=>Math.max(100, Math.round(reg.project(i+1))))]
+    : [null,null,null,null,null];
+  const allLabels = [...labels, ...projLabels];
+  const histLine  = [...ftpData, null,null,null,null];
+  const projLine  = [...Array(labels.length-1).fill(null), ...projData];
+
+  const ctx = document.getElementById('cRaceFTP')?.getContext('2d');
+  if (!ctx) return;
+  if (S.charts.raceFTP) S.charts.raceFTP.destroy();
+  S.charts.raceFTP = new Chart(ctx, {
+    type:'line',
+    data:{ labels:allLabels, datasets:[
+      { label:'Est. FTP (W)', data:histLine,
+        borderColor:'#fc4c02', backgroundColor:'rgba(252,76,2,0.08)',
+        borderWidth:2.5, fill:true, tension:.4, pointRadius:3, pointBackgroundColor:'#fc4c02', spanGaps:true },
+      { label:'Projected', data:projLine,
+        borderColor:'#b388ff', backgroundColor:'rgba(179,136,255,0.08)',
+        borderWidth:1.5, borderDash:[4,3], fill:true, tension:.4, pointRadius:3, pointBackgroundColor:'#b388ff', spanGaps:true }
+    ]},
+    options:{ ...chartDefaults(),
+      plugins:{ ...chartDefaults().plugins, legend:{ display:true, position:'bottom',
+        labels:{ color:'#525c70', font:{size:8}, boxWidth:10 } } },
+      scales:{
+        x:{ grid:{display:false}, ticks:{color:'#2e3545',font:{size:8},maxTicksLimit:12} },
+        y:{ grid:{color:'rgba(255,255,255,.03)'}, ticks:{color:'#525c70',font:{size:9}},
+            title:{display:true,text:'FTP (W)',color:'#525c70',font:{size:9}} }
+      }
+    }
+  });
+}
+
+
+function renderTSSChart(acts) {
+  const weeks={};
+  acts.forEach(a=>{
+    const d=new Date(a.start_date); const ws=new Date(d);
+    ws.setDate(d.getDate()-d.getDay());
+    const k=`${ws.getMonth()+1}/${ws.getDate()}`;
+    weeks[k]=(weeks[k]||0)+(a.suffer_score||a.moving_time/3600*45);
+  });
+  const sorted=Object.entries(weeks).slice(-14);
+  const ctx=document.getElementById('cTSS').getContext('2d');
+  if (S.charts.tss) S.charts.tss.destroy();
+  S.charts.tss = new Chart(ctx,{
+    type:'line',
+    data:{ labels:sorted.map(([k])=>k), datasets:[{
+      label:'TSS', data:sorted.map(([,v])=>Math.round(v)),
+      backgroundColor:'rgba(255,193,7,.1)', borderColor:'#ffc107',
+      borderWidth:2, fill:true, tension:.4, pointRadius:3, pointBackgroundColor:'#ffc107'
+    }]},
+    options:{ ...chartDefaults(),
+      scales:{
+        x:{ ticks:{color:'#2e3545',font:{family:'Space Mono',size:7}}, grid:{display:false} },
+        y:{ ticks:{color:'#2e3545',font:{family:'Space Mono',size:7}}, grid:{color:'rgba(255,255,255,.025)'} }
+      }
+    }
+  });
+}
+
+// ── Triple progression: avg power, HR, cadence per month (outliers removed) ──
+function renderTripleProgression(rides) {
+  // Use IQR to remove power spikes per month
+  const months = byMonth(rides, [
+    { name:'power', get: r => r.weighted_average_watts || r.average_watts || null },
+    { name:'hr',    get: r => r.average_heartrate || null },
+    { name:'cad',   get: r => r.average_cadence || null }
+  ]);
+
+  // byMonth already returns averaged scalars per field
+  const labels   = months.map(m => m.label);
+  const powerAvg = months.map(m => m.power != null ? Math.round(m.power) : null);
+  const hrAvg    = months.map(m => m.hr    != null ? +m.hr.toFixed(1)    : null);
+  const cadAvg   = months.map(m => m.cad   != null ? +m.cad.toFixed(1)   : null);
+
+  const ctx = document.getElementById('cTriple').getContext('2d');
+  if (S.charts.triple) S.charts.triple.destroy();
+  S.charts.triple = new Chart(ctx, {
+    type:'line',
+    data:{ labels, datasets:[
+      { label:'Avg Power (W)', data:powerAvg,
+        borderColor:'#fc4c02', backgroundColor:'rgba(252,76,2,0.06)',
+        borderWidth:2.5, fill:true, tension:.4, pointRadius:3, pointBackgroundColor:'#fc4c02',
+        spanGaps:true, yAxisID:'yP' },
+      { label:'Avg HR (bpm)', data:hrAvg,
+        borderColor:'#b388ff', backgroundColor:'transparent',
+        borderWidth:2, borderDash:[5,3], tension:.4, pointRadius:3, pointBackgroundColor:'#b388ff',
+        spanGaps:true, yAxisID:'yH' },
+      { label:'Avg Cadence (rpm)', data:cadAvg,
+        borderColor:'#00c8f0', backgroundColor:'transparent',
+        borderWidth:2, borderDash:[2,4], tension:.4, pointRadius:3, pointBackgroundColor:'#00c8f0',
+        spanGaps:true, yAxisID:'yC' }
+    ]},
+    options:{ ...chartDefaults(),
+      interaction:{ mode:'index', intersect:false },
+      plugins:{ ...chartDefaults().plugins,
+        legend:{ display:true, position:'bottom',
+          labels:{ color:'#525c70', font:{family:'Space Mono',size:8}, padding:16, boxWidth:12 } },
+        tooltip:{
+          ...chartDefaults().plugins.tooltip,
+          callbacks:{
+            label: ctx => {
+              const units = ['W','bpm','rpm'];
+              return ` ${ctx.dataset.label}: ${ctx.parsed.y ?? '—'} ${units[ctx.datasetIndex]||''}`;
+            }
+          }
+        }
+      },
+      scales:{
+        x:{ ticks:{color:'#2e3545',font:{family:'Space Mono',size:8},maxTicksLimit:14}, grid:{color:'rgba(255,255,255,.02)'} },
+        yP:{ position:'left',  ticks:{color:'#fc4c02',font:{family:'Space Mono',size:8}}, grid:{color:'rgba(255,255,255,.025)'}, title:{display:true,text:'W',color:'#fc4c02',font:{size:9}} },
+        yH:{ position:'right', ticks:{color:'#b388ff',font:{family:'Space Mono',size:8}}, grid:{display:false}, title:{display:true,text:'bpm',color:'#b388ff',font:{size:9}} },
+        yC:{ position:'right', ticks:{color:'#00c8f0',font:{family:'Space Mono',size:8}}, grid:{display:false}, title:{display:true,text:'rpm',color:'#00c8f0',font:{size:9}}, offset:true }
+      }
+    }
+  });
+}
+
+// ── W/BPM aerobic efficiency per month ──────────────────────────────────
+function renderWperBPM(rides) {
+  const eligible = rides.filter(r => r.average_heartrate && (r.weighted_average_watts||r.average_watts) && r.moving_time>=1200);
+  const months = byMonth(eligible, [
+    { name:'wbpm', get: r => {
+        const w = r.weighted_average_watts||r.average_watts;
+        const iqrOk = w < 500 && w > 50; // basic sanity
+        return iqrOk ? w / r.average_heartrate : null;
+      }
+    }
+  ]);
+  function mean(arr) { return arr && arr.length ? arr.reduce((a,b)=>a+b,0)/arr.length : null; }
+  const labels = months.map(m=>m.label);
+  const data   = months.map(m=>{ const v=mean(m.wbpm); return v ? +v.toFixed(3) : null; });
+
+  const ctx = document.getElementById('cWperBPM').getContext('2d');
+  if (S.charts.wbpm) S.charts.wbpm.destroy();
+  S.charts.wbpm = new Chart(ctx, {
+    type:'line',
+    data:{ labels, datasets:[{ label:'W/BPM', data,
+      borderColor:'#b388ff', backgroundColor:'rgba(179,136,255,0.08)',
+      borderWidth:2, fill:true, tension:.4, pointRadius:3, pointBackgroundColor:'#b388ff', spanGaps:true }]},
+    options:{ ...chartDefaults(),
+      plugins:{ ...chartDefaults().plugins,
+        tooltip:{ ...chartDefaults().plugins.tooltip,
+          callbacks:{ label: c => ` ${c.parsed.y?.toFixed(3) ?? '—'} W/BPM` }
+        }
+      },
+      scales:{
+        x:{ ticks:{color:'#2e3545',font:{family:'Space Mono',size:7},maxTicksLimit:10}, grid:{display:false} },
+        y:{ ticks:{color:'#b388ff',font:{family:'Space Mono',size:7}}, grid:{color:'rgba(255,255,255,.025)'},
+            title:{display:true,text:'W/BPM',color:'#b388ff',font:{size:8}} }
+      }
+    }
+  });
+}
+
+// ── Monthly elevation ────────────────────────────────────────────────────
+function renderMonthElevDash(acts) {
+  const months = byMonth(acts, [{ name:'elev', get: a => a.total_elevation_gain||null }]);
+  function sum(arr) { return arr && arr.length ? arr.reduce((a,b)=>a+b,0) : 0; }
+  const ctx = document.getElementById('cMonthElevDash').getContext('2d');
+  if (S.charts.mElevDash) S.charts.mElevDash.destroy();
+  S.charts.mElevDash = new Chart(ctx, {
+    type:'bar',
+    data:{ labels:months.map(m=>m.label), datasets:[{ label:'Elevation m', data:months.map(m=>Math.round(sum(m.elev))),
+      backgroundColor:'rgba(252,76,2,0.2)', borderColor:'#fc4c02', borderWidth:1, borderRadius:3 }]},
+    options:{ ...chartDefaults(),
+      scales:{
+        x:{ ticks:{color:'#2e3545',font:{family:'Space Mono',size:7},maxTicksLimit:10}, grid:{display:false} },
+        y:{ ticks:{color:'#fc4c02',font:{family:'Space Mono',size:7}}, grid:{color:'rgba(255,255,255,.025)'} }
+      }
+    }
+  });
+}
+
+// ── Avg ride duration per month (minutes) ───────────────────────────────
+function renderDurationChart(rides) {
+  const months = byMonth(rides, [{ name:'dur', get: r => r.moving_time ? r.moving_time/60 : null }]);
+  function mean(arr) { return arr && arr.length ? arr.reduce((a,b)=>a+b,0)/arr.length : null; }
+  const ctx = document.getElementById('cDuration').getContext('2d');
+  if (S.charts.dur) S.charts.dur.destroy();
+  S.charts.dur = new Chart(ctx, {
+    type:'bar',
+    data:{ labels:months.map(m=>m.label), datasets:[{ label:'Avg duration (min)', data:months.map(m=>{ const v=mean(m.dur); return v?Math.round(v):null; }),
+      backgroundColor:'rgba(0,200,240,0.15)', borderColor:'#00c8f0', borderWidth:1, borderRadius:3, spanGaps:true }]},
+    options:{ ...chartDefaults(),
+      plugins:{ ...chartDefaults().plugins,
+        tooltip:{ ...chartDefaults().plugins.tooltip,
+          callbacks:{ label: c => ` ${c.parsed.y} min` }
+        }
+      },
+      scales:{
+        x:{ ticks:{color:'#2e3545',font:{family:'Space Mono',size:7},maxTicksLimit:10}, grid:{display:false} },
+        y:{ ticks:{color:'#00c8f0',font:{family:'Space Mono',size:7}}, grid:{color:'rgba(255,255,255,.025)'} }
+      }
+    }
+  });
+}
+
+// ═══════════════════════════════════════════════════════
+// STREAMS CHARTS
+// ═══════════════════════════════════════════════════════
+function renderStreamsCharts(rides) {
+  const keys = Object.keys(S.streamMetrics);
+  if (!keys.length) {
+    document.getElementById('streamsSection').style.display = 'none';
+    return;
+  }
+  document.getElementById('streamsSection').style.display = 'block';
+  const n = keys.length;
+  document.getElementById('streamsSectionTag').textContent =
+    `FROM ${n} ACTIVITIES · SECOND-BY-SECOND STREAMS`;
+
+  // Match metrics to ride objects (sorted by date)
+  const cutoff = Date.now() - STREAMS_WEEKS * 7 * 86400000;
+  const recentRides = rides
+    .filter(r => new Date(r.start_date).getTime() > cutoff)
+    .sort((a,b) => new Date(a.start_date)-new Date(b.start_date));
+
+  const metricsArr = recentRides
+    .map(r => S.streamMetrics[String(r.id)])
+    .filter(Boolean);
+
+  // ── Power Duration Curve ──────────────────────────────
+  const durations = [5, 30, 60, 300, 600, 1200, 1800];
+  const durLabels = ['5s','30s','1m','5m','10m','20m','30m'];
+  const durKeys   = ['p5s','p30s','p1m','p5m','p10m','p20m','p30m'];
+  const bestPDC   = durKeys.map(k => {
+    const vals = metricsArr.map(m=>m[k]).filter(v=>v!=null&&v>0);
+    return vals.length ? Math.max(...vals) : null;
+  });
+  // 4-week ago PDC for comparison
+  const cutoff4w = Date.now() - 4*7*86400000;
+  const older4w  = recentRides.filter(r => new Date(r.start_date).getTime() < cutoff4w);
+  const older4wM  = older4w.map(r=>S.streamMetrics[String(r.id)]).filter(Boolean);
+  const oldPDC    = durKeys.map(k => {
+    const vals = older4wM.map(m=>m[k]).filter(v=>v!=null&&v>0);
+    return vals.length ? Math.max(...vals) : null;
+  });
+
+  const ctxPDC = document.getElementById('cPDC').getContext('2d');
+  if (S.charts.pdc) S.charts.pdc.destroy();
+  S.charts.pdc = new Chart(ctxPDC, {
+    type: 'line',
+    data: { labels: durLabels, datasets: [
+      { label: 'Current best', data: bestPDC,
+        borderColor:'#fc4c02', backgroundColor:'rgba(252,76,2,0.08)',
+        borderWidth:2.5, fill:true, tension:0.4, pointRadius:4, pointBackgroundColor:'#fc4c02', spanGaps:true },
+      { label: '4 weeks ago', data: oldPDC,
+        borderColor:'rgba(255,255,255,0.2)', backgroundColor:'transparent',
+        borderWidth:1.5, borderDash:[4,3], tension:0.4, pointRadius:3, spanGaps:true }
+    ]},
+    options: { ...chartDefaults(),
+      interaction:{mode:'index',intersect:false},
+      plugins:{ ...chartDefaults().plugins,
+        legend:{ display:true, position:'bottom', labels:{color:'#525c70',font:{family:'Space Mono',size:8},padding:12,boxWidth:12} },
+        tooltip:{ ...chartDefaults().plugins.tooltip, callbacks:{ label: c=>`${c.dataset.label}: ${c.parsed.y??'—'}W` } }
+      },
+      scales:{
+        x:{ ticks:{color:'#2e3545',font:{family:'Space Mono',size:8}}, grid:{color:'rgba(255,255,255,.025)'} },
+        y:{ ticks:{color:'#fc4c02',font:{family:'Space Mono',size:8}},
+            grid:{color:'rgba(255,255,255,.025)'},
+            title:{display:true,text:'Watts',color:'#fc4c02',font:{size:8}} }
+      }
+    }
+  });
+
+  // ── HR Zone Distribution (stacked avg across all activities) ───────────
+  const zoneLabels = ['Z1 Recovery','Z2 Aerobic','Z3 Tempo','Z4 Threshold','Z5 VO2Max'];
+  const zoneColors = ['#00e676','#00c8f0','#ffc107','#fc4c02','#ff1744'];
+  const zonesWithData = metricsArr.filter(m => m.hr_zones);
+  const avgZones = zonesWithData.length
+    ? zoneLabels.map((_,i) => +(zonesWithData.reduce((s,m)=>s+m.hr_zones[i],0)/zonesWithData.length).toFixed(1))
+    : [0,0,0,0,0];
+
+  const ctxHRZ = document.getElementById('cHRZones').getContext('2d');
+  if (S.charts.hrz) S.charts.hrz.destroy();
+  S.charts.hrz = new Chart(ctxHRZ, {
+    type:'doughnut',
+    data:{ labels:zoneLabels, datasets:[{
+      data: avgZones,
+      backgroundColor: zoneColors.map(c=>c+'55'),
+      borderColor: zoneColors, borderWidth:2
+    }]},
+    options:{ ...chartDefaults(),
+      plugins:{ ...chartDefaults().plugins,
+        legend:{ display:true, position:'bottom', labels:{color:'#525c70',font:{family:'Space Mono',size:8},padding:6,boxWidth:10} },
+        tooltip:{ ...chartDefaults().plugins.tooltip, callbacks:{ label: c=>`${c.label}: ${c.parsed}%` } }
+      },
+      cutout:'55%'
+    }
+  });
+
+  // ── Variability Index trend ──────────────────────────────
+  const viData = recentRides
+    .map(r => {
+      const m = S.streamMetrics[String(r.id)];
+      const d = new Date(r.start_date);
+      return m?.vi != null ? { x:`${d.getMonth()+1}/${d.getDate()}`, y:m.vi } : null;
+    }).filter(Boolean);
+
+  const ctxVI = document.getElementById('cVI').getContext('2d');
+  if (S.charts.vi) S.charts.vi.destroy();
+  S.charts.vi = new Chart(ctxVI, {
+    type:'scatter',
+    data:{ datasets:[
+      { label:'VI (NP/AP)', data: viData,
+        backgroundColor:'rgba(255,193,7,0.6)', borderColor:'#ffc107', pointRadius:4 },
+      { label:'Target (<1.05)', data: viData.map(p=>({x:p.x, y:1.05})),
+        borderColor:'rgba(0,230,118,0.3)', borderDash:[4,3], showLine:true, pointRadius:0, type:'line' }
+    ]},
+    options:{ ...chartDefaults(),
+      scales:{
+        x:{ ticks:{color:'#2e3545',font:{family:'Space Mono',size:7},maxTicksLimit:8}, grid:{display:false} },
+        y:{ ticks:{color:'#ffc107',font:{family:'Space Mono',size:7}}, grid:{color:'rgba(255,255,255,.025)'},
+            min:0.95, max:1.20 }
+      }
+    }
+  });
+
+  // ── Aerobic Decoupling trend ─────────────────────────────
+  const dcData = recentRides
+    .map(r => {
+      const m = S.streamMetrics[String(r.id)];
+      const d = new Date(r.start_date);
+      return m?.decoupling != null ? { x:`${d.getMonth()+1}/${d.getDate()}`, y:m.decoupling } : null;
+    }).filter(Boolean);
+
+  const ctxDC = document.getElementById('cDecouple').getContext('2d');
+  if (S.charts.dc) S.charts.dc.destroy();
+  S.charts.dc = new Chart(ctxDC, {
+    type:'bar',
+    data:{ labels: dcData.map(p=>p.x), datasets:[{
+      label:'Decoupling %',
+      data: dcData.map(p=>p.y),
+      backgroundColor: dcData.map(p => p.y>5 ? 'rgba(255,23,68,0.4)' : p.y>2 ? 'rgba(255,193,7,0.4)' : 'rgba(0,230,118,0.4)'),
+      borderColor:     dcData.map(p => p.y>5 ? '#ff1744' : p.y>2 ? '#ffc107' : '#00e676'),
+      borderWidth:1, borderRadius:3
+    }]},
+    options:{ ...chartDefaults(),
+      plugins:{ ...chartDefaults().plugins,
+        tooltip:{ ...chartDefaults().plugins.tooltip, callbacks:{ label: c=>`${c.parsed.y?.toFixed(1)}% drift` } }
+      },
+      scales:{
+        x:{ ticks:{color:'#2e3545',font:{family:'Space Mono',size:7},maxTicksLimit:8}, grid:{display:false} },
+        y:{ ticks:{color:'#2e3545',font:{family:'Space Mono',size:7}}, grid:{color:'rgba(255,255,255,.025)'},
+            title:{display:true,text:'%',color:'#525c70',font:{size:8}} }
+      }
+    }
+  });
+
+  // ── Peak 5-min power trend ───────────────────────────────
+  const p5mData = recentRides
+    .map(r => {
+      const m = S.streamMetrics[String(r.id)];
+      const d = new Date(r.start_date);
+      return m?.p5m ? { x:`${d.getMonth()+1}/${d.getDate()}`, y:m.p5m } : null;
+    }).filter(Boolean);
+
+  // Regression line
+  const p5mVals = p5mData.map(p=>p.y);
+  const p5mReg  = linearRegression(p5mVals);
+
+  const ctxP5m = document.getElementById('cP5mTrend').getContext('2d');
+  if (S.charts.p5m) S.charts.p5m.destroy();
+  S.charts.p5m = new Chart(ctxP5m, {
+    type:'line',
+    data:{ labels: p5mData.map(p=>p.x), datasets:[
+      { label:'5-min peak (W)', data: p5mVals,
+        borderColor:'#00c8f0', backgroundColor:'rgba(0,200,240,0.06)',
+        borderWidth:2, fill:true, tension:0.3, pointRadius:3, pointBackgroundColor:'#00c8f0' },
+      { label:'Trend', data: p5mReg ? p5mVals.map((_,i)=>Math.round(p5mReg.intercept + p5mReg.slope*i)) : [],
+        borderColor:'rgba(255,193,7,0.6)', borderDash:[5,4],
+        borderWidth:1.5, pointRadius:0, tension:0 }
+    ]},
+    options:{ ...chartDefaults(),
+      plugins:{ ...chartDefaults().plugins,
+        legend:{ display:true, position:'bottom', labels:{color:'#525c70',font:{family:'Space Mono',size:8},padding:10,boxWidth:10} }
+      },
+      scales:{
+        x:{ ticks:{color:'#2e3545',font:{family:'Space Mono',size:7},maxTicksLimit:8}, grid:{display:false} },
+        y:{ ticks:{color:'#00c8f0',font:{family:'Space Mono',size:7}}, grid:{color:'rgba(255,255,255,.025)'} }
+      }
+    }
+  });
+}
+
+function renderActList(acts) {
+  const icons={Ride:'🚴',Run:'🏃',VirtualRide:'💻',Swim:'🏊',Walk:'🚶',Hike:'🥾'};
+  document.getElementById('actList').innerHTML = acts.map(a=>{
+    const d=new Date(a.start_date);
+    const dist=((a.distance||0)/1000).toFixed(1);
+    const w = a.average_watts ? ` · ${Math.round(a.average_watts)}W` : '';
+    return `<div class="act-row">
+      <div class="act-ico">${icons[a.type]||'🏅'}</div>
+      <div>
+        <div class="act-name">${a.name}</div>
+        <div class="act-meta">${d.getMonth()+1}/${d.getDate()}${w}</div>
+      </div>
+      <div class="act-stat">
+        <div class="act-val">${dist}km</div>
+        <div class="act-meta">${a.average_heartrate?Math.round(a.average_heartrate)+'bpm':''}</div>
+      </div>
+    </div>`;
+  }).join('');
+}
+
+function renderInsights(acts, rides, runs) {
+  const ins = [];
+  const now = Date.now();
+
+  // FTP progression
+  if (rides.length > 10) {
+    const rNP = rides.slice(0,10).filter(r=>r.weighted_average_watts);
+    const oNP = rides.slice(-10).filter(r=>r.weighted_average_watts);
+    if (rNP.length && oNP.length) {
+      const rf = Math.max(...rNP.map(r=>r.weighted_average_watts))*0.95;
+      const of = Math.max(...oNP.map(r=>r.weighted_average_watts))*0.95;
+      const diff = rf-of;
+      ins.push({ ico:'⚡', c:'--orange', bg:'var(--orange-dim)',
+        title:`Est. FTP: ${Math.round(rf)}W`,
+        text:`${diff>0?'▲ Up':'▼ Down'} ~${Math.abs(Math.round(diff))}W vs earlier riding. ${diff>0?'Power is trending upward.':'Consider more intensity work.'}`,
+        badge:diff>0?'IMPROVING':'PLATEAU', bt:diff>0?'var(--green-dim),var(--green)':'var(--yellow-dim),var(--yellow)'
+      });
+    }
+  }
+
+  // Training load
+  const l14 = acts.filter(a=>(now-new Date(a.start_date))<14*86400000);
+  const load = l14.reduce((s,a)=>s+(a.suffer_score||a.moving_time/3600*45),0);
+  if (load>0) {
+    const hi = load>600, md = load>350;
+    ins.push({ ico:hi?'🔥':md?'📊':'🌱', c:'--cyan', bg:'var(--cyan-dim)',
+      title:`14d Load: ${hi?'HIGH':md?'MODERATE':'LOW'} (${Math.round(load)} TSS)`,
+      text: hi?'Heavy load — prioritise recovery before next intensity block.'
+             :md?'Good stimulus. Maintain to consolidate adaptations.'
+                :'Room to build — add a volume or intensity session this week.',
+      badge:hi?'REST':'BUILD', bt:hi?'var(--yellow-dim),var(--yellow)':'var(--orange-dim),var(--orange)'
+    });
+  }
+
+  // Cadence
+  const wc = rides.filter(r=>r.average_cadence);
+  if (wc.length>5) {
+    const avg = wc.reduce((s,r)=>s+r.average_cadence,0)/wc.length;
+    ins.push({ ico:'🔄', c:'--cyan', bg:'var(--cyan-dim)',
+      title:`Avg Cadence: ${Math.round(avg)} rpm`,
+      text: avg<75?`Below optimal (<80rpm). Try shorter, higher-cadence efforts to improve neuromuscular efficiency.`
+                  :`Good cadence. At ${Math.round(avg)}rpm you're in an efficient range.`,
+      badge:avg<75?'IMPROVE':'GOOD', bt:avg<75?'var(--yellow-dim),var(--yellow)':'var(--green-dim),var(--green)'
+    });
+  }
+
+  // Consistency
+  const wks={};
+  acts.slice(0,70).forEach(a=>{ const w=Math.floor((now-new Date(a.start_date))/(7*86400000)); wks[w]=(wks[w]||0)+1; });
+  const wkCount=Object.keys(wks).length;
+  const perWk=(Object.values(wks).reduce((a,b)=>a+b,0)/Math.max(1,wkCount)).toFixed(1);
+  ins.push({ ico:'📅', c:'--green', bg:'var(--green-dim)',
+    title:`${perWk}x/week consistency`,
+    text:`${wkCount} active weeks tracked. ${parseFloat(perWk)>=4?'Excellent consistency — this is where adaptations compound.':'Target 4+ sessions/week for consistent gains.'}`,
+    badge:parseFloat(perWk)>=4?'EXCELLENT':'IMPROVE', bt:parseFloat(perWk)>=4?'var(--green-dim),var(--green)':'var(--orange-dim),var(--orange)'
+  });
+
+  // HR efficiency
+  const hw = rides.filter(r=>r.average_heartrate&&r.average_watts);
+  if (hw.length>5) {
+    const r5=hw.slice(0,5), o5=hw.slice(-5);
+    const re=r5.reduce((s,r)=>s+r.average_watts/r.average_heartrate,0)/5;
+    const oe=o5.reduce((s,r)=>s+r.average_watts/r.average_heartrate,0)/5;
+    const up=re>oe;
+    ins.push({ ico:'❤️', c:'--purple', bg:'var(--purple-dim)',
+      title:`Aerobic Efficiency ${up?'▲ Improving':'→ Flat'}`,
+      text:`W/BPM ratio: ${re.toFixed(2)} (recent) vs ${oe.toFixed(2)} (older). ${up?'Aerobic base building nicely.':'Add Z2 volume to boost efficiency.'}`,
+      badge:up?'AEROBIC GAIN':'Z2 FOCUS', bt:up?'var(--green-dim),var(--green)':'var(--cyan-dim),var(--cyan)'
+    });
+  }
+
+  // Long ride streak
+  const recent14 = rides.filter(a=>(now-new Date(a.start_date))<14*86400000);
+  ins.push({ ico:'🏆', c:'--yellow', bg:'var(--yellow-dim)',
+    title:`${recent14.length} rides in last 14 days`,
+    text: recent14.length>=6?'High frequency — ensure at least 1–2 easy recovery sessions this week.'
+         :recent14.length>=3?'Good rhythm. Consider adding one quality session.'
+                            :'Low recent frequency — rebuild gradually.',
+    badge:recent14.length>=6?'HIGH FREQ':'ON TRACK', bt:'var(--yellow-dim),var(--yellow)'
+  });
+
+  document.getElementById('insightsRow').innerHTML = ins.slice(0,6).map(i=>`
+    <div class="insight">
+      <div class="ins-ico" style="background:${i.bg}">${i.ico}</div>
+      <div>
+        <div class="ins-title">${i.title}</div>
+        <div class="ins-text">${i.text}</div>
+        <span class="ins-badge" style="background:${i.bt.split(',')[0]};color:${i.bt.split(',')[1]}">${i.badge}</span>
+      </div>
+    </div>`).join('');
+}
+
+function updateCtxBar(acts) {
+  const dates = acts.map(a=>new Date(a.start_date));
+  const oldest = dates.length ? new Date(Math.min(...dates.map(d=>d.getTime()))) : new Date();
+  const sports = [...new Set(acts.map(a=>a.type))];
+  document.getElementById('ctxN').textContent = `${acts.length} activities`;
+  document.getElementById('ctxN').className = 'ctx-tag on';
+  document.getElementById('ctxD').textContent = `${oldest.getFullYear()} → now`;
+  document.getElementById('ctxD').className = 'ctx-tag on';
+  document.getElementById('ctxS').textContent = sports.join(' · ');
+  document.getElementById('ctxS').className = 'ctx-tag on';
+  document.getElementById('chatSub').textContent = `// ${acts.length} ACTIVITIES · CLAUDE AI`;
+}
+
+function updatePrompts(rides, runs) {
+  document.getElementById('pChips').innerHTML = [
+    'Am I ready to race this weekend?',
+    "What's my biggest training weakness?",
+    'How does my power trend over the last month?',
+    'Recommend a training focus for next week'
+  ].map(q=>`<div class="p-chip" onclick="ask(this.textContent)">${q}</div>`).join('');
+}
+
+// ═══════════════════════════════════════════════════════
+// CHAT
+// ═══════════════════════════════════════════════════════
+function buildSystem() {
+  const acts = S.activities;
+  if (!acts.length) return 'You are a cycling/running coach AI. No athlete data is loaded yet.';
+  const rides = acts.filter(a=>a.type==='Ride'||a.type==='VirtualRide');
+  const runs  = acts.filter(a=>a.type==='Run');
+  const totalDist = (acts.reduce((s,a)=>s+(a.distance||0),0)/1000).toFixed(0);
+  const totalElev = acts.reduce((s,a)=>s+(a.total_elevation_gain||0),0).toFixed(0);
+  const withNP = rides.filter(r=>r.weighted_average_watts);
+  const estFTP = withNP.length ? Math.round(Math.max(...withNP.map(r=>r.weighted_average_watts||0))*0.95) : 'unknown';
+  const ridesHR = rides.filter(r=>r.average_heartrate);
+  const avgHR = ridesHR.length ? (ridesHR.reduce((s,r)=>s+r.average_heartrate,0)/ridesHR.length).toFixed(0) : 'unknown';
+  const withCad = rides.filter(r=>r.average_cadence);
+  const avgCad = withCad.length ? (withCad.reduce((s,r)=>s+r.average_cadence,0)/withCad.length).toFixed(0) : 'unknown';
+
+  const now = Date.now();
+  const weeks={};
+  acts.forEach(a=>{ const w=Math.floor((now-new Date(a.start_date))/(7*86400000)); if(w<10) weeks[w]=(weeks[w]||0)+(a.suffer_score||a.moving_time/3600*45); });
+  const weeklyLoad = Object.entries(weeks).sort((a,b)=>a[0]-b[0]).map(([w,t])=>`Week -${w}: ${Math.round(t)} TSS`).join('\n');
+
+  const recent10 = acts.slice(0,10).map(a=>
+    `• ${new Date(a.start_date).toDateString()} | ${a.type} | ${a.name} | ${(a.distance/1000).toFixed(1)}km`+
+    `${a.weighted_average_watts?` | NP:${Math.round(a.weighted_average_watts)}W`:''}${a.average_heartrate?` | HR:${Math.round(a.average_heartrate)}bpm`:''}${a.average_cadence?` | cad:${Math.round(a.average_cadence)}rpm`:''}`
+  ).join('\n');
+
+  // Streams-derived metrics
+  const streamEntries = Object.entries(S.streamMetrics || {});
+  const streamCount   = streamEntries.length;
+  let streamsContext  = 'Not yet synced — user can click ⚡ STREAMS to enable';
+  if (streamCount > 0) {
+    const allP5m  = streamEntries.map(([,m])=>m.p5m).filter(Boolean);
+    const allP20m = streamEntries.map(([,m])=>m.p20m).filter(Boolean);
+    const allVI   = streamEntries.map(([,m])=>m.vi).filter(Boolean);
+    const allDC   = streamEntries.map(([,m])=>m.decoupling).filter(Boolean);
+    const bestP5m  = allP5m.length  ? Math.round(Math.max(...allP5m))  : null;
+    const bestP20m = allP20m.length ? Math.round(Math.max(...allP20m)) : null;
+    const avgVI    = allVI.length   ? (allVI.reduce((a,b)=>a+b)/allVI.length).toFixed(2) : null;
+    const avgDC    = allDC.length   ? (allDC.reduce((a,b)=>a+b)/allDC.length).toFixed(1) : null;
+    const zoneArrs = streamEntries.map(([,m])=>m.hr_zones).filter(z=>z&&z.length===5);
+    const avgHRZones = zoneArrs.length
+      ? [0,1,2,3,4].map(i=>+(zoneArrs.reduce((s,z)=>s+z[i],0)/zoneArrs.length).toFixed(1))
+      : null;
+    streamsContext = `${streamCount} activities analysed | Peak 5-min: ${bestP5m||'N/A'}W | Peak 20-min: ${bestP20m||'N/A'}W | Avg VI: ${avgVI||'N/A'} | Avg Decoupling: ${avgDC||'N/A'}%` +
+      (avgHRZones ? ` | HR Zones Z1:${avgHRZones[0]}% Z2:${avgHRZones[1]}% Z3:${avgHRZones[2]}% Z4:${avgHRZones[3]}% Z5:${avgHRZones[4]}%` : '');
+  }
+
+  return `You are an elite cycling and running performance coach AI with full access to this athlete's data.
+
+ATHLETE: ${S.athlete?S.athlete.firstname+' '+S.athlete.lastname:'Unknown'}
+TOTAL ACTIVITIES: ${acts.length} (${rides.length} rides, ${runs.length} runs)
+TOTAL DISTANCE: ${totalDist}km | ELEVATION: ${totalElev}m
+STREAMS DATA (last ${STREAMS_WEEKS}w): ${streamsContext}
+ESTIMATED FTP: ${estFTP}W | AVG RIDE HR: ${avgHR}bpm | AVG CADENCE: ${avgCad}rpm
+
+WEEKLY TRAINING LOAD (last 10 weeks, TSS estimated):
+${weeklyLoad}
+
+RECENT 10 ACTIVITIES:
+${recent10}
+
+COACHING INSTRUCTIONS:
+- Be direct, specific, and reference real numbers from the data
+- Use cycling/running performance terminology appropriately
+- Keep answers concise (3–5 sentences) unless detailed analysis is requested
+- Offer actionable next steps when relevant
+- If asked about readiness, consider the last 14 days' load and trend`;
+}
+
+async function sendMsg() {
+  const input = document.getElementById('chatIn');
+  const txt = input.value.trim();
+  if (!txt || S.isSending) return;
+
+  if (!cfg.anthropicKey && !S.isDemo) {
+    addMsg('ai','⚠️ Add your Anthropic API key in ⚙ Settings to enable AI coaching.'); return;
+  }
+  if (!S.activities.length) {
+    addMsg('ai','⚠️ No activity data loaded yet. Sync with Strava or try demo mode first.'); return;
+  }
+
+  input.value=''; input.style.height='auto';
+  addMsg('user', txt);
+  S.chatHistory.push({ role:'user', content:txt });
+  S.isSending = true;
+  document.getElementById('sendBtn').disabled = true;
+  showTyping();
+
+  try {
+    const res = await fetch('https://api.anthropic.com/v1/messages', {
+      method:'POST',
+      headers:{
+        'Content-Type':'application/json',
+        'x-api-key': cfg.anthropicKey,
+        'anthropic-version': '2023-06-01',
+        'anthropic-dangerous-direct-browser-access': 'true'
+      },
+      body: JSON.stringify({
+        model:'claude-sonnet-4-20250514',
+        max_tokens:1000,
+        system: buildSystem(),
+        messages: S.chatHistory.slice(-12)
+      })
+    });
+    hideTyping();
+    if (!res.ok) { const e=await res.json(); throw new Error(e.error?.message||res.statusText); }
+    const data = await res.json();
+    const reply = data.content[0].text;
+    S.chatHistory.push({ role:'assistant', content:reply });
+    addMsg('ai', reply);
+  } catch(e) {
+    hideTyping();
+    addMsg('ai', `⚠️ Error: ${e.message}`);
+  }
+  S.isSending = false;
+  document.getElementById('sendBtn').disabled = false;
+}
+
+function ask(q) { document.getElementById('chatIn').value=q; sendMsg(); }
+
+function addMsg(role, text) {
+  const c = document.getElementById('chatMsgs');
+  const div = document.createElement('div');
+  div.className = `msg ${role}`;
+  const t = new Date().toLocaleTimeString([],{hour:'2-digit',minute:'2-digit'});
+  const html = text.replace(/\*\*(.*?)\*\*/g,'<strong>$1</strong>').replace(/\n/g,'<br>');
+  div.innerHTML = `<div class="msg-ava">${role==='ai'?'🧠':'🏃'}</div>
+    <div class="msg-body"><div class="bubble">${html}</div><div class="msg-time">${t}</div></div>`;
+  c.appendChild(div); c.scrollTop=c.scrollHeight;
+}
+
+let typingNode=null;
+function showTyping(){
+  const c=document.getElementById('chatMsgs');
+  typingNode=document.createElement('div');
+  typingNode.className='msg ai'; typingNode.id='typingNode';
+  typingNode.innerHTML=`<div class="msg-ava">🧠</div><div class="msg-body"><div class="typing"><div class="t-dot"></div><div class="t-dot"></div><div class="t-dot"></div></div></div>`;
+  c.appendChild(typingNode); c.scrollTop=c.scrollHeight;
+}
+function hideTyping(){ document.getElementById('typingNode')?.remove(); }
+
+function chatKey(e){ if(e.key==='Enter'&&!e.shiftKey){ e.preventDefault(); sendMsg(); } }
+function autoH(el){ el.style.height='auto'; el.style.height=Math.min(el.scrollHeight,90)+'px'; }
+
+// ═══════════════════════════════════════════════════════
+// CHART INSIGHT TOOLTIPS
+// ═══════════════════════════════════════════════════════
+
+// Returns HTML string for the ⓘ button + insight panel
+// Usage: insert at the end of .chart-lbl div
+function infoBtn(chartKey) {
+  const d = CHART_INSIGHTS[chartKey];
+  if (!d) return '';
+  const improve = d.improve ? `
+    <div class="ci-improve">
+      <div class="ci-improve-lbl">▲ How to improve</div>
+      ${d.improve}
+    </div>` : '';
+  const zones = d.zones ? `
+    <div class="ci-zones">${d.zones.map(z=>`<div class="ci-zone-row"><span>${z[0]}</span><span class="ci-zone-val">${z[1]}</span></div>`).join('')}</div>` : '';
+  const coach = d.coach ? `<div class="ci-coach"><div class="ci-coach-lbl">🎯 Coach says</div>${d.coach}</div>` : '';
+  return `<div class="chart-info-btn" onclick="event.stopPropagation();this.classList.toggle('active')" title="What does this mean?">ⓘ</div>
+    <div class="chart-insight-panel">
+      <button class="ci-close" onclick="this.closest('.chart-card').querySelector('.chart-info-btn').classList.remove('active')">✕</button>
+      <div class="ci-title">${d.title}</div>
+      <div class="ci-what">${d.what}</div>${zones}${improve}${coach}
+    </div>`;
+}
+
+
+
+// ── Inject insight buttons into every chart card ──────────────────────
+const CHART_CANVAS_MAP = {"cPerf": "perf", "cSport": "sport", "cWeekly": "weekly", "cTSS": "tss", "cTriple": "triple", "cWperBPM": "wbpm", "cMonthElevDash": "mElevDash", "cDuration": "dur", "cPDC": "pdc", "cHRZones": "hrZones", "cVI": "vi", "cDecouple": "dc", "cP5mTrend": "p5m", "cVO2": "vo2", "cRaceTSS": "raceTSS", "cRaceFTP": "raceFTP", "cMonthDist": "monthDist", "cMonthElev": "monthElev", "cRollingTSS": "rollingTSS", "cHReff": "hrEff", "cPowerTime": "powerTime", "cPowerHR": "powerHR", "cCadTime": "cadTime"};
+
+function injectInsightButtons() {
+  Object.entries(CHART_CANVAS_MAP).forEach(([canvasId, insightKey]) => {
+    const canvas = document.getElementById(canvasId);
+    if (!canvas) return;
+    const card = canvas.closest('.chart-card');
+    if (!card) return;
+    // Avoid double-injection
+    if (card.querySelector('.chart-info-btn')) return;
+    const lbl = card.querySelector('.chart-lbl');
+    if (!lbl) return;
+    const html = infoBtn(insightKey);
+    if (!html) return;
+    lbl.insertAdjacentHTML('beforeend', html);
+  });
+}
+
+const CHART_INSIGHTS = {
+
+  perf: {
+    title: `Power · HR · Cadence Overview`,
+    what: `Three metrics overlaid per ride. <strong style="color:#fc4c02">NP (Normalised Power)</strong> accounts for power variability — it's higher than average power on hilly or interval rides. <strong style="color:#b388ff">Avg HR</strong> shows cardiac load. <strong style="color:#00c8f0">Cadence</strong> shows pedalling rate. Together these reveal whether fitness gains come from more power, better cardiac efficiency, or both.`,
+    improve: `Want NP to rise while HR stays flat or drops? That's aerobic adaptation. If both rise together, you're just working harder, not getting fitter. Target 80–90+ rpm cadence to reduce muscular fatigue on long rides.`,
+    coach: `Watch the gap between NP and Avg Power — that's your variability. If your HR line is rising month-on-month while power stays flat, you're losing aerobic efficiency. That's the #1 sign you need more Zone 2.`
+  },
+
+  sport: {
+    title: `Sport Mix Distribution`,
+    what: `The proportion of your activity types by count. Useful for tracking whether training is balanced across disciplines — important for triathletes, or to spot if you've been skipping runs or rides.`,
+    improve: `For triathlon: aim for roughly 40% bike / 35% run / 15% swim / 10% other. For cycling-focused athletes, supplementary running builds aerobic base and improves VO2Max from a different stimulus.`,
+    coach: `If you're training for triathlon and cycling is >60% of your count, your run fitness will erode. Protect your run frequency — even short easy runs maintain neuromuscular patterns that are expensive to rebuild.`
+  },
+
+  weekly: {
+    title: `Weekly Distance (km)`,
+    what: `Total kilometres across all sports per week. This is your volume signal — the foundation of aerobic fitness. Consistent week-to-week volume matters more than occasional big weeks.`,
+    improve: `Safe volume progression: increase by no more than 10% per week. A "down week" every 3–4 weeks (drop 30–40%) allows adaptation. If you see a big spike followed by a crash, that's a sign of over-reaching.`,
+    coach: `Consistency over 8+ weeks trumps any single big week. If your weekly distance has a saw-tooth pattern, focus on hitting a floor before worrying about the ceiling.`
+  },
+
+  tss: {
+    title: `Training Load (TSS estimate)`,
+    what: `Training Stress Score estimates the physiological cost of each week. It combines duration and intensity. 100 TSS ≈ one hour at threshold effort.<br><br>Thresholds to know:<br>• &lt;300/week: maintenance<br>• 300–500/week: solid base building<br>• 500–800/week: serious training<br>• &gt;800/week: high performance (overtraining risk)`,
+    improve: `Track your chronic training load (CTL = 42-day rolling TSS) and acute load (ATL = 7-day). If ATL/CTL spikes above 1.3, injury risk rises. Build CTL gradually: +3–5 TSS/week is sustainable.`,
+    coach: `If your TSS is flat for 6+ weeks, you're in maintenance — not getting fitter. To improve, you need a progressive build followed by a planned recovery week, not random variation.`
+  },
+
+  triple: {
+    title: `Monthly Avg Power · HR · Cadence`,
+    what: `Monthly averages per ride with power spikes removed. This shows long-term adaptation trends rather than day-to-day noise.<br><br><strong style="color:#fc4c02">Rising power + flat or falling HR</strong> = aerobic adaptation (the goal).<br><strong style="color:#fc4c02">Rising power + rising HR</strong> = working harder, not adapting.<br><strong style="color:#00c8f0">Rising cadence</strong> = better neuromuscular efficiency.`,
+    improve: `For cadence: target 85–95 rpm for road riding. Cadence below 75 rpm increases muscular fatigue and knee stress. Do isolated leg training (ILT) drills at 100+ rpm to build neuromuscular efficiency without cardiovascular load.`,
+    coach: `The ideal signature of improving fitness: power trending up, HR flat or trending down, cadence holding steady or rising. If power is rising but HR is rising proportionally, you're just training harder — not adapting.`
+  },
+
+  wbpm: {
+    title: `Aerobic Efficiency (W/BPM)`,
+    what: `Watts produced per heartbeat. A rising W/BPM trend is the clearest long-term signal of aerobic fitness improvement — your heart is doing more work per beat.<br><br>Typical ranges:<br>• 1.2–1.5: recreational cyclist<br>• 1.5–1.8: trained amateur<br>• 1.8–2.2: competitive amateur<br>• &gt;2.2: elite level`,
+    improve: `Long slow distance (Zone 2) riding is the primary driver. 3–4 hours per week at below 75% of max HR, consistently for 8–12 weeks, will visibly shift this metric upward. Intervals raise power but Zone 2 raises efficiency.`,
+    coach: `This is the single best metric for long-term aerobic development. If it's been flat for 3+ months, you're not doing enough Zone 2. Increase your longest weekly ride by 20-30 min and hold it there for 8 weeks.`
+  },
+
+  mElevDash: {
+    title: `Monthly Elevation (m)`,
+    what: `Total climbing per month. Elevation is a proxy for training intensity and specificity — climbing routes require sustained high power and build strength-endurance. High elevation months with lower avg power are not a fitness drop — just a different stimulus.`,
+    improve: `If preparing for a hilly race: aim for 60–70% of total race elevation in your training weeks. Seated climbing at 60–70 rpm builds quad strength. Standing climbing at 80+ rpm builds explosive power.`,
+    coach: `Elevation builds strength-endurance you can't replicate on flat roads. If your target race is hilly, you should see a climb in this chart in the 8-12 weeks before race day.`
+  },
+
+  dur: {
+    title: `Average Ride Duration (min)`,
+    what: `Average duration of each ride per month. Duration is the foundational volume variable — longer rides at moderate intensity build aerobic base, fat oxidation, and mental toughness that shorter high-intensity sessions cannot replicate.`,
+    improve: `For endurance events: at least one ride per week should exceed 50% of your target race duration. For an Ironman bike leg (~4–5h), you need regular 2.5–3h rides. Duration builds the aerobic engine; intensity just raises the ceiling.`,
+    coach: `Duration is the most underrated training variable. If your average ride is under 75 min, you're likely not building the fat oxidation and muscular endurance that define race-day performance.`
+  },
+
+  pdc: {
+    title: `Power Duration Curve (PDC)`,
+    what: `Your best power output at every duration — from 5 seconds (neuromuscular sprint) to 30 minutes (aerobic power). The shape reveals your rider type:<br><br>• Steep drop-off: sprinter or puncher profile<br>• Flat curve: diesel / time-trial engine<br>• Dip at 1–5min: under-developed VO2Max zone<br><br>Orange = current best. Grey = 4 weeks ago. A gap means fitness has changed.`,
+    improve: `To raise the 5-min point: VO2Max intervals (4–5min at 110–120% FTP, 4–6 reps). To raise the 20-min point: threshold intervals (2×20min at 95–105% FTP). To raise 5s: standing sprints fully fresh, max 6–8 per session.`,
+    coach: `Your biggest gains are usually at the durations that are lowest relative to your best efforts. A dip in the 3-5 min range means your VO2Max work is undertrained. A flat curve after 20 min means your aerobic base is strong.`
+  },
+
+  hrZones: {
+    title: `HR Zone Distribution`,
+    what: `Percentage of time in each heart rate zone across recent rides. Zones are calculated from your LTHR (174 bpm).`,
+    zones: [
+      [`Z1 Recovery`,  `&lt;81% LTHR  (&lt;141bpm)`],
+      [`Z2 Aerobic`,   `81–90%  (141–156bpm)`],
+      [`Z3 Tempo`,     `90–95%  (157–165bpm)`],
+      [`Z4 Threshold`, `95–100% (166–174bpm)`],
+      [`Z5 VO2Max`,    `&gt;100%   (&gt;174bpm)`],
+    ],
+    improve: `Polarised training model: aim for 80% time in Z1–Z2, 20% in Z4–Z5. Very little in Z3 — it's hard enough to accumulate fatigue but not hard enough to drive VO2Max adaptations. If you're mostly in Z3, you're in the "grey zone": too hard to recover, too easy to adapt.`,
+    coach: `Most recreational athletes spend 60-70% of time in Z3 (tempo) — the worst zone for adaptation. You get fatigued like Z4-Z5 but don't get the VO2Max stimulus. Push easy rides easier, hard rides harder.`
+  },
+
+  vi: {
+    title: `Variability Index (VI = NP ÷ Avg Power)`,
+    what: `How "spiky" your power output is. VI = 1.00 means perfectly constant power (like a TT). VI = 1.15 means power varied a lot (hills, surges, stops).<br><br>• 1.00–1.05: very smooth — ideal for flat TT or triathlon<br>• 1.05–1.10: moderate — normal for road races<br>• 1.10–1.15: high — hilly or group ride<br>• &gt;1.15: very erratic — may indicate poor pacing`,
+    improve: `For time trials and triathlons, practise even-power riding. Use power targets and resist the urge to surge on hills. A VI of 1.02–1.04 in a triathlon bike leg typically leads to a better run. For road races, higher VI is normal — work on recovery between efforts.`,
+    coach: `For your next triathlon bike leg, target VI below 1.05. Every surge above FTP accumulates W' debt you'll pay back on the run. Smooth is fast.`
+  },
+
+  dc: {
+    title: `Aerobic Decoupling (HR Drift %)`,
+    what: `How much HR drifts upward in the second half of a ride while power stays constant. A well-trained aerobic system shows below 5% drift — the heart handles the same workload without beating faster.<br><br>• &lt;2% (green): excellent aerobic fitness<br>• 2–5% (yellow): good — normal for long or hot rides<br>• &gt;5% (red): system under stress — dehydration, heat, or insufficient base`,
+    improve: `High decoupling means your aerobic base needs work. The fix is consistent Zone 2 riding — not intervals. After 8–12 weeks of base training at 3–4h/week below 75% HRmax, decoupling on 2-hour rides should drop below 3%. Heat adds 5–10bpm drift independent of fitness.`,
+    coach: `If decoupling is consistently above 5% on rides under 2 hours, your aerobic base needs work before you add intensity. It's tempting to jump to intervals — but base training will give you more return right now.`
+  },
+
+  p5m: {
+    title: `5-Minute Peak Power Trend`,
+    what: `5-min peak power is the best single proxy for VO2Max in cyclists. It requires maximal aerobic output sustained for 5 minutes — close to the upper ceiling of what your cardiovascular system can deliver. A rising trend means genuine VO2Max improvement.`,
+    improve: `5×5 intervals: 5 minutes at 110–120% FTP, full recovery between reps (5–10min easy). Do once per week for 6–8 weeks. Start with 3 reps and build to 6. These are very hard — do them early in the week when fresh. Each 10W improvement in 5-min power typically corresponds to ~1–1.5 ml/kg/min VO2Max gain.`,
+    coach: `Your 5-min power is your VO2Max barometer. If it hasn't moved in 3 months despite consistent training, your VO2Max intervals may not be hard enough. True VO2Max work should feel nearly maximal — if you can complete 6 reps, you're not going hard enough.`
+  },
+
+  vo2: {
+    title: `VO2Max Estimate Over Time`,
+    what: `Three estimation methods shown simultaneously:<br><br><span style="color:#00c8f0">■</span> <strong>Power model</strong> — derived from FTP with trained-athlete efficiency correction. Lower bound.<br><br><span style="color:#ffc107">■</span> <strong>VDOT</strong> — Jack Daniels formula from best run efforts. Independent of cycling data.<br><br><span style="color:rgba(0,230,118,0.8)">■</span> <strong>Uth upper bound</strong> — HR-ratio formula (HRmax/HRrest × 15.3). Most accurate when you enter resting HR in Settings. Your true VO2Max likely sits between the power model and the Uth line.`,
+    improve: `VO2Max improves most from high-intensity interval training: 4–6 reps of 3–5 minutes at 110–120% FTP (cycling) or at 3km race pace (running), 2–3 times per week. It takes 6–8 weeks to see measurable gains. After ~2 years of consistent training it plateaus — genetics set the ceiling, training sets where you sit relative to it.`,
+    coach: `The gap between the power model (lower) and Uth (upper) is your uncertainty band. Add your true resting HR in Settings to narrow it. Your actual VO2Max from 3 years ago was 67 — if the Uth line is near that, your HRmax/HRrest inputs are calibrated well.`
+  },
+
+  raceTSS: {
+    title: `Weekly TSS + Load Projection`,
+    what: `Historical training stress per week (bars) plus a 4-week linear projection (purple). The projection assumes your recent training trend continues — it's a "what if you keep going like this" estimate.<br><br>Use this to plan a race taper: TSS should drop 40–60% in the 2 weeks before an A-race, but hold intensity.`,
+    improve: `Build phase: increase weekly TSS by ~10% every 3 weeks, then cut 30% for a recovery week. For a 70.3 triathlon, target 400–600 TSS/week at peak. For a full Ironman, 600–900 TSS/week. Never increase TSS by more than 50 points in a single week.`,
+    coach: `The projection assumes linear continuation of your current trend. Before an A-race, you want TSS to drop 40-50% in week -2, then recover slightly in race week. Use this chart to plan your taper.`
+  },
+
+  raceFTP: {
+    title: `Monthly FTP Estimate + Projection`,
+    what: `Monthly best NP × 0.95, with a 4-month projection trend line. FTP represents roughly the power you can sustain for ~60 minutes at maximum effort. Everything above FTP is anaerobic; everything below is aerobic. It's the most important performance number for cycling.`,
+    improve: `FTP improves most from sweetspot (88–93% FTP) and threshold work. Classic protocol: 2×20min at 95% FTP, twice per week, for 8 weeks. Combining with one VO2Max session per week accelerates progress. Each ~5W FTP gain typically improves 40km TT time by ~1–2 minutes.`,
+    coach: `FTP is the anchor for every prediction in this app. If it looks wrong, set it manually by checking your best 20-min effort and multiplying by 0.95. Every 5W of FTP is roughly 1-2 min on a 40km TT.`
+  },
+
+  monthDist: {
+    title: `Monthly Distance (km)`,
+    what: `Total distance across all sports per calendar month. Rising monthly distance over a season is the clearest indicator of consistent training habits. Single big months followed by drops indicate inconsistency — the enemy of long-term fitness.`,
+    improve: `Consistency beats intensity. Three months of steady 300km beats one month of 600km followed by two months of 100km. Set a minimum floor you will hit every month — even in recovery months aim for 60–70% of your normal volume.`,
+    coach: `Volume is the foundation. If this chart shows a sharp drop in the last 1-2 months, all your interval work is being built on a shrinking base — gains will stall or reverse.`
+  },
+
+  monthElev: {
+    title: `Monthly Elevation (m)`,
+    what: `Total climbing metres per month. High-elevation months mean more slow-twitch muscle recruitment, better fat oxidation, and power-to-weight development. It also explains power and speed variations — comparing flat and hilly months directly is misleading.`,
+    improve: `If targeting hilly races: your training elevation should match or exceed race elevation across your training block. For W/kg improvement: structured climbing intervals (4–10min at 95–105% FTP on grades of 5–8%) are more efficient than random elevation accumulation.`,
+    coach: `Don't compare months with very different elevation profiles. A 'drop' in power during a high-elevation month is often increased training stress, not a fitness decline.`
+  },
+
+  rollingTSS: {
+    title: `Rolling 24-Week TSS Load`,
+    what: `Training stress per week over 24 weeks. This longer view reveals training periodisation — base phases (moderate TSS), build phases (rising TSS), peak (high TSS), taper (drop before race), and off-season (low TSS). The shape of this curve should match your race calendar.`,
+    improve: `If the curve is flat for more than 3 months, you're in maintenance mode. To improve, you need a progressive overload phase: 8–12 weeks of gradually increasing TSS, then a taper. If the curve is chaotic with no pattern, plan a 16-week structured block with a target A-race.`,
+    coach: `This is your periodisation story. The ideal pattern is a 3:1 build-to-recovery ratio with a clear taper before key races. Chaos here usually means training is reactive rather than planned.`
+  },
+
+  hrEff: {
+    title: `HR Efficiency Trend (W/BPM monthly)`,
+    what: `Average watts divided by average HR per month — the same as the W/BPM dashboard chart but with a longer history. An upward slope means your cardiovascular system is adapting: more work output per heartbeat.`,
+    improve: `Zone 2 base training is the primary driver. Sleep quality and recovery are secondary — poor sleep raises resting HR and suppresses this metric without any fitness change. Track alongside total training hours; rising W/BPM with stable hours = true adaptation.`,
+    coach: `This is the metric that separates aerobic adaptation from just working harder. If W/BPM is rising, your engine is getting more efficient. If it's flat despite rising TSS, you may be accumulating fatigue faster than you're adapting.`
+  },
+
+  powerTime: {
+    title: `Normalised Power Over Time`,
+    what: `NP per ride over the date range, with your estimated FTP shown as the dashed line. Rides above the FTP line were short intense efforts or races. Most training rides should cluster below FTP. The trend of how close rides cluster to the FTP line shows training specificity.`,
+    improve: `If most rides are far below FTP, add one sweetspot session per week (88–93% FTP). If many rides regularly exceed FTP, check recovery — too much high-intensity work without adaptation blocks is a common overtraining pattern.`,
+    coach: `Use the FTP dashed line as a reference. Rides that consistently cluster 20-30W below FTP are your bread-and-butter training — that's the sweetspot zone. If most rides are 60-80W below FTP, you may be undertraining.`
+  },
+
+  powerHR: {
+    title: `Power vs HR Correlation (scatter)`,
+    what: `Each dot is one ride: X = average HR, Y = NP. Fitness shows up as the cloud shifting — the same HR producing more power, or the same power requiring less HR.<br><br>A tight diagonal cluster = consistent training. A wide scatter = highly variable conditions (heat, altitude, fatigue, different routes).`,
+    improve: `Track this monthly. If the cluster is drifting right and up (more power at same HR), you're adapting well. If flat, you're maintaining. A leftward shift without power increase means you're getting more efficient but not stronger — add threshold work.`,
+    coach: `Look for the cloud to shift right-and-up over seasons. If the cloud is wide/scattered, your training is inconsistent. A tight cluster that moves gradually upward is the signature of structured training.`
+  },
+
+  cadTime: {
+    title: `Cadence Over Time`,
+    what: `Average pedalling rate per ride over time. The same power can be produced at low cadence (high torque, muscular) or high cadence (low torque, cardiovascular). Most trained cyclists target 85–95 rpm for road riding to optimise between muscular fatigue and cardiovascular load.`,
+    improve: `If cadence is below 80 rpm: do dedicated cadence work — 3×10min at 95–100 rpm at low power (Zone 1–2). Over 6–8 weeks this becomes natural. Higher cadence reduces force per pedal stroke, which protects knees and delays muscular fatigue on long rides. For climbing, 70–80 rpm is normal.`,
+    coach: `Cadence below 75 rpm means you're producing torque-heavy power that taxes your muscular system more than your cardiovascular system. High-fatigue, low-cadence riding is the #1 cause of mid-ride power drop-off.`
+  },
+
+};
+
+// ── Executive AI Coaching Summary ────────────────────────
+let _execSummaryKey = 0; // prevent stale renders
+
+async function generateExecSummary(acts, rides, runs) {
+  if (!cfg.anthropicKey) {
+    document.getElementById('execSummary').innerHTML =
+      `<span style="color:var(--text-2);font-family:var(--mono);font-size:9px">Add Anthropic API key in Settings to enable AI coaching analysis</span>`;
+    return;
+  }
+  const myKey = ++_execSummaryKey;
+  const el = document.getElementById('execSummary');
+  el.innerHTML = `<span style="color:var(--text-2);font-family:var(--mono);font-size:9px;animation:pulse 1.5s infinite">⟳ &nbsp;Analysing your training data...</span>`;
+
+  const wt  = cfg.weight || 74;
+  const ftp = robustFTP(rides) || '?';
+  const now = Date.now();
+  const w4  = 4*7*86400000;
+  const recent = rides.filter(r => now-new Date(r.start_date) < w4);
+  const totalDist  = (acts.reduce((s,a)=>s+(a.distance||0),0)/1000).toFixed(0);
+  const totalRides = rides.length;
+  const totalRuns  = runs.length;
+  const avgHR = rides.filter(r=>r.average_heartrate).length
+    ? Math.round(mean(rides.filter(r=>r.average_heartrate).map(r=>r.average_heartrate))) : '?';
+  const avgCad = rides.filter(r=>r.average_cadence).length
+    ? Math.round(mean(rides.filter(r=>r.average_cadence).map(r=>r.average_cadence))) : '?';
+  const recentFTP  = robustFTP(recent) || ftp;
+  const vo2est = estimateVO2MaxFirstbeat(recent.length > 3 ? recent : rides, wt);
+  const vo2range = estimateVO2MaxRange(acts, wt);
+  const tssData = projectTSS(acts);
+  const weeklyTSS = tssData.historical.slice(-4);
+  const avgWeekTSS = weeklyTSS.length ? Math.round(mean(weeklyTSS)) : '?';
+
+  // Build context
+  const context = `You are an elite endurance sports coach analysing an athlete's training data. Be direct, specific, and actionable. No generic platitudes.
+
+ATHLETE PROFILE:
+- Weight: ${wt}kg | FTP: ${ftp}W | FTP/kg: ${(ftp/wt).toFixed(2)} W/kg
+- LTHR: 174bpm | HRmax: ${cfg.hrMax||'~188'}bpm | Resting HR: ${cfg.hrRest||'~42'}bpm
+- VO2Max tested 3yr ago: 67 ml/kg/min | Current estimate: ${vo2est||'?'} ml/kg/min (range: ${vo2range.lower||'?'}–${vo2range.upper} ml/kg/min)
+- Total activities: ${acts.length} (${totalRides} rides, ${totalRuns} runs) | Total distance: ${totalDist}km
+- Avg cadence: ${avgCad} rpm | Avg HR: ${avgHR} bpm
+- Avg weekly TSS (last 4w): ${avgWeekTSS}
+- Recent FTP estimate: ${recentFTP}W
+
+GOALS: Bulgarian National ITT, 2027 Singapore National ITT, possible triathlon
+
+Write a 4-6 sentence executive coaching analysis. Cover:
+1. Current fitness state (FTP, aerobic efficiency, W/kg)
+2. The single most important training gap you see in the data
+3. One specific, concrete recommendation for the next 4 weeks
+4. A brief note on race readiness or trajectory
+
+Format as flowing prose (no bullets, no headers). Be specific with numbers. Speak like a coach who knows this athlete well.`;
+
+  try {
+    const resp = await fetch('https://api.anthropic.com/v1/messages', {
+      method: 'POST',
+      headers: {
+        'Content-Type': 'application/json',
+        'x-api-key': cfg.anthropicKey,
+        'anthropic-version': '2023-06-01',
+        'anthropic-dangerous-direct-browser-access': 'true'
+      },
+      body: JSON.stringify({
+        model: 'claude-sonnet-4-20250514',
+        max_tokens: 400,
+        stream: true,
+        messages: [{ role: 'user', content: context }]
+      })
+    });
+
+    if (!resp.ok || myKey !== _execSummaryKey) return;
+    if (myKey !== _execSummaryKey) return;
+
+    el.innerHTML = `<span id="execText" style="color:var(--text-0)"></span>
+      <span id="execCursor" style="display:inline-block;width:2px;height:13px;background:var(--orange);margin-left:2px;animation:blink 1s step-end infinite;vertical-align:middle"></span>`;
+    const textEl = document.getElementById('execText');
+
+    const reader = resp.body.getReader();
+    const dec = new TextDecoder();
+    let buf = '';
+    while (true) {
+      const { done, value } = await reader.read();
+      if (done || myKey !== _execSummaryKey) break;
+      buf += dec.decode(value, { stream: true });
+      const lines = buf.split('\n');
+      buf = lines.pop();
+      for (const line of lines) {
+        if (!line.startsWith('data: ')) continue;
+        const data = line.slice(6);
+        if (data === '[DONE]') continue;
+        try {
+          const ev = JSON.parse(data);
+          if (ev.type === 'content_block_delta' && ev.delta?.type === 'text_delta') {
+            textEl.textContent += ev.delta.text;
+          }
+        } catch {}
+      }
+    }
+    // Remove cursor when done
+    document.getElementById('execCursor')?.remove();
+    // Add timestamp
+    if (myKey === _execSummaryKey && textEl) {
+      el.insertAdjacentHTML('beforeend',
+        `<div style="margin-top:10px;font-family:var(--mono);font-size:8px;color:var(--text-3)">
+          Generated ${new Date().toLocaleTimeString()} · Based on ${acts.length} activities
+          <span style="margin-left:10px;color:var(--text-3);cursor:pointer;text-decoration:underline" onclick="regenExecSummary()">↻ regenerate</span>
+        </div>`);
+    }
+  } catch(e) {
+    if (myKey === _execSummaryKey)
+      el.innerHTML = `<span style="color:var(--red);font-size:11px">Could not generate analysis: ${e.message}</span>`;
+  }
+}
+
+function regenExecSummary() {
+  const a = S.activities;
+  generateExecSummary(a, a.filter(x=>x.type==='Ride'||x.type==='VirtualRide'), a.filter(x=>x.type==='Run'));
+}
+
+// Close insight panels when clicking outside
+document.addEventListener('click', e => {
+  if (!e.target.closest('.chart-info-btn') && !e.target.closest('.chart-insight-panel')) {
+    document.querySelectorAll('.chart-info-btn.active').forEach(b => b.classList.remove('active'));
+  }
+});
+
+// ═══════════════════════════════════════════════════════
+// INIT
+// ═══════════════════════════════════════════════════════
+window.addEventListener('DOMContentLoaded', async () => {
+  loadCfg();
+  if (cfg.stravaToken) {
+    // Config exists — skip welcome, auto-connect
+    document.getElementById('welcomeOverlay').style.display = 'none';
+    await triggerSync();
+  }
+  // else: welcome overlay is shown by default
+});
+</script>
+</body>
+</html>
